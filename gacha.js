@@ -1,5 +1,5 @@
 import { jogo, salvarJogo } from './state.js';
-import { textosFlutuantes } from './render.js';
+import { textosFlutuantes, mostrarNotificacao } from './render.js';
 import { atualizarInterface, renderizarBotoesUpgrades } from './engine.js';
 
 export function adicionarFragmentos(heroiIndex, quantidade) {
@@ -49,7 +49,6 @@ export function darTiroGacha(quantidade = 1) {
                 let ganho = (dpsTotal > 0 ? dpsTotal : 1) * 60;
                 jogo.pontos += ganho;
                 totalPontosGacha += ganho;
-                textosFlutuantes.push({ texto: `+${ganho} pts`, x: 150 + (Math.random()*40), y: 150 + (Math.random()*20), alpha: 1, duracao: 80, cor: "46, 204, 113", tamanho: "bold 20px sans-serif" });
             } else {
                 let heroIndex = Math.floor(Math.random() * jogo.herois.length);
                 let heroi = jogo.herois[heroIndex];
@@ -64,7 +63,7 @@ export function darTiroGacha(quantidade = 1) {
         for (let h in fragmentosGanhos) msg += `🧩 5 Fragmentos para ${h} (${fragmentosGanhos[h]}x)\n`;
         if (totalPontosGacha > 0) msg += `💰 Pontos Ganhos: ${totalPontosGacha}\n`;
         
-        if (msg) alert(msg.trim());
+        if (msg.trim()) mostrarNotificacao(msg.trim());
 
         renderizarBotoesUpgrades(); 
         atualizarInterface();

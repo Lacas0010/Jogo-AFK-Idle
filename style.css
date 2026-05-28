@@ -26,3 +26,31 @@ button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 6px; 
 .heroi-stars { margin: 0; color: #f1c40f; font-size: 16px; min-height: 20px; }
 .heroi-title { margin: 5px 0 10px 0; font-size: 14px; color: #fff; }
 .heroi-actions { display: flex; justify-content: center; gap: 10px; }
+
+/* Botão de Habilidade */
+.btn-skill { background: #c0392b; color: white; }
+.btn-skill:hover:not(:disabled) { background: #e67e22; }
+
+/* Sistema de Abas */
+.menu-abas {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 15px 0;
+}
+.btn-aba {
+    background: #333;
+    color: white;
+    border-radius: 6px;
+    opacity: 0.7;
+}
+.btn-aba.active {
+    background: #3498db;
+    opacity: 1;
+}
+.aba-conteudo {
+    display: none;
+}
+.aba-conteudo.active {
+    display: block;
+}
