@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Joguinho AFK</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <h1>Idle Game</h1>
+    <p>Pontos: <span id="pontos">0</span></p>
+    <canvas id="jogoCanvas" width="400" height="400"></canvas>
+    
+    <div id="painelGacha" class="painel-gacha">
+        <h2>🔮 Altar de Invocação</h2>
+        <p>Gemas: <span id="gemas">0</span> | Pity: <span id="pityGacha">0</span>/50</p>
+        <button id="btnGacha" class="btn-upgrade btn-gacha-1" onclick="darTiroGacha(1)">1 Tiro (10 Gemas)</button>
+        <button id="btnGacha10" class="btn-upgrade btn-gacha-10" onclick="darTiroGacha(10)">10 Tiros (100 Gemas)</button>
+        <button class="btn-upgrade btn-gacha-teste" onclick="darGemasTeste()">+100 Gemas (Teste)</button>
+    </div>
+
+    <div id="painelUpgrades" class="controles painel-upgrades"></div>
+    <div class="controles">
+        <button class="btn-reset" onclick="resetarJogo()">Resetar Progresso</button>
+    </div>
+
+    <script type="module" src="engine.js"></script>
+</body>
+</html>

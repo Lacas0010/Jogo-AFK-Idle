@@ -1,0 +1,28 @@
+body { background: #1a1a1a; color: white; text-align: center; font-family: sans-serif; }
+canvas { background: #111; border: 2px solid #333; margin-top: 20px; cursor: pointer; }
+.controles { margin-top: 15px; display: flex; justify-content: center; gap: 15px; }
+button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; font-size: 14px; transition: 0.2s; }
+.btn-upgrade { background: #2ecc71; color: #111; }
+.btn-upgrade:hover:not(:disabled) { background: #27ae60; }
+.btn-upgrade:disabled { background: #444; color: #888; cursor: not-allowed; }
+.btn-crit { background: #f39c12; color: #111; }
+.btn-crit:hover:not(:disabled) { background: #e67e22; }
+.btn-reset { background: #e74c3c; color: white; }
+.btn-reset:hover { background: #c0392b; }
+
+/* Gacha e Painéis (Substituindo os estilos inline) */
+.painel-gacha { margin-top: 20px; margin-bottom: 20px; background: #2c3e50; padding: 15px; border-radius: 8px; border: 2px solid #8e44ad; display: inline-block; }
+.painel-gacha h2 { margin: 0 0 10px 0; color: #fff; font-size: 18px; }
+.painel-gacha p { margin: 0 0 10px 0; }
+#gemas { color: #9b59b6; font-weight: bold; font-size: 18px; }
+#pityGacha { color: #f1c40f; font-weight: bold; font-size: 18px; }
+.btn-gacha-1 { background: #9b59b6; color: white; }
+.btn-gacha-10 { background: #8e44ad; color: white; margin-left: 10px; }
+.btn-gacha-teste { background: #f39c12; color: white; margin-left: 10px; font-size: 12px; padding: 6px 12px; }
+.painel-upgrades { flex-wrap: wrap; }
+
+/* Cards de Heróis criados via JavaScript */
+.heroi-card { background: #222; padding: 10px; border-radius: 8px; border: 1px solid #444; flex: 1; min-width: 250px; }
+.heroi-stars { margin: 0; color: #f1c40f; font-size: 16px; min-height: 20px; }
+.heroi-title { margin: 5px 0 10px 0; font-size: 14px; color: #fff; }
+.heroi-actions { display: flex; justify-content: center; gap: 10px; }
