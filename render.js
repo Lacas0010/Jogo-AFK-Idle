@@ -61,7 +61,7 @@ export function desenhar() {
 
     const marcoAtaque = animacao.duracao / 3; // Dinâmico (5 p/ ataque normal, 15 p/ a Elfa)
 
-    const skillFogo = jogo.herois[0].skills?.[0];
+    const skillFogo = jogo.herois[0].skills?.find(s => s.nome === "🔥 Lâmina Incandescente");
 
     // Gera as partículas de labaredas se a habilidade estiver ativa
     if (skillFogo && skillFogo.ativa) {
@@ -246,7 +246,7 @@ export function desenhar() {
 
     // EXPLOSÃO AZUL DA ELFA
     if (animacao.ativa && animacao.tipo === 'burstElfa' && animacao.frameAtual === animacao.duracao - 1) {
-        const fogoAtivo = jogo.herois[0].skills?.[0]?.ativa;
+        const fogoAtivo = jogo.herois[0].skills?.find(s => s.nome === "🔥 Lâmina Incandescente")?.ativa;
         const numParticulas = fogoAtivo ? 45 : 30;
         const velMult = fogoAtivo ? 20 : 12;
         const cores = fogoAtivo 
@@ -403,7 +403,7 @@ export function desenhar() {
         ctx.rotate(Math.atan2(-155, 75));
         if (animacao.ativa && animacao.frameAtual < marcoAtaque) ctx.translate(-5, 0);
         
-        const skillElfaAtiva = animacao.ativa && animacao.tipo === 'burstElfa';
+        const skillElfaAtiva = animacao.ativa && animacao.tipo === 'burstElfa' && jogo.herois[1]?.skills?.some(s => s.nome === "🏹 Rajada de Glifos");
 
         ctx.strokeStyle = skillElfaAtiva ? "#00ffff" : "#f39c12"; 
         ctx.lineWidth = skillElfaAtiva ? 8 : 4;

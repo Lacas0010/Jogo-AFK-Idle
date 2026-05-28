@@ -251,17 +251,17 @@ export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'no
 
     if (tipo === 'normal' && espadaFogoAtiva) {
         if (isBoss) {
-            multiplicadorElemental = 3.0; // 2.0 Vantagem + Combo de Combustão
-            corTexto = "255, 102, 0"; // Laranja vivo
+            multiplicadorElemental = 3.0;
+            corTexto = "255, 102, 0";
             textoAtaque = "🔥 DEGRADAÇÃO POLIGONAL! ";
         }
     } else if (tipo === 'burstElfa') {
         if (espadaFogoAtiva) {
-            multiplicadorElemental = 2.0; // Combo de Vaporização
-            corTexto = "191, 0, 255"; // Roxo neon
+            multiplicadorElemental = 2.0;
+            corTexto = "191, 0, 255";
             textoAtaque = "💥 DERRETIMENTO DE PIXELS! ";
         } else if (isBoss) {
-            multiplicadorElemental = 0.5; // Desvantagem Glintstone vs Natureza (Boss)
+            multiplicadorElemental = 0.5;
             textoAtaque = "🔷 FRACTAL MÁGICO ";
         }
     }
@@ -355,11 +355,13 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        let dpsTotal = jogo.herois.reduce((acc, h) => acc + h.dps, 0);
-        let isCrit = Math.random() < jogo.herois[0].chanceCritico;
-        let danoFinal = isCrit ? dpsTotal * 3 : dpsTotal;
-        
-        atacar(danoFinal, isCrit);
+        jogo.herois.forEach((heroi, index) => {
+            if (index === 0 || heroi.nivelDps > 0) {
+                let isCrit = Math.random() < heroi.chanceCritico;
+                let danoHeroi = isCrit ? heroi.dps * 3 : heroi.dps;
+                atacar(danoHeroi, isCrit, 15, index === 1 ? 'dpsPassivoElfa' : 'normal');
+            }
+        });
         salvarJogo();
         atualizarInterface();
     }, 1000);
