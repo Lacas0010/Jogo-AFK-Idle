@@ -37,4 +37,4 @@ Como o projeto utiliza `ES6 Modules` (com as declarações de `import` e `export
 
 * **Vanilla JavaScript (ES6+)**
 * **HTML5 Canvas Context 2D**
-* **CSS3** (Presumido para estilização da interface dos menus)
+* **CSS3**
