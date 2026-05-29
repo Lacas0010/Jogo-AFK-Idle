@@ -14,6 +14,8 @@ let tempoAnimacao = 0;
 let cicloTempo = 0; // Cronômetro geral para o céu
 let noitesPassadas = 0; // Para calcular a fase da Lua
 let foiNoite = false; // Flag para detectar quando a noite vira dia
+let nivelAnterior = null; // Rastreador de mortes
+let frameMorte = 0; // Temporizador para esconder o monstro
 
 export function mostrarNotificacao(mensagem) {
     const linhas = mensagem.split('\n').filter(l => l.trim() !== '');
@@ -37,6 +39,30 @@ export function desenhar() {
     if (!ctx) {
         requestAnimationFrame(desenhar);
         return;
+    }
+
+    // SISTEMA DE MORTE E FEEDBACK VISUAL
+    if (nivelAnterior === null) nivelAnterior = jogo.nivel;
+
+    if (nivelAnterior !== jogo.nivel) {
+        frameMorte = 15; // Esconde o monstro por 15 frames (~0.25s) para dar a sensação de morte
+        const isPantanoAtual = Math.floor((nivelAnterior - 1) / 15) % 2 === 1;
+        const isBossAtual = nivelAnterior % 5 === 0;
+        let corMorte = isPantanoAtual ? (isBossAtual ? "#1e8449" : "rgba(142, 68, 173, 0.8)") : (isBossAtual ? "#196f3d" : "#27ae60");
+        
+        for (let i = 0; i < 40; i++) { // Explosão enorme de sangue/lodo
+            particulasSangue.push({
+                x: 400 + (Math.random() - 0.5) * 80,
+                y: 150 + (Math.random() - 0.5) * 80,
+                vx: (Math.random() - 0.5) * 16,
+                vy: (Math.random() - 0.5) * 16 - 4,
+                tamanho: 6 + Math.random() * 10,
+                alpha: 1.2,
+                cor: corMorte,
+                gravidade: 0.4
+            });
+        }
+        nivelAnterior = jogo.nivel;
     }
 
     tempoAnimacao += 0.05;
@@ -72,7 +98,7 @@ export function desenhar() {
             const coresFogo = ["#e74c3c", "#e67e22", "#f1c40f"]; // Vermelho, Laranja, Amarelo
             particulasFogo.push({
                 x: -6 + Math.random() * 12, // Largura local da lâmina
-                y: -74 + Math.random() * 70, // Altura local da lâmina
+                y: -86 + Math.random() * 82, // Altura local da lâmina (ajustado para a ponta)
                 vx: (Math.random() - 0.5) * 2, // Velocidade X lateral caótica
                 vy: -Math.random() * 2 - 1,    // Velocidade Y sempre para cima
                 tamanho: 3 + Math.random() * 4,
@@ -135,46 +161,100 @@ export function desenhar() {
     ctx.fillStyle = "#2ecc71"; 
     ctx.fillRect(0, 180, canvas.width, canvas.height - 180);
 
+    const isPantano = Math.floor((jogo.nivel - 1) / 15) % 2 === 1;
     const balancoVento = Math.sin(cicloTempo * 4) * 0.05; // Movimento contínuo do vento
 
-    // Árvore 1 balançando
-    ctx.fillStyle = "#8b4513"; 
-    ctx.fillRect(40, 115, 16, 75);
-    ctx.save();
-    ctx.translate(48, 115); // Eixo de rotação no topo do tronco
-    ctx.rotate(balancoVento);
-    ctx.fillStyle = "#27ae60"; 
-    ctx.beginPath(); ctx.arc(0, 0, 35, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(-18, -20, 25, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(17, -20, 25, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
+    if (!isPantano) {
+        // Bioma Floresta
+        ctx.fillStyle = "#2ecc71"; 
+        ctx.fillRect(0, 180, canvas.width, canvas.height - 180);
 
-    // Árvore 2 balançando
-    ctx.fillStyle = "#8b4513"; 
-    ctx.fillRect(720, 125, 14, 65);
-    ctx.save();
-    ctx.translate(727, 125);
-    ctx.rotate(balancoVento);
-    ctx.fillStyle = "#27ae60"; 
-    ctx.beginPath(); ctx.arc(0, 0, 30, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(-17, -20, 20, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(18, -15, 20, 0, Math.PI * 2); ctx.fill();
-    ctx.restore();
+        // Árvore 1 balançando
+        ctx.fillStyle = "#8b4513"; 
+        ctx.fillRect(40, 115, 16, 75);
+        ctx.save();
+        ctx.translate(48, 115);
+        ctx.rotate(balancoVento);
+        ctx.fillStyle = "#27ae60"; 
+        ctx.beginPath(); ctx.arc(0, 0, 35, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-18, -20, 25, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(17, -20, 25, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
 
-    ctx.fillStyle = "#229954"; 
-    const gramas = [
-        [50, 220], [120, 280], [280, 210], [350, 300], [80, 320], [310, 260], [20, 270], [200, 195], 
-        [60, 390], [180, 410], [320, 380], [260, 420], [450, 200], [520, 270], [600, 215], [710, 310], 
-        [550, 390], [680, 410], [750, 350], [410, 250]];
-    gramas.forEach(g => {
+        // Árvore 2 balançando
+        ctx.fillStyle = "#8b4513"; 
+        ctx.fillRect(720, 125, 14, 65);
+        ctx.save();
+        ctx.translate(727, 125);
+        ctx.rotate(balancoVento);
+        ctx.fillStyle = "#27ae60"; 
+        ctx.beginPath(); ctx.arc(0, 0, 30, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(-17, -20, 20, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(18, -15, 20, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+
+        ctx.fillStyle = "#229954"; 
+        const gramas = [
+            [50, 220], [120, 280], [280, 210], [350, 300], [80, 320], [310, 260], [20, 270], [200, 195], 
+            [60, 390], [180, 410], [320, 380], [260, 420], [450, 200], [520, 270], [600, 215], [710, 310], 
+            [550, 390], [680, 410], [750, 350], [410, 250]];
+        gramas.forEach(g => {
+            const ventoGrama = Math.sin(cicloTempo * 4 + g[0] * 0.01) * 3;
+            ctx.beginPath();
+            ctx.moveTo(g[0], g[1]); // Base esquerda fica fixa
+            ctx.lineTo(g[0] - 4 + ventoGrama, g[1] - 8); // Ponta esquerda balança com o vento
+            ctx.lineTo(g[0] + 2 + (ventoGrama * 0.2), g[1] - 2); // Meio da grama dobra levemente
+            ctx.lineTo(g[0] + 6 + ventoGrama, g[1] - 10); // Ponta direita balança com o vento
+            ctx.lineTo(g[0] + 10, g[1]); // Base direita fica fixa
+            ctx.fill();
+        });
+    } else {
+        // Bioma Pântano
+        ctx.fillStyle = "#2c3e20"; // Chão lodo escuro
+        ctx.fillRect(0, 180, canvas.width, canvas.height - 180);
+
+        // Poças de água tóxica
+        ctx.fillStyle = "#808000"; // Verde oliva
+        ctx.beginPath(); ctx.ellipse(120, 230, 50, 12, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(650, 310, 60, 15, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#4b0082"; // Roxo escuro
+        ctx.beginPath(); ctx.ellipse(350, 280, 40, 10, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(100, 370, 70, 18, 0, 0, Math.PI * 2); ctx.fill();
+
+        // Árvores Mortas
+        ctx.save();
+        ctx.fillStyle = "#4a3b2c";
+        ctx.strokeStyle = "#4a3b2c";
+        ctx.lineCap = "round";
+        ctx.lineWidth = 4;
+
+        // Árvore Morta 1
+        ctx.fillRect(40, 115, 16, 75);
         ctx.beginPath();
-        ctx.moveTo(g[0], g[1]);
-        ctx.lineTo(g[0] - 4, g[1] - 8);
-        ctx.lineTo(g[0] + 2, g[1] - 2);
-        ctx.lineTo(g[0] + 6, g[1] - 10);
-        ctx.lineTo(g[0] + 10, g[1]);
-        ctx.fill();
-    });
+        ctx.moveTo(48, 115); ctx.lineTo(20, 80);
+        ctx.moveTo(48, 115); ctx.lineTo(75, 85);
+        ctx.moveTo(32, 95); ctx.lineTo(15, 105);
+        ctx.moveTo(60, 95); ctx.lineTo(85, 110);
+        ctx.stroke();
+
+        // Árvore Morta 2
+        ctx.fillRect(720, 125, 14, 65);
+        ctx.beginPath();
+        ctx.moveTo(727, 125); ctx.lineTo(690, 85);
+        ctx.moveTo(727, 125); ctx.lineTo(765, 95);
+        ctx.moveTo(710, 100); ctx.lineTo(680, 115);
+        ctx.stroke();
+        ctx.restore();
+
+        // Neblina baixa
+        const gradientNeblina = ctx.createLinearGradient(0, 160, 0, 260);
+        gradientNeblina.addColorStop(0, "rgba(220, 220, 220, 0)");
+        gradientNeblina.addColorStop(0.5, "rgba(220, 220, 220, 0.35)");
+        gradientNeblina.addColorStop(1, "rgba(220, 220, 220, 0)");
+        
+        ctx.fillStyle = gradientNeblina;
+        ctx.fillRect(0, 160, canvas.width, 100);
+    }
 
     const isBoss = jogo.nivel % 5 === 0;
     
@@ -185,66 +265,272 @@ export function desenhar() {
     }
     ctx.translate(0, flutuarMonstro); // Aplica a flutuação em tudo do monstro
 
-    if (isBoss) {
-        // Machado Gigante (Arma do Chefe)
-        ctx.fillStyle = "#5c3a21"; // Cabo
-        ctx.fillRect(470, 70, 15, 120);
-        ctx.fillStyle = "#95a5a6"; // Lâmina de ferro
-        ctx.beginPath();
-        ctx.moveTo(485, 90); ctx.lineTo(540, 60); ctx.lineTo(550, 110);
-        ctx.lineTo(510, 130); ctx.lineTo(485, 120); ctx.fill();
-
-        // Braços (Mais robustos que os do Goblin)
-        ctx.fillStyle = "#196f3d"; // Verde escuro musculoso
-        ctx.fillRect(315, 130, 25, 60); // Esquerdo
-        ctx.fillRect(460, 130, 25, 60); // Direito
-
-        // Corpo do Orc
-        ctx.fillRect(340, 120, 120, 100);
-
-        // Armadura / Calças do Orc
-        ctx.fillStyle = "#2c3e50"; 
-        ctx.fillRect(340, 180, 120, 40);
-        ctx.fillStyle = "#f1c40f"; // Fivela do Cinto
-        ctx.fillRect(390, 175, 20, 15);
-
-        // Orelhas e Cabeça do Orc
-        ctx.fillStyle = "#196f3d";
-        ctx.beginPath();
-        ctx.moveTo(360, 95); ctx.lineTo(325, 85); ctx.lineTo(355, 120); // Esquerda
-        ctx.moveTo(440, 95); ctx.lineTo(475, 85); ctx.lineTo(445, 120); // Direita
-        ctx.fill();
-        ctx.beginPath(); ctx.arc(400, 95, 40, 0, Math.PI * 2); ctx.fill();
-
-        // Olhos Furiosos e Sobrancelhas
-        ctx.fillStyle = "#e74c3c"; 
-        ctx.beginPath(); ctx.arc(380, 85, 6, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(420, 85, 6, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = "#000"; ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(365, 75); ctx.lineTo(390, 85); // Sobrancelha Esquerda
-        ctx.moveTo(435, 75); ctx.lineTo(410, 85); // Sobrancelha Direita
-        ctx.stroke();
-
-        // Boca e Presas (Dentes de Javali)
-        ctx.beginPath(); ctx.moveTo(385, 115); ctx.lineTo(415, 115); ctx.stroke();
-        ctx.fillStyle = "#ecf0f1"; 
-        ctx.beginPath(); ctx.moveTo(385, 115); ctx.lineTo(390, 100); ctx.lineTo(395, 115); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(405, 115); ctx.lineTo(410, 100); ctx.lineTo(415, 115); ctx.fill();
+    if (frameMorte > 0) {
+        frameMorte--;
     } else {
-        // Goblin ajustado para escala -25% (Y base mantido)
-        ctx.fillStyle = "#8b4513"; 
-        ctx.fillRect(438, 152, 11, 68);
-        ctx.fillStyle = "#27ae60";
-        ctx.fillRect(370, 160, 60, 60);
-        ctx.beginPath();
-        ctx.moveTo(378, 138); ctx.lineTo(333, 123); ctx.lineTo(378, 153);
-        ctx.moveTo(422, 138); ctx.lineTo(467, 123); ctx.lineTo(422, 153);
-        ctx.fill();
-        ctx.beginPath(); ctx.arc(400, 138, 26, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = "#000";
-        ctx.beginPath(); ctx.arc(389, 134, 4, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(411, 134, 4, 0, Math.PI * 2); ctx.fill();
+        if (!isPantano) {
+            if (isBoss) {
+            // Machado Gigante (Arma do Chefe)
+            ctx.fillStyle = "#5c3a21"; // Cabo
+            ctx.fillRect(470, 70, 15, 120);
+            ctx.fillStyle = "#95a5a6"; // Lâmina de ferro
+            ctx.beginPath();
+            ctx.moveTo(485, 90); ctx.lineTo(540, 60); ctx.lineTo(550, 110);
+            ctx.lineTo(510, 130); ctx.lineTo(485, 120); ctx.fill();
+
+            // Braços (Mais robustos que os do Goblin)
+            ctx.fillStyle = "#196f3d"; // Verde escuro musculoso
+            ctx.fillRect(315, 130, 25, 60); // Esquerdo
+            ctx.fillRect(460, 130, 25, 60); // Direito
+
+            // Corpo do Orc
+            ctx.fillRect(340, 120, 120, 100);
+
+            // Armadura / Calças do Orc
+            ctx.fillStyle = "#2c3e50"; 
+            ctx.fillRect(340, 180, 120, 40);
+            ctx.fillStyle = "#f1c40f"; // Fivela do Cinto
+            ctx.fillRect(390, 175, 20, 15);
+
+            // Orelhas e Cabeça do Orc
+            ctx.fillStyle = "#196f3d";
+            ctx.beginPath();
+            ctx.moveTo(360, 95); ctx.lineTo(325, 85); ctx.lineTo(355, 120); // Esquerda
+            ctx.moveTo(440, 95); ctx.lineTo(475, 85); ctx.lineTo(445, 120); // Direita
+            ctx.fill();
+            ctx.beginPath(); ctx.arc(400, 95, 40, 0, Math.PI * 2); ctx.fill();
+
+            // Olhos Furiosos e Sobrancelhas
+            ctx.fillStyle = "#e74c3c"; 
+            ctx.beginPath(); ctx.arc(380, 85, 6, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(420, 85, 6, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = "#000"; ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(365, 75); ctx.lineTo(390, 85); // Sobrancelha Esquerda
+            ctx.moveTo(435, 75); ctx.lineTo(410, 85); // Sobrancelha Direita
+            ctx.stroke();
+
+            // Boca e Presas (Dentes de Javali)
+            ctx.beginPath(); ctx.moveTo(385, 115); ctx.lineTo(415, 115); ctx.stroke();
+            ctx.fillStyle = "#ecf0f1"; 
+            ctx.beginPath(); ctx.moveTo(385, 115); ctx.lineTo(390, 100); ctx.lineTo(395, 115); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(405, 115); ctx.lineTo(410, 100); ctx.lineTo(415, 115); ctx.fill();
+        } else {
+            // Goblin Detalhado
+            
+            // Arma: Clava com Espinhos
+            ctx.fillStyle = "#5c3a21"; // Cabo
+            ctx.fillRect(438, 140, 10, 70);
+            ctx.fillStyle = "#4a2e1b"; // Cabeça da clava
+            ctx.beginPath(); ctx.ellipse(443, 135, 12, 25, 0, 0, Math.PI * 2); ctx.fill();
+            // Espinhos da clava
+            ctx.fillStyle = "#bdc3c7";
+            [[433, 125], [453, 125], [431, 140], [455, 140], [443, 110]].forEach(p => {
+                ctx.beginPath(); ctx.moveTo(p[0]-3, p[1]); ctx.lineTo(p[0]+3, p[1]); ctx.lineTo(p[0], p[1]-8); ctx.fill();
+            });
+
+            // Braço Direito (Atrás da arma)
+            ctx.fillStyle = "#27ae60"; 
+            ctx.fillRect(425, 165, 25, 12);
+            ctx.fillRect(432, 165, 12, 25);
+
+            // Pernas e Pés
+            ctx.fillStyle = "#1e8449"; // Sombra da perna
+            ctx.fillRect(380, 210, 12, 20);
+            ctx.fillRect(408, 210, 12, 20);
+            ctx.fillStyle = "#4a3b2c"; // Sapatos de trapos
+            ctx.beginPath(); ctx.ellipse(385, 228, 12, 8, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(415, 228, 12, 8, 0, 0, Math.PI * 2); ctx.fill();
+
+            // Corpo/Tronco (Corcunda)
+            ctx.fillStyle = "#27ae60";
+            ctx.beginPath(); ctx.ellipse(400, 185, 28, 30, 0, 0, Math.PI * 2); ctx.fill();
+
+            // Roupas: Tanga/Colete rasgado de couro
+            ctx.fillStyle = "#8b4513";
+            ctx.beginPath(); ctx.moveTo(375, 175); ctx.lineTo(425, 175); ctx.lineTo(415, 215); ctx.lineTo(385, 215); ctx.fill();
+            // Cinto e Fivela
+            ctx.fillStyle = "#2c3e50"; ctx.fillRect(372, 178, 56, 8);
+            ctx.fillStyle = "#f1c40f"; ctx.fillRect(392, 176, 16, 12);
+            ctx.fillStyle = "#2c3e50"; ctx.fillRect(395, 179, 10, 6);
+
+            // Braço Esquerdo (Frente)
+            ctx.fillStyle = "#27ae60"; 
+            ctx.beginPath(); ctx.ellipse(365, 180, 8, 20, Math.PI/6, 0, Math.PI * 2); ctx.fill();
+
+            // Orelhas
+            ctx.fillStyle = "#27ae60";
+            ctx.beginPath(); ctx.moveTo(380, 138); ctx.lineTo(330, 120); ctx.lineTo(375, 150); ctx.fill(); // Esquerda
+            ctx.beginPath(); ctx.moveTo(420, 138); ctx.lineTo(470, 120); ctx.lineTo(425, 150); ctx.fill(); // Direita
+            // Interior das Orelhas (Sombra)
+            ctx.fillStyle = "#1e8449";
+            ctx.beginPath(); ctx.moveTo(375, 138); ctx.lineTo(340, 125); ctx.lineTo(372, 145); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(425, 138); ctx.lineTo(460, 125); ctx.lineTo(428, 145); ctx.fill();
+
+            // Cabeça
+            ctx.fillStyle = "#27ae60";
+            ctx.beginPath(); ctx.arc(400, 135, 26, 0, Math.PI * 2); ctx.fill();
+
+            // Rosto Detalhado
+            // Olhos de Fera (Amarelos com pupila vermelha)
+            ctx.fillStyle = "#f1c40f";
+            ctx.beginPath(); ctx.ellipse(390, 130, 6, 4, Math.PI/8, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(410, 130, 6, 4, -Math.PI/8, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = "#e74c3c";
+            ctx.beginPath(); ctx.arc(390, 130, 2, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(410, 130, 2, 0, Math.PI * 2); ctx.fill();
+
+            // Sobrancelhas (Bravas)
+            ctx.strokeStyle = "#111"; ctx.lineWidth = 3; ctx.lineCap = "round";
+            ctx.beginPath(); ctx.moveTo(380, 122); ctx.lineTo(395, 127); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(420, 122); ctx.lineTo(405, 127); ctx.stroke();
+
+            // Nariz adunco
+            ctx.fillStyle = "#1e8449";
+            ctx.beginPath(); ctx.moveTo(400, 132); ctx.lineTo(395, 144); ctx.lineTo(405, 144); ctx.fill();
+
+            // Sorriso maléfico e torto
+            ctx.strokeStyle = "#111"; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(386, 148); ctx.quadraticCurveTo(400, 156, 414, 146); ctx.stroke();
+            
+            // Presas irregulares
+            ctx.fillStyle = "#fff";
+            ctx.beginPath(); ctx.moveTo(390, 150); ctx.lineTo(394, 144); ctx.lineTo(394, 152); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(410, 148); ctx.lineTo(406, 142); ctx.lineTo(406, 150); ctx.fill();
+        }
+    } else {
+        if (isBoss) {
+            // Hidra de 3 Cabeças Detalhada
+            const t = tempoAnimacao;
+
+            // Patas Traseiras (Escuras)
+            ctx.fillStyle = "#145a32"; 
+            ctx.beginPath(); ctx.ellipse(360, 185, 12, 22, -Math.PI/6, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(440, 185, 12, 22, Math.PI/6, 0, Math.PI * 2); ctx.fill();
+
+            // Patas Dianteiras
+            ctx.fillStyle = "#1e8449"; 
+            ctx.beginPath(); ctx.ellipse(375, 195, 15, 25, -Math.PI/8, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(425, 195, 15, 25, Math.PI/8, 0, Math.PI * 2); ctx.fill();
+            
+            // Garras
+            ctx.fillStyle = "#e74c3c";
+            [367, 374, 381, 417, 424, 431].forEach(x => {
+                ctx.beginPath(); ctx.moveTo(x, 215); ctx.lineTo(x + 2, 225); ctx.lineTo(x + 4, 215); ctx.fill();
+            });
+
+            // Corpo
+            ctx.fillStyle = "#1e8449";
+            ctx.beginPath(); ctx.ellipse(400, 160, 55, 45, 0, 0, Math.PI * 2); ctx.fill();
+            
+            // Barriga (Escamas do corpo)
+            ctx.fillStyle = "#145a32";
+            ctx.beginPath(); ctx.arc(400, 175, 25, Math.PI, 0); ctx.fill();
+
+            // Configuração dos Pescoços Animados usando Curvas Bezier
+            const offsets = [
+                { base: [370, 150], ctrl1: [350 + Math.sin(t*2)*15, 120], ctrl2: [330 + Math.cos(t*1.5)*15, 90], head: [320 + Math.sin(t*2)*15, 75 + Math.cos(t*2)*10] },
+                { base: [400, 140], ctrl1: [400 + Math.cos(t*1.8)*20, 110], ctrl2: [400 - Math.sin(t*2.2)*20, 80], head: [400 + Math.cos(t*1.8)*20, 60 + Math.sin(t*1.8)*10] },
+                { base: [430, 150], ctrl1: [450 + Math.sin(t*2.1)*15, 120], ctrl2: [470 + Math.cos(t*1.6)*15, 90], head: [480 + Math.sin(t*2.1)*15, 75 + Math.cos(t*2.1)*10] }
+            ];
+
+            ctx.lineCap = "round";
+            
+            offsets.forEach((n) => {
+                // Desenha a base do pescoço (Grosso)
+                ctx.lineWidth = 16;
+                ctx.strokeStyle = "#1e8449";
+                ctx.beginPath();
+                ctx.moveTo(n.base[0], n.base[1]);
+                ctx.bezierCurveTo(n.ctrl1[0], n.ctrl1[1], n.ctrl2[0], n.ctrl2[1], n.head[0], n.head[1]);
+                ctx.stroke();
+
+                // Segmentos/Escamas ao longo do pescoço
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = "#145a32";
+                for(let j = 0.15; j < 0.9; j += 0.15) {
+                    const u = 1 - j;
+                    const px = u*u*u*n.base[0] + 3*u*u*j*n.ctrl1[0] + 3*u*j*j*n.ctrl2[0] + j*j*j*n.head[0];
+                    const py = u*u*u*n.base[1] + 3*u*u*j*n.ctrl1[1] + 3*u*j*j*n.ctrl2[1] + j*j*j*n.head[1];
+                    
+                    // Desenha um 'V' invertido simulando a separação do segmento
+                    ctx.beginPath();
+                    ctx.moveTo(px - 7, py);
+                    ctx.lineTo(px, py + 6);
+                    ctx.lineTo(px + 7, py);
+                    ctx.stroke();
+                }
+            });
+
+            // Cabeças Detalhadas
+            offsets.forEach(n => {
+                const cx = n.head[0];
+                const cy = n.head[1];
+
+                // Chifres Traseiros
+                ctx.fillStyle = "#f1c40f"; 
+                ctx.beginPath(); ctx.moveTo(cx - 10, cy - 10); ctx.lineTo(cx - 18, cy - 30); ctx.lineTo(cx - 4, cy - 15); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(cx + 10, cy - 10); ctx.lineTo(cx + 18, cy - 30); ctx.lineTo(cx + 4, cy - 15); ctx.fill();
+
+                // Cranio base
+                ctx.fillStyle = "#145a32";
+                ctx.beginPath(); ctx.arc(cx, cy - 5, 16, 0, Math.PI * 2); ctx.fill();
+
+                // Mandíbula Inferior (Aberta levemente)
+                ctx.fillStyle = "#145a32";
+                ctx.beginPath();
+                ctx.moveTo(cx - 10, cy + 10); ctx.lineTo(cx - 6, cy + 32); ctx.lineTo(cx + 6, cy + 32); ctx.lineTo(cx + 10, cy + 10); ctx.fill();
+
+                // Língua de Serpente
+                ctx.strokeStyle = "#8e44ad";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy + 25); ctx.lineTo(cx, cy + 38); ctx.lineTo(cx - 4, cy + 42);
+                ctx.moveTo(cx, cy + 38); ctx.lineTo(cx + 4, cy + 42);
+                ctx.stroke();
+
+                // Focinho Superior
+                ctx.fillStyle = "#1e8449";
+                ctx.beginPath();
+                ctx.moveTo(cx - 15, cy - 2); ctx.lineTo(cx - 10, cy + 22); ctx.lineTo(cx + 10, cy + 22); ctx.lineTo(cx + 15, cy - 2); ctx.fill();
+
+                // Narinas
+                ctx.fillStyle = "#000";
+                ctx.beginPath(); ctx.arc(cx - 4, cy + 18, 1.5, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(cx + 4, cy + 18, 1.5, 0, Math.PI * 2); ctx.fill();
+
+                // Dentes (Cima e Baixo)
+                ctx.fillStyle = "#fff";
+                [-7, -2, 3, 8].forEach(dx => {
+                    // Cima
+                    ctx.beginPath(); ctx.moveTo(cx + dx, cy + 22); ctx.lineTo(cx + dx + 2, cy + 26); ctx.lineTo(cx + dx + 4, cy + 22); ctx.fill();
+                    // Baixo
+                    ctx.beginPath(); ctx.moveTo(cx + dx, cy + 32); ctx.lineTo(cx + dx + 2, cy + 28); ctx.lineTo(cx + dx + 4, cy + 32); ctx.fill();
+                });
+
+                // Olhos de Fera (Amarelos com pupila fendida)
+                ctx.fillStyle = "#f1c40f";
+                ctx.beginPath(); ctx.ellipse(cx - 8, cy - 2, 4, 2.5, Math.PI/6, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(cx + 8, cy - 2, 4, 2.5, -Math.PI/6, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = "#000"; // Pupila fendida
+                ctx.beginPath(); ctx.ellipse(cx - 8, cy - 2, 1, 2.5, Math.PI/6, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.ellipse(cx + 8, cy - 2, 1, 2.5, -Math.PI/6, 0, Math.PI * 2); ctx.fill();
+            });
+        } else {
+            // Slime Gigante
+            ctx.fillStyle = "rgba(142, 68, 173, 0.8)";
+            ctx.beginPath(); ctx.ellipse(400, 210, 60, 45, 0, Math.PI, Math.PI * 2); ctx.fill();
+            
+            // Núcleo pulsante interno
+            ctx.fillStyle = "#4a235a";
+            ctx.beginPath(); ctx.arc(400, 185 + Math.sin(tempoAnimacao * 3) * 5, 15, 0, Math.PI * 2); ctx.fill();
+
+            // Olhos brancos
+            ctx.fillStyle = "#fff";
+            ctx.beginPath(); ctx.ellipse(380, 190, 4, 8, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(420, 190, 4, 8, 0, 0, Math.PI * 2); ctx.fill();
+        }
+    }
     }
     ctx.restore();
 
@@ -321,6 +607,7 @@ export function desenhar() {
 
     // GERADOR DE SANGUE GEOMÉTRICO (No impacto do ataque geral)
     if (animacao.ativa && animacao.frameAtual === 1) {
+        let corSangue = isPantano ? (isBoss ? "#7cfc00" : "#8e44ad") : (isBoss ? "#8e44ad" : "#2ecc71");
         for (let i = 0; i < 10; i++) {
             particulasSangue.push({
                 x: 400 + (Math.random() - 0.5) * 40,
@@ -329,7 +616,7 @@ export function desenhar() {
                 vy: (Math.random() - 0.5) * 10 - 2, // Ligeiro impulso para cima inicial
                 tamanho: 4 + Math.random() * 4,
                 alpha: 1,
-                cor: isBoss ? "#8e44ad" : "#2ecc71", // Roxo ou Verde
+                cor: corSangue,
                 gravidade: 0.4
             });
         }
@@ -414,7 +701,7 @@ export function desenhar() {
             ctx.translate(baseX + 68, 329); 
             if (animacao.ativa) {
                 ctx.beginPath();
-                ctx.arc(0, 0, 74, -Math.PI / 2, -Math.PI / 2 + (Math.PI / 4), false);
+                ctx.arc(0, 0, 88, -Math.PI / 2, -Math.PI / 2 + (Math.PI / 4), false);
                 if (skillFogo && skillFogo.ativa) {
                     ctx.strokeStyle = `rgba(230, 126, 34, ${1 - (animacao.frameAtual / animacao.duracao)})`;
                 } else {
@@ -429,6 +716,12 @@ export function desenhar() {
             // Lâmina
             ctx.fillStyle = (skillFogo && skillFogo.ativa) ? "#e74c3c" : "#bdc3c7"; 
             ctx.fillRect(-6, -74, 12, 70); 
+            // Ponta da lâmina (Triângulo)
+            ctx.beginPath();
+            ctx.moveTo(-6, -74);
+            ctx.lineTo(0, -88); // Bico da espada
+            ctx.lineTo(6, -74);
+            ctx.fill();
             // Guarda da espada
             ctx.fillStyle = "#f39c12";
             ctx.fillRect(-20, -8, 40, 6); 
