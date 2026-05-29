@@ -1,0 +1,133 @@
+{
+  "pontos": 80722,
+  "gemas": 15,
+  "tirosGacha": 1,
+  "ultimoAcesso": 1780065858391,
+  "nivel": 20,
+  "monstroHp": 28,
+  "monstroHpMax": 17928,
+  "cliquesTotais": 6,
+  "monstrosMortos": 19,
+  "conquistas": {
+    "cliques100": false,
+    "monstros50": false
+  },
+  "multiplicadorAscensao": 1,
+  "timeAtivo": [
+    0,
+    1,
+    2
+  ],
+  "herois": [
+    {
+      "nome": "Herói Principal",
+      "dps": 33,
+      "nivelDps": 6,
+      "custoDps": 109,
+      "chanceCritico": 0.15000000000000002,
+      "nivelCritico": 3,
+      "custoCritico": 780,
+      "multCusto": 1.5,
+      "fragmentos": 0,
+      "estrelas": 8,
+      "skills": [
+        {
+          "nome": "🔥 Lâmina Incandescente",
+          "multiplicadorDano": 5,
+          "cooldownMax": 10,
+          "cooldownAtual": 0,
+          "duracaoMax": 3,
+          "duracaoAtual": 0,
+          "ativa": false,
+          "desbloqueada": true,
+          "nivel": 1,
+          "custoUpgrade": 100,
+          "multCusto": 1.8
+        }
+      ]
+    },
+    {
+      "nome": "🏹 Elfa Arqueira (Gacha)",
+      "dps": 18,
+      "nivelDps": 1,
+      "custoDps": 150,
+      "chanceCritico": 0.1,
+      "nivelCritico": 0,
+      "custoCritico": 300,
+      "multCusto": 1.7,
+      "fragmentos": 0,
+      "estrelas": 6,
+      "skills": [
+        {
+          "nome": "🏹 Rajada de Glifos",
+          "multiplicadorDanoInstantaneo": 25,
+          "cooldownMax": 15,
+          "cooldownAtual": 0,
+          "duracaoMax": 1,
+          "duracaoAtual": 0,
+          "ativa": false,
+          "desbloqueada": true,
+          "nivel": 1,
+          "custoUpgrade": 200,
+          "multCusto": 1.9
+        }
+      ]
+    },
+    {
+      "nome": "🔮 Mago de Glintstone (Gacha)",
+      "dps": 1,
+      "nivelDps": 1,
+      "custoDps": 250,
+      "chanceCritico": 0.05,
+      "nivelCritico": 0,
+      "custoCritico": 400,
+      "multCusto": 1.6,
+      "fragmentos": 5,
+      "estrelas": 2,
+      "skills": [
+        {
+          "nome": "🔮 Comet Azur",
+          "multiplicadorDanoMultiHit": 3,
+          "cooldownMax": 15,
+          "cooldownAtual": 0,
+          "duracaoMax": 3,
+          "duracaoAtual": 0,
+          "ativa": false,
+          "desbloqueada": true,
+          "nivel": 1,
+          "custoUpgrade": 250,
+          "multCusto": 1.8
+        }
+      ]
+    },
+    {
+      "nome": "🛡️ Cavaleiro de Ferro (Gacha)",
+      "dps": 3,
+      "nivelDps": 0,
+      "custoDps": 400,
+      "chanceCritico": 0.15,
+      "nivelCritico": 0,
+      "custoCritico": 500,
+      "multCusto": 1.8,
+      "fragmentos": 5,
+      "estrelas": 4,
+      "buffPassivoDpsTime": 0.15,
+      "skills": [
+        {
+          "nome": "⚙️ Baluarte Vetorial",
+          "multiplicadorDanoClique": 2,
+          "multiplicadorDpsAtivo": 1.5,
+          "cooldownMax": 20,
+          "cooldownAtual": 0,
+          "duracaoMax": 6,
+          "duracaoAtual": 0,
+          "ativa": false,
+          "desbloqueada": true,
+          "nivel": 1,
+          "custoUpgrade": 300,
+          "multCusto": 1.9
+        }
+      ]
+    }
+  ]
+}

@@ -11,11 +11,11 @@
     <div class="hud">Tesouro do Reino: $<span id="pontos">0</span></div>
     <canvas id="jogoCanvas" width="800" height="450"></canvas>
     
-    <div id="painelSkills" style="margin-top: 10px;">
+    <div id="painelSkills" style="margin-top: 15px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
         <button id="btnSkill_0_0" class="btn-upgrade btn-skill" onclick="ativarSkill(0, 0)">🔥 Lâmina Incandescente</button>
-        <button id="btnSkill_1_0" class="btn-upgrade btn-skill" style="background: #2980b9;" onclick="ativarSkill(1, 0)">🏹 Rajada de Glifos</button>
-        <button id="btnSkill_2_0" class="btn-upgrade btn-skill" style="background: #8e44ad; display: none;" onclick="ativarSkill(2, 0)">🔮 Comet Azur</button>
-        <button id="btnSkill_3_0" class="btn-upgrade btn-skill" style="background: #7f8c8d; display: none;" onclick="ativarSkill(3, 0)">⚙️ Baluarte Vetorial</button>
+        <button id="btnSkill_1_0" class="btn-upgrade btn-skill" onclick="ativarSkill(1, 0)">🏹 Rajada de Glifos</button>
+        <button id="btnSkill_2_0" class="btn-upgrade btn-skill" style="display: none;" onclick="ativarSkill(2, 0)">🔮 Comet Azur</button>
+        <button id="btnSkill_3_0" class="btn-upgrade btn-skill" style="display: none;" onclick="ativarSkill(3, 0)">⚙️ Baluarte Vetorial</button>
     </div>
 
     <div class="menu-abas">
@@ -36,11 +36,23 @@
             <button id="btnGacha" class="btn-upgrade btn-gacha-1" onclick="darTiroGacha(1)">1 Tiro (10 Gemas)</button>
             <button id="btnGacha10" class="btn-upgrade btn-gacha-10" onclick="darTiroGacha(10)">10 Tiros (100 Gemas)</button>
             <button class="btn-upgrade btn-gacha-teste" onclick="darGemasTeste()">+100 Gemas (Teste)</button>
+            
+            <div style="margin-top: 20px; border-top: 1px dashed rgba(92,58,33,0.3); padding-top: 15px; text-align: left;">
+                <h3 style="text-align: center; color: #5c3a21;">🔮 Pergaminho de Probabilidades</h3>
+                <div id="listaPremiosGacha" style="display: flex; flex-direction: column; gap: 10px; font-size: 13px;"></div>
+            </div>
         </div>
     </div>
 
     <div id="abaStatus" class="aba-conteudo">
         <div id="statusHerois"></div>
+        <div style="margin-top: 20px; border-top: 1px dashed rgba(92,58,33,0.3); padding-top: 15px;">
+            <h3>💾 Gerenciamento de Grimórios (Saves)</h3>
+            <button class="btn-upgrade" onclick="exportarSaveFisico()">📜 Exportar Pergaminho de Save</button>
+            
+            <input type="file" id="inputImportarSave" accept=".dat" style="display: none;" onchange="importarSaveFisico(event)">
+            <button class="btn-crit" onclick="document.getElementById('inputImportarSave').click()">📂 Ler Pergaminho de Save</button>
+        </div>
     </div>
 
     <div id="abaEquipe" class="aba-conteudo">
@@ -48,7 +60,7 @@
         <div id="painelGerenciarEquipe" class="controles" style="flex-direction: column; gap: 15px; align-items: center;"></div>
     </div>
 
-    <div class="controles">
+    <div class="controles" style="max-width: 800px; margin: 20px auto; text-align: center;">
         <button class="btn-reset" onclick="resetarJogo()">Resetar Progresso</button>
     </div>
 

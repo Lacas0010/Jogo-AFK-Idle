@@ -456,15 +456,6 @@ export function desenhar() {
             ctx.globalAlpha = 1; 
             ctx.restore(); 
 
-            // Capa vermelha
-            ctx.fillStyle = "#c0392b";
-            ctx.beginPath();
-            ctx.moveTo(baseX + 10, 300 + offsetYHeroi);
-            ctx.lineTo(baseX - 15, 375 + offsetYHeroi);
-            ctx.lineTo(baseX + 75, 375 + offsetYHeroi);
-            ctx.lineTo(baseX + 50, 300 + offsetYHeroi);
-            ctx.fill();
-
             // Túnica base
             ctx.fillStyle = `hsl(200, 100%, ${Math.min(40 + jogo.herois[0].dps * 5, 80)}%)`;
             ctx.fillRect(baseX, 300 + offsetYHeroi, 60, 75 * escalaBreathe);
@@ -480,18 +471,18 @@ export function desenhar() {
             ctx.fillRect(baseX, 355 + offsetYHeroi, 25, 20 * escalaBreathe);
             ctx.fillRect(baseX + 35, 355 + offsetYHeroi, 25, 20 * escalaBreathe);
 
-            // Rosto
-            ctx.fillStyle = "#ffcc99";
-            ctx.beginPath(); ctx.arc(baseX + 30, 280 + offsetYHeroi, 22, 0, Math.PI * 2); ctx.fill();
-            
-            // Olhos
-            ctx.fillStyle = "#000";
-            ctx.beginPath(); ctx.arc(baseX + 35, 275 + offsetYHeroi, 3, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(baseX + 45, 275 + offsetYHeroi, 3, 0, Math.PI * 2); ctx.fill();
+            // Capa vermelha nas costas (Por cima da armadura)
+            ctx.fillStyle = "#c0392b";
+            ctx.beginPath();
+            ctx.moveTo(baseX + 10, 305 + offsetYHeroi);
+            ctx.lineTo(baseX - 15, 380 + offsetYHeroi);
+            ctx.lineTo(baseX + 75, 380 + offsetYHeroi);
+            ctx.lineTo(baseX + 50, 305 + offsetYHeroi);
+            ctx.fill();
 
-            // Cabelo volumoso laranja
+            // Cabelo volumoso laranja (Visto de trás, cobrindo a nuca)
             ctx.fillStyle = "#d35400";
-            ctx.beginPath(); ctx.arc(baseX + 30, 280 + offsetYHeroi, 23, Math.PI, 0); ctx.fill(); 
+            ctx.beginPath(); ctx.arc(baseX + 30, 280 + offsetYHeroi, 23, 0, Math.PI * 2); ctx.fill(); 
             ctx.beginPath(); ctx.arc(baseX + 15, 270 + offsetYHeroi, 12, 0, Math.PI*2); ctx.fill();
             ctx.beginPath(); ctx.arc(baseX + 25, 260 + offsetYHeroi, 14, 0, Math.PI*2); ctx.fill();
             ctx.beginPath(); ctx.arc(baseX + 38, 262 + offsetYHeroi, 12, 0, Math.PI*2); ctx.fill();
@@ -501,23 +492,16 @@ export function desenhar() {
             ctx.fillStyle = "#1abc9c"; 
             ctx.fillRect(baseX, 300 + offsetYHeroi, 40, 75 * escalaBreathe);
             
-            // Cinto marrom e detalhes de couro
+            // Aljava nas costas
             ctx.fillStyle = "#8b4513"; 
-            ctx.fillRect(baseX, 335 + offsetYHeroi, 40, 8); 
-            ctx.fillStyle = "#f1c40f"; 
-            ctx.fillRect(baseX + 15, 333 + offsetYHeroi, 10, 12);
-            ctx.fillStyle = "#a0522d"; 
-            ctx.fillRect(baseX + 5, 300 + offsetYHeroi, 8, 35 * escalaBreathe); 
-            ctx.fillRect(baseX + 27, 300 + offsetYHeroi, 8, 35 * escalaBreathe);
+            ctx.fillRect(baseX + 5, 310 + offsetYHeroi, 30, 40); 
+            ctx.fillStyle = "#ecf0f1";
+            ctx.beginPath(); ctx.moveTo(baseX + 10, 310 + offsetYHeroi); ctx.lineTo(baseX + 5, 295 + offsetYHeroi); ctx.lineTo(baseX + 15, 300 + offsetYHeroi); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(baseX + 25, 310 + offsetYHeroi); ctx.lineTo(baseX + 25, 290 + offsetYHeroi); ctx.lineTo(baseX + 35, 300 + offsetYHeroi); ctx.fill();
 
-            // Rosto
-            ctx.fillStyle = "#ffcc99";
-            ctx.beginPath(); ctx.arc(baseX + 20, 280 + offsetYHeroi, 20, 0, Math.PI * 2); ctx.fill();
-            
-            // Olhos expressivos (verdes)
-            ctx.fillStyle = "#2ecc71";
-            ctx.beginPath(); ctx.ellipse(baseX + 25, 276 + offsetYHeroi, 3, 5, 0, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.ellipse(baseX + 33, 276 + offsetYHeroi, 3, 5, 0, 0, Math.PI * 2); ctx.fill();
+            // Cinto marrom
+            ctx.fillStyle = "#8b4513"; 
+            ctx.fillRect(baseX, 345 + offsetYHeroi, 40, 8); 
 
             // Orelhas pontudas
             ctx.fillStyle = "#ffcc99";
@@ -526,11 +510,10 @@ export function desenhar() {
             ctx.moveTo(baseX + 35, 280 + offsetYHeroi); ctx.lineTo(baseX + 55, 270 + offsetYHeroi); ctx.lineTo(baseX + 38, 287 + offsetYHeroi); 
             ctx.fill();
             
-            // Cabelo em triângulos e franja
+            // Cabelo caindo nas costas
             ctx.fillStyle = "#f1c40f";
-            ctx.beginPath(); ctx.arc(baseX + 20, 280 + offsetYHeroi, 21, Math.PI, 0); ctx.fill(); 
-            ctx.beginPath(); ctx.moveTo(baseX + 2, 280 + offsetYHeroi); ctx.lineTo(baseX + 12, 295 + offsetYHeroi); ctx.lineTo(baseX + 22, 275 + offsetYHeroi); ctx.fill();
-            ctx.fillRect(baseX + 2, 280 + offsetYHeroi, 15, 45); // Cabelo caindo atrás
+            ctx.beginPath(); ctx.arc(baseX + 20, 280 + offsetYHeroi, 21, 0, Math.PI * 2); ctx.fill(); 
+            ctx.fillRect(baseX + 5, 280 + offsetYHeroi, 30, 50); 
             
             ctx.save();
             const origemX = baseX + 50;
@@ -593,40 +576,22 @@ export function desenhar() {
             ctx.fillStyle = "#9b59b6"; 
             ctx.fillRect(baseX, 300 + offsetYHeroi, 50, 75 * escalaBreathe);
             
-            // Runas verticais douradas
-            ctx.strokeStyle = "#f1c40f"; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.setLineDash([4, 4]); 
-            ctx.moveTo(baseX + 15, 300 + offsetYHeroi); ctx.lineTo(baseX + 15, 375 * escalaBreathe + 300 + offsetYHeroi); 
-            ctx.moveTo(baseX + 35, 300 + offsetYHeroi); ctx.lineTo(baseX + 35, 375 * escalaBreathe + 300 + offsetYHeroi); 
-            ctx.stroke(); ctx.setLineDash([]);
+            // Detalhe nas costas
+            ctx.fillStyle = "#8e44ad";
+            ctx.fillRect(baseX + 15, 300 + offsetYHeroi, 20, 75 * escalaBreathe);
 
-            // Rosto
-            ctx.fillStyle = "#ffcc99";
+            // Cabelo branco cobrindo a nuca
+            ctx.fillStyle = "#ecf0f1";
             ctx.beginPath(); ctx.arc(baseX + 25, 280 + offsetYHeroi, 20, 0, Math.PI * 2); ctx.fill();
             
-            // Olhos
-            ctx.fillStyle = "#000";
-            ctx.beginPath(); ctx.arc(baseX + 30, 275 + offsetYHeroi, 3, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(baseX + 40, 275 + offsetYHeroi, 3, 0, Math.PI*2); ctx.fill();
-
-            // Barba geométrica branca
-            ctx.fillStyle = "#ecf0f1";
-            ctx.beginPath(); 
-            ctx.moveTo(baseX + 5, 285 + offsetYHeroi); 
-            ctx.lineTo(baseX + 45, 285 + offsetYHeroi); 
-            ctx.lineTo(baseX + 25, 315 + offsetYHeroi); 
-            ctx.fill();
-            
-            // Chapéu cônico azul escuro com aba e joia
+            // Chapéu cônico azul escuro (Inclinado para frente/reto, visto de trás)
             ctx.fillStyle = "#2c3e50";
-            ctx.fillRect(baseX - 10, 260 + offsetYHeroi, 70, 6); // Aba
+            ctx.fillRect(baseX - 10, 265 + offsetYHeroi, 70, 10); // Aba
             ctx.beginPath();
-            ctx.moveTo(baseX + 5, 260 + offsetYHeroi);
-            ctx.lineTo(baseX + 45, 260 + offsetYHeroi);
-            ctx.lineTo(baseX + 25, 195 + offsetYHeroi);
+            ctx.moveTo(baseX + 5, 265 + offsetYHeroi);
+            ctx.lineTo(baseX + 45, 265 + offsetYHeroi);
+            ctx.lineTo(baseX + 25, 185 + offsetYHeroi); // Ponta
             ctx.fill();
-            ctx.fillStyle = "#00ffff"; // Joia ciano
-            ctx.fillRect(baseX + 22, 190 + offsetYHeroi, 6, 6);
             
             // Cajado roxo
             ctx.fillStyle = "#8e44ad";
@@ -715,23 +680,17 @@ export function desenhar() {
             ctx.fillStyle = "#34495e"; 
             ctx.fillRect(baseX - 5, 300 + offsetYHeroi, 70, 75 * escalaBreathe);
             
-            // Rebites na armadura
+            // Rebites nas costas
             ctx.fillStyle = "#111";
             ctx.beginPath(); ctx.arc(baseX, 305 + offsetYHeroi, 2, 0, Math.PI*2); ctx.fill();
             ctx.beginPath(); ctx.arc(baseX + 60, 305 + offsetYHeroi, 2, 0, Math.PI*2); ctx.fill();
             ctx.beginPath(); ctx.arc(baseX, 365 + offsetYHeroi, 2, 0, Math.PI*2); ctx.fill();
             ctx.beginPath(); ctx.arc(baseX + 60, 365 + offsetYHeroi, 2, 0, Math.PI*2); ctx.fill();
 
-            // Elmo
+            // Elmo (Visto de trás, sem fresta)
             ctx.fillStyle = "#7f8c8d";
             ctx.fillRect(baseX + 10, 255 + offsetYHeroi, 40, 45);
             ctx.beginPath(); ctx.arc(baseX + 30, 255 + offsetYHeroi, 20, 0, Math.PI * 2); ctx.fill();
-            
-            // Fresta vermelha de visão
-            ctx.fillStyle = "#111"; 
-            ctx.fillRect(baseX + 15, 275 + offsetYHeroi, 30, 10);
-            ctx.fillStyle = "#e74c3c";
-            ctx.fillRect(baseX + 20, 277 + offsetYHeroi, 25, 6);
             
             // Escudo Quadrado do Cavaleiro com reforço em bronze
             ctx.fillStyle = "#95a5a6";
@@ -812,4 +771,121 @@ export function desenhar() {
     }
 
     requestAnimationFrame(desenhar);
+}
+
+export function desenharPortrait(canvasId, heroiIndex) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const cx = 45;
+    const cy = 50;
+
+    if (heroiIndex === 0) {
+        // Guerreiro
+        // Armadura
+        ctx.fillStyle = "#bdc3c7";
+        ctx.fillRect(cx - 30, cy + 20, 60, 30);
+        ctx.fillStyle = "#7f8c8d";
+        ctx.beginPath(); ctx.arc(cx - 20, cy + 30, 10, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx + 20, cy + 30, 10, 0, Math.PI * 2); ctx.fill();
+        
+        // Rosto
+        ctx.fillStyle = "#ffcc99";
+        ctx.beginPath(); ctx.arc(cx, cy, 25, 0, Math.PI * 2); ctx.fill();
+        
+        // Olhos
+        ctx.fillStyle = "#000";
+        ctx.beginPath(); ctx.arc(cx - 8, cy - 5, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx + 8, cy - 5, 4, 0, Math.PI * 2); ctx.fill();
+
+        // Cabelo Laranja Espetado
+        ctx.fillStyle = "#d35400";
+        ctx.beginPath(); ctx.arc(cx, cy - 5, 27, Math.PI, 0); ctx.fill(); 
+        ctx.beginPath(); ctx.arc(cx - 20, cy - 15, 15, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx, cy - 25, 18, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx + 15, cy - 20, 15, 0, Math.PI*2); ctx.fill();
+    } else if (heroiIndex === 1) {
+        // Elfa
+        // Roupa/Couro
+        ctx.fillStyle = "#1abc9c"; 
+        ctx.fillRect(cx - 25, cy + 20, 50, 30);
+        ctx.fillStyle = "#a0522d"; 
+        ctx.fillRect(cx - 20, cy + 20, 10, 30); 
+        ctx.fillRect(cx + 10, cy + 20, 10, 30);
+
+        // Orelhas pontudas
+        ctx.fillStyle = "#ffcc99";
+        ctx.beginPath();
+        ctx.moveTo(cx - 15, cy); ctx.lineTo(cx - 40, cy - 15); ctx.lineTo(cx - 20, cy + 10); ctx.fill();
+        ctx.moveTo(cx + 15, cy); ctx.lineTo(cx + 40, cy - 15); ctx.lineTo(cx + 20, cy + 10); ctx.fill();
+
+        // Rosto
+        ctx.beginPath(); ctx.arc(cx, cy, 22, 0, Math.PI * 2); ctx.fill();
+
+        // Olhos Expressivos (Verdes)
+        ctx.fillStyle = "#2ecc71";
+        ctx.beginPath(); ctx.ellipse(cx - 8, cy - 2, 4, 6, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(cx + 8, cy - 2, 4, 6, 0, 0, Math.PI * 2); ctx.fill();
+
+        // Cabelo
+        ctx.fillStyle = "#f1c40f";
+        ctx.beginPath(); ctx.arc(cx, cy, 23, Math.PI, 0); ctx.fill(); 
+        ctx.beginPath(); ctx.moveTo(cx - 22, cy); ctx.lineTo(cx - 10, cy + 15); ctx.lineTo(cx, cy - 5); ctx.fill();
+        ctx.fillRect(cx - 23, cy, 12, 40);
+    } else if (heroiIndex === 2) {
+        // Mago
+        // Túnica
+        ctx.fillStyle = "#9b59b6";
+        ctx.fillRect(cx - 25, cy + 20, 50, 30);
+
+        // Rosto
+        ctx.fillStyle = "#ffcc99";
+        ctx.beginPath(); ctx.arc(cx, cy, 22, 0, Math.PI * 2); ctx.fill();
+
+        // Olhos
+        ctx.fillStyle = "#000";
+        ctx.beginPath(); ctx.arc(cx - 8, cy - 5, 4, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx + 8, cy - 5, 4, 0, Math.PI*2); ctx.fill();
+
+        // Barba branca
+        ctx.fillStyle = "#ecf0f1";
+        ctx.beginPath(); 
+        ctx.moveTo(cx - 22, cy + 5); 
+        ctx.lineTo(cx + 22, cy + 5); 
+        ctx.lineTo(cx, cy + 35); 
+        ctx.fill();
+
+        // Chapéu Cônico
+        ctx.fillStyle = "#2c3e50";
+        ctx.fillRect(cx - 35, cy - 20, 70, 8); // Aba
+        ctx.beginPath();
+        ctx.moveTo(cx - 25, cy - 20);
+        ctx.lineTo(cx + 25, cy - 20);
+        ctx.lineTo(cx, cy - 80);
+        ctx.fill();
+        
+        // Joia do chapéu
+        ctx.fillStyle = "#00ffff";
+        ctx.fillRect(cx - 4, cy - 65, 8, 8);
+    } else if (heroiIndex === 3) {
+        // Cavaleiro
+        // Armadura Base
+        ctx.fillStyle = "#34495e"; 
+        ctx.fillRect(cx - 35, cy - 25, 70, 65);
+        
+        // Rebites
+        ctx.fillStyle = "#111";
+        ctx.beginPath(); ctx.arc(cx - 25, cy - 15, 3, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx + 25, cy - 15, 3, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx - 25, cy + 25, 3, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx + 25, cy + 25, 3, 0, Math.PI*2); ctx.fill();
+
+        // Fresta de visão
+        ctx.fillStyle = "#111"; 
+        ctx.fillRect(cx - 25, cy, 50, 12);
+        ctx.fillStyle = "#e74c3c";
+        ctx.fillRect(cx - 15, cy + 2, 30, 8);
+    }
 }

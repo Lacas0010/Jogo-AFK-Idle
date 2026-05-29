@@ -5,14 +5,18 @@ import { atualizarInterface, renderizarBotoesUpgrades } from './engine.js';
 export function adicionarFragmentos(heroiIndex, quantidade) {
     let heroi = jogo.herois[heroiIndex];
     heroi.fragmentos += quantidade;
-    let estrelasGanhas = 0;
+    let gemasReembolsadas = 0;
     while (heroi.fragmentos >= 10) {
         heroi.fragmentos -= 10;
-        heroi.estrelas += 1;
-        heroi.dps = Math.max(1, Math.ceil(heroi.dps * 1.5));
-        estrelasGanhas++;
+        if (heroi.estrelas < 5) {
+            heroi.estrelas += 1;
+            heroi.dps = Math.max(1, Math.ceil(heroi.dps * 2.0)); // Novo scaling dobrado
+        } else {
+            jogo.gemas += 10; // Converte a estrela excedente em 10 gemas
+            gemasReembolsadas += 10;
+        }
     }
-    return estrelasGanhas;
+    return gemasReembolsadas;
 }
 
 export function darTiroGacha(quantidade = 1) {
@@ -25,6 +29,7 @@ export function darTiroGacha(quantidade = 1) {
         let fragmentosGanhos = {};
         let fragmentos20Ganhos = {};
         let heroisDesbloqueados = [];
+        let totalGemasReembolso = 0;
 
         for (let i = 0; i < quantidade; i++) {
             jogo.tirosGacha++;
@@ -41,7 +46,7 @@ export function darTiroGacha(quantidade = 1) {
                     heroi.nivelDps = 1;
                     heroisDesbloqueados.push(heroi.nome);
                 } else {
-                    adicionarFragmentos(heroIndex, 20);
+                    totalGemasReembolso += adicionarFragmentos(heroIndex, 20);
                     fragmentos20Ganhos[heroi.nome] = (fragmentos20Ganhos[heroi.nome] || 0) + 1;
                 }
             } else if (roll < 0.70) {
@@ -52,7 +57,7 @@ export function darTiroGacha(quantidade = 1) {
             } else {
                 let heroIndex = Math.floor(Math.random() * jogo.herois.length);
                 let heroi = jogo.herois[heroIndex];
-                adicionarFragmentos(heroIndex, 5);
+                totalGemasReembolso += adicionarFragmentos(heroIndex, 5);
                 fragmentosGanhos[heroi.nome] = (fragmentosGanhos[heroi.nome] || 0) + 1;
             }
         }
@@ -62,6 +67,7 @@ export function darTiroGacha(quantidade = 1) {
         for (let h in fragmentos20Ganhos) msg += `🌟 20 Frag. Épicos para ${h} (${fragmentos20Ganhos[h]}x)\n`;
         for (let h in fragmentosGanhos) msg += `🧩 5 Fragmentos para ${h} (${fragmentosGanhos[h]}x)\n`;
         if (totalPontosGacha > 0) msg += `💰 Pontos Ganhos: ${totalPontosGacha}\n`;
+        if (totalGemasReembolso > 0) msg += `💎 Reembolso Max Estrelas: +${totalGemasReembolso} Gemas\n`;
         
         if (msg.trim()) mostrarNotificacao(msg.trim());
 

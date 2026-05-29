@@ -14,6 +14,7 @@ export let jogo = {
     herois: [
         {
             nome: "Herói Principal",
+            descricao: "O pilar do reino. Seus cliques manuais causam dano massivo na tela.",
             dps: 1,
             nivelDps: 0,
             custoDps: 10,
@@ -26,6 +27,7 @@ export let jogo = {
             skills: [
                 {
                     nome: "🔥 Lâmina Incandescente",
+                    descricao: "Incendeia a espada por 3s, multiplicando o dano do clique em 5x com chance de crítico. Causa DEGRADAÇÃO POLIGONAL (3x dano) contra o Boss.",
                     multiplicadorDano: 5,
                     cooldownMax: 10, // segundos
                     cooldownAtual: 0,
@@ -41,6 +43,7 @@ export let jogo = {
         },
         {
             nome: "🏹 Elfa Arqueira (Gacha)",
+            descricao: "Atiradora de elite ágil. Dispara flechas diagonais teleguiadas em cadência constante.",
             dps: 0,
             nivelDps: 0,
             custoDps: 150,
@@ -53,6 +56,7 @@ export let jogo = {
             skills: [
                 {
                     nome: "🏹 Rajada de Glifos",
+                    descricao: "Dispara 4 flechas mágicas de Glintstone simultâneas causando 25x de dano de burst. Se o Boss estiver queimando, causa DERRETIMENTO DE PIXELS (2x dano extra).",
                     multiplicadorDanoInstantaneo: 25, // Dá 25x o dano base dela de uma vez só!
                     cooldownMax: 15, // 15 segundos de recarga
                     cooldownAtual: 0,
@@ -68,6 +72,7 @@ export let jogo = {
         },
         {
             nome: "🔮 Mago de Glintstone (Gacha)",
+            descricao: "Conjurador místico. Seus ataques básicos são esferas de energia que perseguem os alvos.",
             dps: 0,
             nivelDps: 0,
             custoDps: 250,
@@ -80,6 +85,7 @@ export let jogo = {
             skills: [
                 {
                     nome: "🔮 Comet Azur",
+                    descricao: "Canaliza um feixe colossal de energia néon por 3s. Causa dano contínuo multi-hit frame a frame enquanto ativo.",
                     multiplicadorDanoMultiHit: 3,
                     cooldownMax: 15,
                     cooldownAtual: 0,
@@ -95,6 +101,7 @@ export let jogo = {
         },
         {
             nome: "🛡️ Cavaleiro de Ferro (Gacha)",
+            descricao: "O escudo vivo da equipe. Não ataca, mas concede +15% de DPS passivo global para o time inteiro enquanto estiver escalado.",
             dps: 0,
             nivelDps: 0,
             custoDps: 400,
@@ -108,6 +115,7 @@ export let jogo = {
             skills: [
                 {
                     nome: "⚙️ Baluarte Vetorial",
+                    descricao: "Ergue uma barreira dourada por 6s, dobrando o dano dos cliques do jogador e dando +50% de DPS ativo para todos os aliados em campo.",
                     multiplicadorDanoClique: 2.0,
                     multiplicadorDpsAtivo: 1.5,
                     cooldownMax: 20,
@@ -157,7 +165,8 @@ export function carregarJogo() {
                 jogo.herois[i] = dadosSalvos.herois[i];
                 jogo.herois[i].multCusto = jogo.herois[i].multCusto || hBase.multCusto;
                 jogo.herois[i].fragmentos = jogo.herois[i].fragmentos || 0;
-                jogo.herois[i].estrelas = jogo.herois[i].estrelas || 1;
+                jogo.herois[i].estrelas = Math.min(jogo.herois[i].estrelas || 1, 5); // Limita as estrelas de saves antigos a 5
+                jogo.herois[i].descricao = hBase.descricao;
                 
                 if (hBase.skills) {
                     // Se o save antigo tinha um array vazio, puxa os dados base completos
@@ -171,6 +180,7 @@ export function carregarJogo() {
                             } else {
                                 let skill = jogo.herois[i].skills[sIdx];
                                 skill.nome = baseSkill.nome;
+                                skill.descricao = baseSkill.descricao;
                                 skill.nivel = skill.nivel || 1;
                                 skill.custoUpgrade = skill.custoUpgrade || baseSkill.custoUpgrade;
                                 skill.multCusto = skill.multCusto || baseSkill.multCusto;
@@ -205,6 +215,39 @@ export function resetarJogo() {
     }
 }
 
+export function exportarProgressoFisico() {
+    const dados = JSON.stringify(jogo);
+    const blob = new Blob([dados], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'vibe_game_save.dat';
+    link.click();
+    URL.revokeObjectURL(url); // Limpa a memória
+}
+
+export function importarProgressoFisico(event) {
+    const arquivo = event.target.files[0];
+    if (!arquivo) return;
+
+    const leitor = new FileReader();
+    leitor.onload = function(e) {
+        try {
+            const novosDados = JSON.parse(e.target.result);
+            if (novosDados && (novosDados.nivel !== undefined || novosDados.pontos !== undefined)) {
+                Object.assign(jogo, novosDados); // Substitui os dados atuais de forma segura
+                salvarJogo();
+                window.location.reload();
+            } else {
+                alert("Arquivo de progresso inválido ou corrompido.");
+            }
+        } catch (error) {
+            alert("Erro ao ler o arquivo de progresso.");
+        }
+    };
+    leitor.readAsText(arquivo);
+}
+
 export function executarAscensao() {
     if (jogo.nivel <= 30) {
         alert("Você precisa passar do nível 30 para realizar a Ascensão!");
@@ -230,7 +273,7 @@ export function executarAscensao() {
             
             // Reseta o DPS para o nível Base, mantendo os multiplicadores por Estrela do Gacha
             let dpsBase = index === 0 ? 1 : (estavaDesbloqueado ? (index === 1 ? 2 : (index === 3 ? 0 : 1)) : 0);
-            for (let s = 1; s < (heroi.estrelas || 1); s++) dpsBase = Math.max(1, Math.ceil(dpsBase * 1.5));
+            for (let s = 1; s < (heroi.estrelas || 1); s++) dpsBase = Math.max(1, Math.ceil(dpsBase * 2.0));
             heroi.dps = dpsBase;
             
             if (heroi.skills) {

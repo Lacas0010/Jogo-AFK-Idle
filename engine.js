@@ -1,6 +1,6 @@
-import { jogo, salvarJogo, carregarJogo, calcularHpMaximo, calcularRecompensa, resetarJogo, executarAscensao } from './state.js';
+import { jogo, salvarJogo, carregarJogo, calcularHpMaximo, calcularRecompensa, resetarJogo, executarAscensao, exportarProgressoFisico, importarProgressoFisico } from './state.js';
 import { darTiroGacha, darGemasTeste } from './gacha.js';
-import { desenhar, textosFlutuantes, animacao, mostrarNotificacao } from './render.js';
+import { desenhar, textosFlutuantes, animacao, mostrarNotificacao, desenharPortrait } from './render.js';
 
 export function renderizarBotoesUpgrades() {
     const painel = document.getElementById("painelUpgrades");
@@ -13,7 +13,8 @@ export function renderizarBotoesUpgrades() {
                 <div class="heroi-card">
                     <p class="heroi-stars">${starsHTML}</p>
                     <h3 class="heroi-title">${heroi.nome} <small>(${heroi.fragmentos || 0}/10)</small></h3>
-                    <div class="heroi-actions">
+                    <p style="font-style: italic; font-size: 12px; color: #5c3a21; margin: 2px 0 10px 0;">${heroi.descricao}</p>
+                        <div class="heroi-actions-group" style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
                         <button id="btnDps_${index}" class="btn-upgrade" onclick="comprarUpgrade(${index})">
                             DPS (+1)<br><small>Nvl: <span id="nivelDps_${index}">${heroi.nivelDps}</span> | Custo: <span id="custoUpgrade_${index}">${heroi.custoDps}</span></small>
                         </button>
@@ -24,8 +25,9 @@ export function renderizarBotoesUpgrades() {
                     ${heroi.skills ? heroi.skills.map((skill, sIdx) => {
                         let descUpgrade = skill.multiplicadorDanoInstantaneo !== undefined ? "+5 Mult. Burst" : "+1 Mult. Dano";
                         return `
-                            <div style="margin-top: 10px; border-top: 1px dashed rgba(92,58,33,0.3); padding-top: 10px;">
+                                <div style="margin-top: 10px; border-top: 1px dashed rgba(92,58,33,0.3); padding-top: 10px; width: 100%;">
                                 <h4 style="margin: 0 0 5px 0; font-size: 13px; color: #a04000;">Melhorar ${skill.nome}</h4>
+                                <p style="font-style: italic; font-size: 12px; color: #5c3a21; margin: 2px 0 10px 0;">${skill.descricao}</p>
                                 <button id="btnUpgradeSkill_${index}_${sIdx}" class="btn-upgrade" style="background: #c0392b; color: white;" onclick="comprarUpgradeSkill(${index}, ${sIdx})">
                                     ${descUpgrade}<br><small>Nvl: <span id="nivelSkill_${index}_${sIdx}">${skill.nivel || 1}</span> | Custo: <span id="custoSkill_${index}_${sIdx}">${skill.custoUpgrade || 100}</span></small>
                                 </button>
@@ -57,13 +59,24 @@ function renderizarStatusHerois() {
             const chanceCrit = Math.round(heroi.chanceCritico * 100);
             painel.innerHTML += `
                 <div class="heroi-card" style="margin-bottom: 10px; text-align: left;">
-                    <h3 class="heroi-title">${heroi.nome} ${'⭐'.repeat(heroi.estrelas || 1)}</h3>
-                    <p style="margin: 2px 0; font-size: 14px;"><strong>DPS Base:</strong> ${heroi.dps}</p>
-                    <p style="margin: 2px 0; font-size: 14px;"><strong>Chance de Crítico:</strong> ${chanceCrit}%</p>
-                    <p style="margin: 2px 0; font-size: 14px;"><strong>Nível DPS:</strong> ${heroi.nivelDps}</p>
-                    <p style="margin: 2px 0; font-size: 14px;"><strong>Nível Crítico:</strong> ${heroi.nivelCritico}</p>
+                        <canvas id="portrait_${index}" class="portrait-canvas" width="90" height="90"></canvas>
+                        <div class="status-info" style="display: flex; flex-direction: column; text-align: left; gap: 4px; flex: 1;">
+                            <h3 class="heroi-title" style="margin: 0 0 5px 0;">${heroi.nome} ${'⭐'.repeat(heroi.estrelas || 1)}</h3>
+                            <p style="font-style: italic; font-size: 12px; color: #5c3a21; margin: 0;">${heroi.descricao}</p>
+                            ${heroi.skills && heroi.skills[0] ? `<p style="font-style: italic; font-size: 12px; color: #5c3a21; margin: 0 0 5px 0;"><strong>Skill:</strong> ${heroi.skills[0].descricao}</p>` : ''}
+                            <p style="margin: 2px 0; font-size: 14px;"><strong>DPS Base:</strong> ${heroi.dps}</p>
+                            <p style="margin: 2px 0; font-size: 14px;"><strong>Chance de Crítico:</strong> ${chanceCrit}%</p>
+                            <p style="margin: 2px 0; font-size: 14px;"><strong>Nível DPS:</strong> ${heroi.nivelDps}</p>
+                            <p style="margin: 2px 0; font-size: 14px;"><strong>Nível Crítico:</strong> ${heroi.nivelCritico}</p>
+                        </div>
                 </div>
             `;
+        }
+    });
+
+    jogo.herois.forEach((heroi, index) => {
+        if (jogo.timeAtivo.includes(index) && (index === 0 || heroi.nivelDps > 0)) {
+            desenharPortrait(`portrait_${index}`, index);
         }
     });
 }
@@ -90,7 +103,7 @@ export function renderizarPainelEquipe() {
             }
 
             painel.innerHTML += `
-                <div class="heroi-card" style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 400px; text-align: left; margin-bottom: 5px;">
+                <div class="heroi-card" style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 400px; text-align: left; margin: 0 auto 5px auto;">
                     <div>
                         <h3 style="margin: 0; color: #f1c40f; font-size: 15px;">${heroi.nome}</h3>
                     </div>
@@ -99,6 +112,27 @@ export function renderizarPainelEquipe() {
             `;
         }
     });
+}
+
+export function renderizarListaPremiosGacha() {
+    const painel = document.getElementById("listaPremiosGacha");
+    if (!painel) return;
+
+    painel.innerHTML = "";
+    const funcoes = ["", "Burst", "Atacante", "Suporte Passivo"];
+
+    for (let i = 1; i < jogo.herois.length; i++) {
+        let heroi = jogo.herois[i];
+        let funcao = funcoes[i] || "Herói";
+        painel.innerHTML += `
+            <div style="background: rgba(0,0,0,0.05); padding: 10px; border-radius: 4px; border-left: 4px solid #8e44ad;">
+                <strong style="color: #2c1d11; font-size: 14px;">${heroi.nome} ${'⭐'.repeat(heroi.estrelas || 1)}</strong>
+                <span style="font-size: 11px; background: #8e44ad; color: white; padding: 2px 6px; border-radius: 4px; margin-left: 5px; box-shadow: 1px 1px 2px rgba(0,0,0,0.3);">${funcao}</span>
+                <p style="margin: 5px 0; font-style: italic; color: #5c3a21; line-height: 1.4;">${heroi.descricao}</p>
+                <p style="margin: 0; font-size: 11px; color: #a04000;"><strong>🎯 Probabilidade:</strong> 5% Personagem / 25% Fragmentos | Pity garantido aos 50 Tiros.</p>
+            </div>
+        `;
+    }
 }
 
 export function atualizarInterface() {
@@ -216,6 +250,8 @@ window.darTiroGacha = darTiroGacha;
 window.darGemasTeste = darGemasTeste;
 window.resetarJogo = resetarJogo;
 window.ascender = executarAscensao;
+window.exportarSaveFisico = exportarProgressoFisico;
+window.importarSaveFisico = importarProgressoFisico;
 
 window.alternarHeroiNoTime = function(heroiIndex) {
     if (heroiIndex === 0) return; // Regra: O Herói Principal (0) não pode ser removido
@@ -270,6 +306,9 @@ window.alternarAba = function(abaId) {
     }
     if (abaId === 'abaEquipe') {
         renderizarPainelEquipe();
+    }
+    if (abaId === 'abaGacha') {
+        renderizarListaPremiosGacha();
     }
 };
 
