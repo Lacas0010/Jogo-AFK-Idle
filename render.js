@@ -683,6 +683,43 @@ export function desenhar() {
     jogo.timeAtivo.forEach((heroiIndex, i) => {
         const baseX = posicoesX[i];
 
+        const isMaxStar = jogo.herois[heroiIndex].estrelas >= 5;
+
+        if (isMaxStar) {
+            ctx.save();
+            if (heroiIndex === 0) {
+                // Guerreiro: Círculos solares dourados pulsantes
+                ctx.strokeStyle = `rgba(241, 196, 15, ${0.3 + Math.sin(tempoAnimacao * 5) * 0.2})`;
+                ctx.lineWidth = 4;
+                ctx.beginPath(); ctx.arc(baseX + 30, 320 + offsetYHeroi, 55 + Math.sin(tempoAnimacao * 3) * 5, 0, Math.PI * 2); ctx.stroke();
+                ctx.beginPath(); ctx.arc(baseX + 30, 320 + offsetYHeroi, 40 - Math.sin(tempoAnimacao * 3) * 5, 0, Math.PI * 2); ctx.stroke();
+            } else if (heroiIndex === 1) {
+                // Elfa: Folhas/Triângulos orbitando
+                ctx.fillStyle = "#2ecc71";
+                for (let f = 0; f < 3; f++) {
+                    let anguloOrbita = tempoAnimacao * 2 + (f * (Math.PI * 2 / 3));
+                    let orbX = baseX + 20 + Math.cos(anguloOrbita) * 45;
+                    let orbY = 320 + offsetYHeroi + Math.sin(anguloOrbita) * 20;
+                    ctx.beginPath(); ctx.moveTo(orbX, orbY - 5); ctx.lineTo(orbX - 4, orbY + 4); ctx.lineTo(orbX + 4, orbY + 4); ctx.fill();
+                }
+            } else if (heroiIndex === 2) {
+                // Mago: Grande losango mágico girando lentamente
+                ctx.translate(baseX + 25, 310 + offsetYHeroi);
+                ctx.rotate(tempoAnimacao);
+                ctx.strokeStyle = "rgba(0, 255, 255, 0.4)";
+                ctx.lineWidth = 3;
+                ctx.strokeRect(-35, -35, 70, 70);
+                ctx.translate(-(baseX + 25), -(310 + offsetYHeroi)); // Desfaz a translação
+            } else if (heroiIndex === 3) {
+                // Cavaleiro: Escudos hexagonais flutuando nas laterais
+                ctx.fillStyle = "rgba(189, 195, 199, 0.5)";
+                let flutuoEscudo = Math.sin(tempoAnimacao * 4) * 10;
+                ctx.fillRect(baseX - 25, 290 + offsetYHeroi + flutuoEscudo, 10, 30);
+                ctx.fillRect(baseX + 65, 290 + offsetYHeroi - flutuoEscudo, 10, 30);
+            }
+            ctx.restore();
+        }
+
         // Barreira Dourada do Cavaleiro ao redor de todos os heróis escalados
         if (buffCavaleiroAtivo) {
             ctx.save();

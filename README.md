@@ -5,15 +5,21 @@ Um jogo incremental (clicker/idle) construído em JavaScript modular utilizando 
 ## 🌟 Funcionalidades
 
 * **Combate Incremental:** Clique ativamente para atacar monstros ou dependa do DPS passivo da sua equipe.
-* **Sistema de Upgrades:** Utilize pontos para aprimorar Dano, Chance de Crítico e subir o nível das Habilidades Ativas.
-* **Sistema de Gacha:** Gaste "Gemas" para invocar novos heróis (como a *Elfa Arqueira*) ou coletar fragmentos para aumentar suas estrelas (com sistema de *Pity* garantido aos 50 tiros).
-* **Habilidades Especiais Visuais:**
-  * 🔥 *Lâmina Incandescente* (Herói Principal)
-  * 🏹 *Rajada de Glifos* (Elfa Arqueira - Burst Damage)
-* **Lutas contra Chefes:** A cada 5 níveis enfrente um Orc Chefe para ganhar bônus significativos de gemas e pontos.
+* **Gerenciamento de Equipe:** Escale até 3 heróis simultâneos no seu time ativo, combinando sinergias de DPS passivo e habilidades em combate.
+* **Sistema de Upgrades & Estrelas:** Utilize pontos para aprimorar Dano e Crítico. Colete fragmentos repetidos no Gacha para evoluir heróis até **5 Estrelas (Despertar Máximo)**, ganhando grandes bônus de multiplicadores e auras visuais únicas.
+* **Sistema de Gacha Aprimorado:** Gaste "Gemas" para invocar heróis com sistema de *Pity* garantido aos 50 tiros.
+* **Heróis & Habilidades Especiais Visuais:**
+  * ⚔️ *Guerreiro Principal:* 🔥 Lâmina Incandescente (Multiplicador massivo de dano e chamas contínuas).
+  * 🏹 *Elfa Arqueira:* 🏹 Rajada de Glifos (Burst damage formidável de Glintstone).
+  * 🔮 *Mago de Glintstone:* 🔮 Comet Azur (Raio multi-hit frame-a-frame que derrete inimigos).
+  * 🛡️ *Cavaleiro de Ferro:* ⚙️ Baluarte Vetorial (Suporte focado em aumentar o DPS e clique de todo o time).
+* **Biomas & Novos Chefes:** Enfrente Bosses a cada 5 níveis (Orcs, Goblins, Hidras e Slimes) enquanto viaja por transições dinâmicas entre os biomas de **Floresta** e **Pântano**.
+* **Inventário & Forja:** Derrote chefes para obter *Couro de Orc* e *Escamas de Hidra*. Utilize-os na Forja para criar Artefatos poderosos (como Manopla Orc e Glândula Hidra) que alteram tempo de recarga e duração das habilidades globais.
+* **Guilda dos Aventureiros:** Cumpra Contratos Diários para ganhar Gemas extras e envie seus heróis inativos em **Expedições** em busca de tesouros com duração de tempo real (1 hora).
+* **Ascensão & Santuário:** Ao atingir o nível 30, realize uma "Ascensão Cósmica" e obtenha *Almas Poligonais*. Troque as Almas no Santuário por melhorias permanentes (Poder Primordial, Fluxo Temporal, e até Conjurador Automático de Habilidades).
 * **Ciclo Dia/Noite:** Céu e ambiente totalmente desenhados em Canvas que transitam entre dia, pôr do sol e fases da lua.
-* **Ascensão:** Ao atingir o nível 30, realize uma "Ascensão Cósmica", sacrificando seu progresso atual para ganhar multiplicadores de dano permanentes.
 * **Save Local e Progresso Offline:** O jogo salva automaticamente no seu navegador (`localStorage`) e calcula os ataques passivos que ocorreram enquanto você estava fora.
+* **Exportação/Importação Física:** Baixe um arquivo local (`.dat`) contendo o save completo para garantir que nunca perderá seu progresso e possa jogá-lo em outros dispositivos.
 
 ## 📁 Estrutura de Arquivos
 

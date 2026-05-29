@@ -215,6 +215,106 @@ export function renderizarForja() {
     painel.innerHTML = html;
 }
 
+export function renderizarGuilda() {
+    const painel = document.getElementById("painelGuilda");
+    if (!painel) return;
+
+    let html = `
+        <div style="width: 100%; text-align: left; margin-bottom: 20px;">
+            <h3 style="color: #f1c40f; border-bottom: 1px dashed #5c3a21; padding-bottom: 5px;">Contratos Diários</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+    `;
+
+    jogo.guilda.contratos.forEach((contrato, i) => {
+        let textBtn, corBtn, disabled, clickAction;
+        if (contrato.resgatado) {
+            textBtn = "Concluído";
+            corBtn = "#7f8c8d";
+            disabled = true;
+            clickAction = "";
+        } else if (contrato.atual >= contrato.meta) {
+            textBtn = `Resgatar (${contrato.premioGemas} Gemas)`;
+            corBtn = "#2ecc71";
+            disabled = false;
+            clickAction = `resgatarContrato(${i})`;
+        } else {
+            textBtn = `${contrato.atual} / ${contrato.meta}`;
+            corBtn = "#e67e22";
+            disabled = true;
+            clickAction = "";
+        }
+
+        html += `
+            <div class="heroi-card">
+                <h4 style="margin: 0; color: #f1c40f;">${contrato.desc}</h4>
+                <button class="btn-upgrade" style="background: ${corBtn}; width: 100%; margin-top: 10px;" ${disabled ? 'disabled' : ''} onclick="${clickAction}">
+                    ${textBtn}
+                </button>
+            </div>
+        `;
+    });
+
+    html += `
+            </div>
+        </div>
+        <div style="width: 100%; text-align: left;">
+            <h3 style="color: #f1c40f; border-bottom: 1px dashed #5c3a21; padding-bottom: 5px;">Expedição de Heróis</h3>
+            <div class="heroi-card" style="display: flex; flex-direction: column; gap: 10px;">
+    `;
+
+    if (!jogo.guilda.expedicao.ativa) {
+        let options = "";
+        let temDisponivel = false;
+        jogo.herois.forEach((heroi, i) => {
+            if ((i === 0 || heroi.nivelDps > 0) && !jogo.timeAtivo.includes(i)) {
+                options += `<option value="${i}">${heroi.nome} (DPS: ${heroi.dps})</option>`;
+                temDisponivel = true;
+            }
+        });
+
+        if (temDisponivel) {
+            html += `
+                <p style="margin: 0; font-size: 13px; color: #5c3a21;">Envie um herói inativo para buscar tesouros. Recompensa baseada no DPS.</p>
+                <select id="selectExpedicao" style="padding: 8px; border-radius: 4px; border: 1px solid #5c3a21; background: #f4eccf; color: #2c1d11; font-family: 'Georgia', serif;">
+                    ${options}
+                </select>
+                <button class="btn-upgrade" style="background: #3498db; width: 100%;" onclick="iniciarExpedicao(parseInt(document.getElementById('selectExpedicao').value))">
+                    Enviar Herói (1 Hora)
+                </button>
+            `;
+        } else {
+            html += `<p style="margin: 0; font-size: 13px; color: #5c3a21;">Nenhum herói disponível. Desbloqueie mais heróis ou remova alguém do time ativo.</p>`;
+        }
+    } else {
+        let heroi = jogo.herois[jogo.guilda.expedicao.heroiIndex];
+        let tempoRestante = Math.max(0, jogo.guilda.expedicao.tempoFim - Date.now());
+        
+        if (tempoRestante > 0) {
+            let min = Math.floor(tempoRestante / 60000);
+            let seg = Math.floor((tempoRestante % 60000) / 1000);
+            html += `
+                <h4 style="margin: 0; color: #3498db;">${heroi.nome} está explorando...</h4>
+                <p style="margin: 0; font-size: 14px; color: #e67e22;">Restam: ${min}m ${seg}s</p>
+                <button class="btn-upgrade" style="background: #7f8c8d; width: 100%;" disabled>Em andamento...</button>
+            `;
+        } else {
+            html += `
+                <h4 style="margin: 0; color: #2ecc71;">A expedição de ${heroi.nome} terminou!</h4>
+                <button class="btn-upgrade" style="background: #f1c40f; color: #111; width: 100%;" onclick="resgatarExpedicao()">
+                    Resgatar Tesouro
+                </button>
+            `;
+        }
+    }
+
+    html += `
+            </div>
+        </div>
+    `;
+
+    painel.innerHTML = html;
+}
+
 export function atualizarInterface() {
     const elPontos = document.getElementById("pontos");
     if (elPontos) elPontos.innerText = Math.floor(jogo.pontos);
@@ -354,6 +454,7 @@ window.ascender = executarAscensao;
 window.exportarSaveFisico = exportarProgressoFisico;
 window.importarSaveFisico = importarProgressoFisico;
 window.renderizarForja = renderizarForja;
+window.renderizarGuilda = renderizarGuilda;
 
 window.alternarHeroiNoTime = function(heroiIndex) {
     if (heroiIndex === 0) return; // Regra: O Herói Principal (0) não pode ser removido
@@ -436,6 +537,9 @@ window.alternarAba = function(abaId) {
     if (abaId === 'abaForja') {
         renderizarForja();
     }
+    if (abaId === 'abaGuilda') {
+        renderizarGuilda();
+    }
 };
 
 export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'normal') {
@@ -503,6 +607,7 @@ export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'no
         jogo.pontos += recompensa;
         
         jogo.monstrosMortos++;
+        if (jogo.guilda.contratos[1].atual < jogo.guilda.contratos[1].meta) jogo.guilda.contratos[1].atual++;
         if (jogo.monstrosMortos >= 50 && !jogo.conquistas.monstros50) {
             jogo.conquistas.monstros50 = true;
             jogo.gemas += 50;
@@ -538,6 +643,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (canvas) {
         canvas.addEventListener("mousedown", () => {
             jogo.cliquesTotais++;
+            if (jogo.guilda.contratos[0].atual < jogo.guilda.contratos[0].meta) jogo.guilda.contratos[0].atual++;
             if (jogo.cliquesTotais >= 100 && !jogo.conquistas.cliques100) {
                 jogo.conquistas.cliques100 = true;
                 jogo.gemas += 50;
@@ -643,6 +749,11 @@ window.addEventListener('DOMContentLoaded', () => {
                 if (danoHeroi > 0) atacar(danoHeroi, isCrit, 15, tipo); // Ignora 0 DPS natural do Cavaleiro de Ferro
             }
         });
+
+        const abaGuilda = document.getElementById("abaGuilda");
+        if (abaGuilda && abaGuilda.classList.contains("active") && window.renderizarGuilda) {
+            window.renderizarGuilda();
+        }
         salvarJogo();
         atualizarInterface();
     }, 1000);
@@ -701,4 +812,44 @@ window.debugResetarCooldowns = function() {
         }
     });
     atualizarInterface();
+};
+
+window.resgatarContrato = function(index) {
+    let contrato = jogo.guilda.contratos[index];
+    if (contrato && contrato.atual >= contrato.meta && !contrato.resgatado) {
+        contrato.resgatado = true;
+        jogo.gemas += contrato.premioGemas;
+        mostrarNotificacao(`📜 Contrato Resgatado!\n+${contrato.premioGemas} Gemas para a conta!`);
+        atualizarInterface();
+        if (window.renderizarGuilda) window.renderizarGuilda();
+        salvarJogo();
+    }
+};
+
+window.iniciarExpedicao = function(heroiIndex) {
+    if (!jogo.guilda.expedicao.ativa) {
+        jogo.guilda.expedicao.ativa = true;
+        jogo.guilda.expedicao.heroiIndex = heroiIndex;
+        jogo.guilda.expedicao.tempoFim = Date.now() + 3600000; // 1 hora
+        atualizarInterface();
+        if (window.renderizarGuilda) window.renderizarGuilda();
+        salvarJogo();
+    }
+};
+
+window.resgatarExpedicao = function() {
+    if (jogo.guilda.expedicao.ativa && Date.now() >= jogo.guilda.expedicao.tempoFim) {
+        let heroi = jogo.herois[jogo.guilda.expedicao.heroiIndex];
+        let premioPontos = Math.max(100, Math.floor(heroi.dps * 3600)); // Pontos baseados no DPS ou 100 no mínimo
+        let premioGemas = 20; // Recompensa fixa de gemas
+        jogo.pontos += premioPontos;
+        jogo.gemas += premioGemas;
+        jogo.guilda.expedicao.ativa = false;
+        jogo.guilda.expedicao.heroiIndex = null;
+        jogo.guilda.expedicao.tempoFim = 0;
+        mostrarNotificacao(`🏕️ Expedição Concluída!\nO herói encontrou:\n+${premioPontos} Pontos\n+${premioGemas} Gemas`);
+        atualizarInterface();
+        if (window.renderizarGuilda) window.renderizarGuilda();
+        salvarJogo();
+    }
 };

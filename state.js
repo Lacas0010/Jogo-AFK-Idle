@@ -13,6 +13,14 @@ export let jogo = {
     artefatos: { manoplaOrc: false, glandulaHidra: false },
     almasPoligonais: 0,
     upgradesAlmas: [0, 0, 0, 0, 0],
+    guilda: {
+        ultimaRenovacao: new Date().toDateString(),
+        contratos: [
+            { id: 'cliques', desc: 'Dedo Nervoso: 200 Cliques', atual: 0, meta: 200, resgatado: false, premioGemas: 30 },
+            { id: 'mortes', desc: 'Caçador: Derrotar 20 Monstros', atual: 0, meta: 20, resgatado: false, premioGemas: 50 }
+        ],
+        expedicao: { ativa: false, heroiIndex: null, tempoFim: 0 }
+    },
     timeAtivo: [0],
     herois: [
         {
@@ -212,6 +220,22 @@ export function carregarJogo() {
     jogo.multiplicadorAscensao = dadosSalvos.multiplicadorAscensao || 1;
     jogo.almasPoligonais = dadosSalvos.almasPoligonais || 0;
     jogo.upgradesAlmas = dadosSalvos.upgradesAlmas || [0, 0, 0, 0, 0];
+
+    jogo.guilda = dadosSalvos.guilda || {
+        ultimaRenovacao: new Date().toDateString(),
+        contratos: [
+            { id: 'cliques', desc: 'Dedo Nervoso: 200 Cliques', atual: 0, meta: 200, resgatado: false, premioGemas: 30 },
+            { id: 'mortes', desc: 'Caçador: Derrotar 20 Monstros', atual: 0, meta: 20, resgatado: false, premioGemas: 50 }
+        ],
+        expedicao: { ativa: false, heroiIndex: null, tempoFim: 0 }
+    };
+
+    const hoje = new Date().toDateString();
+    if (jogo.guilda.ultimaRenovacao !== hoje) {
+        jogo.guilda.ultimaRenovacao = hoje;
+        jogo.guilda.contratos[0].atual = 0; jogo.guilda.contratos[0].resgatado = false;
+        jogo.guilda.contratos[1].atual = 0; jogo.guilda.contratos[1].resgatado = false;
+    }
 }
 
 export function resetarJogo() {

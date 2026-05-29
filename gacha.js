@@ -10,6 +10,9 @@ export function adicionarFragmentos(heroiIndex, quantidade) {
         heroi.fragmentos -= 10;
         if (heroi.estrelas < 5) {
             heroi.estrelas += 1;
+            if (heroi.estrelas === 5) {
+                mostrarNotificacao(`🌟 DESPERTAR MÁXIMO!\n${heroi.nome} alcançou 5 Estrelas!`);
+            }
             heroi.dps = Math.max(1, Math.ceil(heroi.dps * 2.0)); // Novo scaling dobrado
         } else {
             jogo.gemas += 10; // Converte a estrela excedente em 10 gemas
