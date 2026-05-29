@@ -76,11 +76,3 @@ export function darTiroGacha(quantidade = 1) {
         salvarJogo();
     }
 }
-
-export function darGemasTeste() {
-    if (isNaN(jogo.gemas)) jogo.gemas = 0; 
-    jogo.gemas += 100;
-    document.getElementById("gemas").innerText = jogo.gemas;
-    atualizarInterface();
-    salvarJogo();
-}

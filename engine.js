@@ -1,5 +1,5 @@
 import { jogo, salvarJogo, carregarJogo, calcularHpMaximo, calcularRecompensa, resetarJogo, executarAscensao, exportarProgressoFisico, importarProgressoFisico } from './state.js';
-import { darTiroGacha, darGemasTeste } from './gacha.js';
+import { darTiroGacha } from './gacha.js';
 import { desenhar, textosFlutuantes, animacao, mostrarNotificacao, desenharPortrait } from './render.js';
 
 const custosAlmasBase = [1, 2, 1, 2, 5];
@@ -305,7 +305,6 @@ window.comprarUpgradeAlma = function(upgradeId) {
 };
 
 window.darTiroGacha = darTiroGacha;
-window.darGemasTeste = darGemasTeste;
 window.resetarJogo = resetarJogo;
 window.ascender = executarAscensao;
 window.exportarSaveFisico = exportarProgressoFisico;
