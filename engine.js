@@ -176,6 +176,45 @@ export function renderizarLojaSantuario() {
     painel.innerHTML = html;
 }
 
+export function renderizarForja() {
+    const painel = document.getElementById("painelForja");
+    if (!painel) return;
+
+    let html = "";
+
+    const temManopla = jogo.artefatos.manoplaOrc;
+    const podeForjarManopla = jogo.inventario.couroOrc >= 3 && !temManopla;
+    let textoBtnManopla = temManopla ? "Equipado" : "Forjar (3x Couro de Orc)";
+    let corBtnManopla = temManopla ? "#7f8c8d" : (podeForjarManopla ? "#d35400" : "#7f8c8d");
+
+    html += `
+        <div class="heroi-card" style="display: flex; flex-direction: column; justify-content: space-between; gap: 8px;">
+            <h4 style="margin: 0; color: #f1c40f; font-size: 15px;">🧤 Manopla Feroz do Orc</h4>
+            <p style="margin: 0; font-size: 13px; color: #5c3a21; font-style: italic;">Efeito: +2s na duração de todas as habilidades.</p>
+            <button class="btn-upgrade" style="background: ${corBtnManopla}; width: 100%; margin-top: auto;" onclick="forjarArtefato('manoplaOrc')" ${temManopla || !podeForjarManopla ? 'disabled' : ''}>
+                ${textoBtnManopla}
+            </button>
+        </div>
+    `;
+
+    const temGlandula = jogo.artefatos.glandulaHidra;
+    const podeForjarGlandula = jogo.inventario.escamasHidra >= 3 && !temGlandula;
+    let textoBtnGlandula = temGlandula ? "Equipado" : "Forjar (3x Escama de Hidra)";
+    let corBtnGlandula = temGlandula ? "#7f8c8d" : (podeForjarGlandula ? "#8e44ad" : "#7f8c8d");
+
+    html += `
+        <div class="heroi-card" style="display: flex; flex-direction: column; justify-content: space-between; gap: 8px;">
+            <h4 style="margin: 0; color: #f1c40f; font-size: 15px;">🧪 Glândula Tóxica da Hidra</h4>
+            <p style="margin: 0; font-size: 13px; color: #5c3a21; font-style: italic;">Efeito: -2s de Cooldown Máximo nas habilidades.</p>
+            <button class="btn-upgrade" style="background: ${corBtnGlandula}; width: 100%; margin-top: auto;" onclick="forjarArtefato('glandulaHidra')" ${temGlandula || !podeForjarGlandula ? 'disabled' : ''}>
+                ${textoBtnGlandula}
+            </button>
+        </div>
+    `;
+
+    painel.innerHTML = html;
+}
+
 export function atualizarInterface() {
     const elPontos = document.getElementById("pontos");
     if (elPontos) elPontos.innerText = Math.floor(jogo.pontos);
@@ -247,6 +286,11 @@ export function atualizarInterface() {
     if (abaSantuario && abaSantuario.classList.contains("active")) {
         renderizarLojaSantuario();
     }
+    
+    const elCouro = document.getElementById("qtdCouro");
+    if (elCouro) elCouro.innerText = jogo.inventario.couroOrc || 0;
+    const elEscama = document.getElementById("qtdEscama");
+    if (elEscama) elEscama.innerText = jogo.inventario.escamasHidra || 0;
 }
 
 // Expondo métodos na window pois módulos criam um escopo fechado e quebram os 'onclick' do HTML
@@ -309,6 +353,7 @@ window.resetarJogo = resetarJogo;
 window.ascender = executarAscensao;
 window.exportarSaveFisico = exportarProgressoFisico;
 window.importarSaveFisico = importarProgressoFisico;
+window.renderizarForja = renderizarForja;
 
 window.alternarHeroiNoTime = function(heroiIndex) {
     if (heroiIndex === 0) return; // Regra: O Herói Principal (0) não pode ser removido
@@ -328,7 +373,8 @@ window.ativarSkill = function(heroiIndex, skillIndex) {
     let heroi = jogo.herois[heroiIndex];
     let skill = heroi.skills[skillIndex];
     if (skill && skill.cooldownAtual <= 0 && !skill.ativa) {
-        skill.cooldownAtual = skill.cooldownMax;
+        let cooldownBuff = jogo.artefatos.glandulaHidra ? 2 : 0;
+        skill.cooldownAtual = Math.max(1, skill.cooldownMax - cooldownBuff);
         
         if (skill.multiplicadorDanoInstantaneo !== undefined) {
             let danoBurst = heroi.dps * skill.multiplicadorDanoInstantaneo;
@@ -337,10 +383,27 @@ window.ativarSkill = function(heroiIndex, skillIndex) {
             atacar(danoBurst, isCrit, 45, heroiIndex === 1 ? 'burstElfa' : 'normal'); // Dá à skill da Elfa uma animação mais longa e cinemática
         } else {
             skill.ativa = true;
-            skill.duracaoAtual = skill.duracaoMax;
+            let durationBuff = jogo.artefatos.manoplaOrc ? 2 : 0;
+            skill.duracaoAtual = skill.duracaoMax + durationBuff;
         }
         
         atualizarInterface();
+    }
+};
+
+window.forjarArtefato = function(idArtefato) {
+    if (idArtefato === 'manoplaOrc' && jogo.inventario.couroOrc >= 3 && !jogo.artefatos.manoplaOrc) {
+        jogo.inventario.couroOrc -= 3;
+        jogo.artefatos.manoplaOrc = true;
+        atualizarInterface();
+        if (window.renderizarForja) window.renderizarForja();
+        salvarJogo();
+    } else if (idArtefato === 'glandulaHidra' && jogo.inventario.escamasHidra >= 3 && !jogo.artefatos.glandulaHidra) {
+        jogo.inventario.escamasHidra -= 3;
+        jogo.artefatos.glandulaHidra = true;
+        atualizarInterface();
+        if (window.renderizarForja) window.renderizarForja();
+        salvarJogo();
     }
 };
 
@@ -369,6 +432,9 @@ window.alternarAba = function(abaId) {
     }
     if (abaId === 'abaSantuario') {
         renderizarLojaSantuario();
+    }
+    if (abaId === 'abaForja') {
+        renderizarForja();
     }
 };
 
@@ -447,6 +513,15 @@ export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'no
             let gemasGanhos = 5 + (jogo.upgradesAlmas[2] || 0);
             jogo.gemas += gemasGanhos;
             textosFlutuantes.push({ texto: `+${gemasGanhos} Gemas`, x: 170 + (Math.random() * 20), y: 60, alpha: 1, duracao: 80, cor: "155, 89, 182", tamanho: "bold 18px sans-serif" });
+
+            const isPantano = Math.floor((jogo.nivel - 1) / 15) % 2 === 1;
+            if (isPantano) {
+                jogo.inventario.escamasHidra += 1;
+                textosFlutuantes.push({ texto: "+1 Escama de Hidra", x: 170 + (Math.random() * 20), y: 40, alpha: 1, duracao: 100, cor: "46, 204, 113", tamanho: "bold 16px sans-serif" });
+            } else {
+                jogo.inventario.couroOrc += 1;
+                textosFlutuantes.push({ texto: "+1 Couro de Orc", x: 170 + (Math.random() * 20), y: 40, alpha: 1, duracao: 100, cor: "139, 69, 19", tamanho: "bold 16px sans-serif" });
+            }
         }
         textosFlutuantes.push({ texto: `+${recompensa} pts`, x: 170 + (Math.random() * 20), y: 80, alpha: 1, duracao: 60, cor: "241, 196, 15" });
 

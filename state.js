@@ -9,6 +9,8 @@ export let jogo = {
     cliquesTotais: 0,
     monstrosMortos: 0,
     conquistas: { cliques100: false, monstros50: false },
+    inventario: { couroOrc: 0, escamasHidra: 0 },
+    artefatos: { manoplaOrc: false, glandulaHidra: false },
     almasPoligonais: 0,
     upgradesAlmas: [0, 0, 0, 0, 0],
     timeAtivo: [0],
@@ -205,6 +207,8 @@ export function carregarJogo() {
     jogo.cliquesTotais = dadosSalvos.cliquesTotais || 0;
     jogo.monstrosMortos = dadosSalvos.monstrosMortos || 0;
     jogo.conquistas = dadosSalvos.conquistas || { cliques100: false, monstros50: false };
+    jogo.inventario = dadosSalvos.inventario || { couroOrc: 0, escamasHidra: 0 };
+    jogo.artefatos = dadosSalvos.artefatos || { manoplaOrc: false, glandulaHidra: false };
     jogo.multiplicadorAscensao = dadosSalvos.multiplicadorAscensao || 1;
     jogo.almasPoligonais = dadosSalvos.almasPoligonais || 0;
     jogo.upgradesAlmas = dadosSalvos.upgradesAlmas || [0, 0, 0, 0, 0];

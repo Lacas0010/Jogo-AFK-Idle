@@ -24,6 +24,7 @@
         <button class="btn-aba" onclick="alternarAba('abaStatus')">📊 Status</button>
         <button class="btn-aba" onclick="alternarAba('abaEquipe')">🛡️ Equipe</button>
         <button class="btn-aba" onclick="alternarAba('abaSantuario')">✨ Santuário</button>
+        <button class="btn-aba" onclick="alternarAba('abaForja')">⚒️ Forja</button>
     </div>
 
     <div id="abaUpgrades" class="aba-conteudo active">
@@ -57,6 +58,14 @@
 
     <div id="abaSantuario" class="aba-conteudo">
         <div id="painelSantuario"></div>
+    </div>
+
+    <div id="abaForja" class="aba-conteudo">
+        <h2>⚒️ Forja de Artefatos</h2>
+        <p style="color: #f1c40f; margin-bottom: 20px;">
+            Mochila: <span id="qtdCouro">0</span>x Couro de Orc | <span id="qtdEscama">0</span>x Escama de Hidra
+        </p>
+        <div id="painelForja" class="painel-upgrades"></div>
     </div>
 
     <div id="abaEquipe" class="aba-conteudo">
