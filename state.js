@@ -9,7 +9,8 @@ export let jogo = {
     cliquesTotais: 0,
     monstrosMortos: 0,
     conquistas: { cliques100: false, monstros50: false },
-    multiplicadorAscensao: 1,
+    almasPoligonais: 0,
+    upgradesAlmas: [0, 0, 0, 0, 0],
     timeAtivo: [0],
     herois: [
         {
@@ -205,6 +206,8 @@ export function carregarJogo() {
     jogo.monstrosMortos = dadosSalvos.monstrosMortos || 0;
     jogo.conquistas = dadosSalvos.conquistas || { cliques100: false, monstros50: false };
     jogo.multiplicadorAscensao = dadosSalvos.multiplicadorAscensao || 1;
+    jogo.almasPoligonais = dadosSalvos.almasPoligonais || 0;
+    jogo.upgradesAlmas = dadosSalvos.upgradesAlmas || [0, 0, 0, 0, 0];
 }
 
 export function resetarJogo() {
@@ -254,8 +257,10 @@ export function executarAscensao() {
         return;
     }
 
-    if (confirm(`Deseja Ascender? Você ganhará +${jogo.nivel - 30} no seu Multiplicador de Ascensão!\nTodo o progresso de níveis e upgrades de pontos será resetado.`)) {
+    if (confirm(`Deseja Ascender? Você ganhará +${jogo.nivel - 30} no seu Multiplicador de Ascensão e +${jogo.nivel - 30} Almas Poligonais!\nTodo o progresso de níveis e upgrades de pontos será resetado.`)) {
         jogo.multiplicadorAscensao += (jogo.nivel - 30);
+        if (jogo.almasPoligonais === undefined) jogo.almasPoligonais = 0;
+        jogo.almasPoligonais += (jogo.nivel - 30);
         
         jogo.pontos = 0;
         jogo.nivel = 1;

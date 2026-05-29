@@ -90,13 +90,40 @@ canvas {
     padding: 20px;
     border-radius: 4px;
     position: relative;
-    
-    /* Força o alinhamento lado a lado perfeito */
+    box-sizing: border-box;
+}
+
+/* Regra Exclusiva para os Cards de Upgrades (Fluxo Vertical Organizado) */
+#painelUpgrades .heroi-card {
     display: flex !important;
-    flex-direction: row !important;
-    align-items: flex-start; /* Alinha o topo do portrait com o topo do texto */
+    flex-direction: column !important; /* Empilha os blocos verticalmente */
+    align-items: stretch;
     justify-content: flex-start;
+    gap: 12px;
+}
+
+/* Regra Exclusiva para os Cards de Status (Fluxo Horizontal com o Retrato) */
+#statusHerois .heroi-card {
+    display: flex !important;
+    flex-direction: row !important; /* Mantém retrato na esquerda e texto na direita */
+    align-items: flex-start;
     gap: 20px;
+}
+
+/* Padronização do Bloco de Ações e Botões de Upgrade */
+.heroi-actions {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+.heroi-actions button {
+    flex: 1; /* Faz o botão de DPS e Crítico dividirem o espaço 50/50 perfeitamente */
+    min-width: 0;
+}
+
+/* Garante que o bloco de skills ocupe a largura total do pergaminho */
+.skill-upgrade-block {
+    width: 100%;
     box-sizing: border-box;
 }
 

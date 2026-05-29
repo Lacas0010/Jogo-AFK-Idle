@@ -23,6 +23,7 @@
         <button class="btn-aba" onclick="alternarAba('abaGacha')">🔮 Gacha</button>
         <button class="btn-aba" onclick="alternarAba('abaStatus')">📊 Status</button>
         <button class="btn-aba" onclick="alternarAba('abaEquipe')">🛡️ Equipe</button>
+        <button class="btn-aba" onclick="alternarAba('abaSantuario')">✨ Santuário</button>
     </div>
 
     <div id="abaUpgrades" class="aba-conteudo active">
@@ -55,6 +56,10 @@
         </div>
     </div>
 
+    <div id="abaSantuario" class="aba-conteudo">
+        <div id="painelSantuario"></div>
+    </div>
+
     <div id="abaEquipe" class="aba-conteudo">
         <h2>🛡️ Formação do Time (<span id="tamanhoTime">1</span>/3)</h2>
         <div id="painelGerenciarEquipe" class="controles" style="flex-direction: column; gap: 15px; align-items: center;"></div>
@@ -62,6 +67,21 @@
 
     <div class="controles" style="max-width: 800px; margin: 20px auto; text-align: center;">
         <button class="btn-reset" onclick="resetarJogo()">Resetar Progresso</button>
+    </div>
+
+    <div style="margin-top: 40px; text-align: center;">
+        <button class="btn-reset" style="background: #2c3e50; border-color: #34495e;" onclick="window.alternarPainelDebug()">🛠️ Painel de Desenvolvedor</button>
+    </div>
+
+    <div id="painelDebugAdmin" class="aba-conteudo" style="display: none; max-width: 800px; margin: 15px auto; padding: 15px; border: 2px dashed #e74c3c; background: #1c1c1c;">
+        <h3 style="color: #e74c3c; margin-top: 0;">⚡ Menu de Trapaças (Debug)</h3>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+            <button class="btn-upgrade" style="background: #f1c40f; color: #111;" onclick="window.debugAdicionarPontos(100000)">💰 +100k Pontos</button>
+            <button class="btn-upgrade" style="background: #9b59b6; color: #fff;" onclick="window.debugAdicionarGemas(500)">🔮 +500 Gemas</button>
+            <button class="btn-upgrade" style="background: #00ffff; color: #111;" onclick="window.debugAdicionarAlmas(10)">✨ +10 Almas</button>
+            <button class="btn-crit" onclick="window.debugAvancarNiveis(5)">⏩ Avançar 5 Níveis</button>
+            <button class="btn-reset" onclick="window.debugResetarCooldowns()">⏳ Reset Cooldowns</button>
+        </div>
     </div>
 
     <script type="module" src="engine.js"></script>

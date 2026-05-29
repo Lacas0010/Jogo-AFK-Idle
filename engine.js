@@ -2,6 +2,8 @@ import { jogo, salvarJogo, carregarJogo, calcularHpMaximo, calcularRecompensa, r
 import { darTiroGacha, darGemasTeste } from './gacha.js';
 import { desenhar, textosFlutuantes, animacao, mostrarNotificacao, desenharPortrait } from './render.js';
 
+const custosAlmasBase = [1, 2, 1, 2, 5];
+
 export function renderizarBotoesUpgrades() {
     const painel = document.getElementById("painelUpgrades");
     if (!painel) return;
@@ -25,11 +27,11 @@ export function renderizarBotoesUpgrades() {
                     ${heroi.skills ? heroi.skills.map((skill, sIdx) => {
                         let descUpgrade = skill.multiplicadorDanoInstantaneo !== undefined ? "+5 Mult. Burst" : "+1 Mult. Dano";
                         return `
-                                <div style="margin-top: 10px; border-top: 1px dashed rgba(92,58,33,0.3); padding-top: 10px; width: 100%;">
+                            <div class="skill-upgrade-block" style="margin-top: 10px; border-top: 1px dashed rgba(92,58,33,0.3); padding-top: 10px;">
                                 <h4 style="margin: 0 0 5px 0; font-size: 13px; color: #a04000;">Melhorar ${skill.nome}</h4>
                                 <p style="font-style: italic; font-size: 12px; color: #5c3a21; margin: 2px 0 10px 0;">${skill.descricao}</p>
-                                <button id="btnUpgradeSkill_${index}_${sIdx}" class="btn-upgrade" style="background: #c0392b; color: white;" onclick="comprarUpgradeSkill(${index}, ${sIdx})">
-                                    ${descUpgrade}<br><small>Nvl: <span id="nivelSkill_${index}_${sIdx}">${skill.nivel || 1}</span> | Custo: <span id="custoSkill_${index}_${sIdx}">${skill.custoUpgrade || 100}</span></small>
+                                <button id="btnUpgradeSkill_${index}_${sIdx}" class="btn-upgrade" style="background: #c0392b; color: white; width: 100%;" onclick="comprarUpgradeSkill(${index}, ${sIdx})">
+                                    ${descUpgrade}<br><small>Nvl: <span id="nivelSkill_${index}_${sIdx}">${skill.nivel || 1}</span> | Custo: <span id=\"custoSkill_${index}_${sIdx}\">${skill.custoUpgrade || 100}</span></small>
                                 </button>
                             </div>
                         `;
@@ -47,7 +49,7 @@ function renderizarStatusHerois() {
     const podeAscender = jogo.nivel >= 30;
     painel.innerHTML = `
         <div style="margin-bottom: 20px;">
-            <h3>✨ Multiplicador de Ascensão Atual: ${jogo.multiplicadorAscensao}x</h3>
+            <h3>✨ Almas Poligonais: ${jogo.almasPoligonais}</h3>
             <button id="btnAscensão" class="btn-upgrade" style="background: #9b59b6; margin-bottom: 15px;" onclick="ascender()" ${podeAscender ? "" : "disabled"}>
                 ${podeAscender ? "Realizar Ascensão Cósmica" : "Bloqueado (Chegue ao Nível 30)"}
             </button>
@@ -135,6 +137,45 @@ export function renderizarListaPremiosGacha() {
     }
 }
 
+export function renderizarLojaSantuario() {
+    const painel = document.getElementById("painelSantuario"); // Certifique-se que no seu HTML o interior da aba tenha id="painelSantuario"
+    if (!painel) return;
+
+    const descricoes = [
+        "Poder Primordial: +10% Dano de Clique",
+        "Visão Letal: +2% Chance de Crítico Global",
+        "Riqueza Abissal: +1 Gema bônus nos Chefes",
+        "Fluxo Temporal: Acelera recarga de habilidades",
+        "Conjurador Automático: Ativa habilidades automaticamente"
+    ];
+
+    let html = `<h3 style="color: #9b59b6; text-align: center; margin-bottom: 20px;">✨ Almas Poligonais Disponíveis: ${jogo.almasPoligonais || 0}</h3>`;
+    html += `<div class="painel-upgrades">`;
+
+    for (let i = 0; i < 5; i++) {
+        let nivel = jogo.upgradesAlmas[i] || 0;
+        let custo = i === 4 ? 5 : custosAlmasBase[i] * Math.pow(2, nivel); // Custo dobra a cada nível comprado, exceto auto-cast
+        let maxNivel = i === 4 && nivel >= 1;
+        let podeComprar = (jogo.almasPoligonais || 0) >= custo && !maxNivel;
+
+        let textBotao = maxNivel 
+            ? "🤖 ATIVADO (MÁX)" 
+            : `Melhorar (Nvl ${nivel})<br><small>Custo: ✨ ${custo}</small>`;
+
+        html += `
+            <div class="heroi-card" style="display: flex; flex-direction: column; justify-content: space-between; gap: 8px; border-color: #9b59b6;">
+                <h4 style="margin: 0; color: #f1c40f; font-size: 14px;">${descricoes[i].split(':')[0]}</h4>
+                <p style="margin: 0; font-size: 12px; color: #5c3a21; font-style: italic;">${descricoes[i].split(':')[1]}</p>
+                <button class="btn-upgrade" style="background: ${podeComprar ? '#9b59b6' : '#7f8c8d'}; width: 100%; margin-top: auto;" onclick="comprarUpgradeAlma(${i})" ${!podeComprar ? 'disabled' : ''}>
+                    ${textBotao}
+                </button>
+            </div>
+        `;
+    }
+    html += `</div>`;
+    painel.innerHTML = html;
+}
+
 export function atualizarInterface() {
     const elPontos = document.getElementById("pontos");
     if (elPontos) elPontos.innerText = Math.floor(jogo.pontos);
@@ -201,6 +242,11 @@ export function atualizarInterface() {
     if (abaStatus && abaStatus.classList.contains("active")) {
         renderizarStatusHerois();
     }
+    
+    const abaSantuario = document.getElementById("abaSantuario");
+    if (abaSantuario && abaSantuario.classList.contains("active")) {
+        renderizarLojaSantuario();
+    }
 }
 
 // Expondo métodos na window pois módulos criam um escopo fechado e quebram os 'onclick' do HTML
@@ -241,6 +287,18 @@ window.comprarUpgradeSkill = function(heroiIndex, skillIndex) {
         }
         if (skill.nivel % 5 === 0) skill.duracaoMax += 1; // +1 Segundo a cada 5 níveis
         skill.custoUpgrade = Math.floor((skill.custoUpgrade || 100) * (skill.multCusto || 1.8));
+        atualizarInterface();
+        salvarJogo();
+    }
+};
+
+window.comprarUpgradeAlma = function(upgradeId) {
+    let nivelAtual = jogo.upgradesAlmas[upgradeId] || 0;
+    let custo = upgradeId === 4 ? 5 : custosAlmasBase[upgradeId] * Math.pow(2, nivelAtual);
+    
+    if ((jogo.almasPoligonais || 0) >= custo && (upgradeId !== 4 || nivelAtual < 1)) {
+        jogo.almasPoligonais -= custo;
+        jogo.upgradesAlmas[upgradeId] = nivelAtual + 1;
         atualizarInterface();
         salvarJogo();
     }
@@ -309,6 +367,9 @@ window.alternarAba = function(abaId) {
     }
     if (abaId === 'abaGacha') {
         renderizarListaPremiosGacha();
+    }
+    if (abaId === 'abaSantuario') {
+        renderizarLojaSantuario();
     }
 };
 
@@ -384,8 +445,9 @@ export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'no
         }
 
         if (jogo.nivel % 5 === 0) {
-            jogo.gemas += 5;
-            textosFlutuantes.push({ texto: `+5 Gemas`, x: 170 + (Math.random() * 20), y: 60, alpha: 1, duracao: 80, cor: "155, 89, 182", tamanho: "bold 18px sans-serif" });
+            let gemasGanhos = 5 + (jogo.upgradesAlmas[2] || 0);
+            jogo.gemas += gemasGanhos;
+            textosFlutuantes.push({ texto: `+${gemasGanhos} Gemas`, x: 170 + (Math.random() * 20), y: 60, alpha: 1, duracao: 80, cor: "155, 89, 182", tamanho: "bold 18px sans-serif" });
         }
         textosFlutuantes.push({ texto: `+${recompensa} pts`, x: 170 + (Math.random() * 20), y: 80, alpha: 1, duracao: 60, cor: "241, 196, 15" });
 
@@ -413,12 +475,17 @@ window.addEventListener('DOMContentLoaded', () => {
             let heroi = jogo.herois[0];
             let dano = heroi.dps + Math.floor(dpsTotal * 0.10);
             
+            // Buff 0: Poder Primordial (+10% dano de clique)
+            dano *= (1 + ((jogo.upgradesAlmas[0] || 0) * 0.10));
+
             let skillFogo = heroi.skills && heroi.skills[0];
             if (skillFogo && skillFogo.ativa) {
                 dano *= skillFogo.multiplicadorDano;
             }
 
-            let isCrit = Math.random() < heroi.chanceCritico;
+            // Buff 1: Visão Letal (+2% crit global)
+            let chanceCritFinal = heroi.chanceCritico + ((jogo.upgradesAlmas[1] || 0) * 0.02);
+            let isCrit = Math.random() < chanceCritFinal;
             if (isCrit) dano *= 3;
             atacar(dano, isCrit);
         });
@@ -434,6 +501,19 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     setInterval(() => {
+        // Upgrade 4: Conjurador Automático (Auto-Cast)
+        if ((jogo.upgradesAlmas[4] || 0) >= 1) {
+            jogo.timeAtivo.forEach(idx => {
+                let heroi = jogo.herois[idx];
+                if (heroi.skills && heroi.skills.length > 0) {
+                    let skill = heroi.skills[0];
+                    if (!skill.ativa && skill.cooldownAtual === 0) {
+                        window.ativarSkill(idx, 0);
+                    }
+                }
+            });
+        }
+
         // Loop para gerenciar as Habilidades Ativas e Cooldowns
         jogo.timeAtivo.forEach(idx => {
             let heroi = jogo.herois[idx];
@@ -444,7 +524,9 @@ window.addEventListener('DOMContentLoaded', () => {
                         if (skill.duracaoAtual <= 0) skill.ativa = false;
                     }
                     if (skill.cooldownAtual > 0) {
-                        skill.cooldownAtual--;
+                    // Buff 3: Fluxo Temporal (Acelera cooldown)
+                    let aceleracao = 1 + ((jogo.upgradesAlmas[3] || 0) * 0.10);
+                    skill.cooldownAtual = Math.max(0, skill.cooldownAtual - aceleracao);
                     }
                 });
             }
@@ -468,7 +550,9 @@ window.addEventListener('DOMContentLoaded', () => {
                     return; 
                 }
 
-                let isCrit = Math.random() < heroi.chanceCritico;
+                // Buff 1: Visão Letal (+2% crit global)
+                let chanceCritFinal = heroi.chanceCritico + ((jogo.upgradesAlmas[1] || 0) * 0.02);
+                let isCrit = Math.random() < chanceCritFinal;
                 let danoHeroi = isCrit ? heroi.dps * 3 : heroi.dps;
                 
                 if (heroi.skills && heroi.skills[0] && heroi.skills[0].ativa && heroi.skills[0].multiplicadorDano) {
@@ -478,6 +562,9 @@ window.addEventListener('DOMContentLoaded', () => {
                 // Aplica os buffs provenientes do Cavaleiro em todo DPS gerado
                 danoHeroi *= buffPassivoCavaleiro * buffAtivoCavaleiro;
                 
+                // Buff 4: Aura Poligonal (+10% DPS Passivo)
+                danoHeroi *= (1 + ((jogo.upgradesAlmas[4] || 0) * 0.10));
+
                 let tipo = index === 1 ? 'dpsPassivoElfa' : (index === 2 ? 'passivoMago' : (index === 3 ? 'passivoCavaleiro' : 'normal'));
                 if (danoHeroi > 0) atacar(danoHeroi, isCrit, 15, tipo); // Ignora 0 DPS natural do Cavaleiro de Ferro
             }
@@ -490,3 +577,54 @@ window.addEventListener('DOMContentLoaded', () => {
     atualizarInterface();
     desenhar();
 });
+
+// --- FUNÇÕES DO PAINEL DE DEBUG ---
+window.alternarPainelDebug = function() {
+    const painel = document.getElementById('painelDebugAdmin');
+    if (painel) {
+        painel.style.display = painel.style.display === 'none' ? 'block' : 'none';
+    }
+};
+
+window.debugAdicionarPontos = function(qtd) {
+    jogo.pontos += qtd;
+    atualizarInterface();
+    salvarJogo();
+};
+
+window.debugAdicionarGemas = function(qtd) {
+    jogo.gemas += qtd;
+    atualizarInterface();
+    salvarJogo();
+};
+
+window.debugAdicionarAlmas = function(qtd) {
+    if (jogo.almasPoligonais !== undefined) {
+        jogo.almasPoligonais += qtd;
+    } else {
+        jogo.multiplicadorAscensao += qtd;
+    }
+    atualizarInterface();
+    salvarJogo();
+};
+
+window.debugAvancarNiveis = function(qtd) {
+    jogo.nivel += qtd;
+    jogo.monstroHpMax = calcularHpMaximo(jogo.nivel);
+    jogo.monstroHp = jogo.monstroHpMax;
+    atualizarInterface();
+    salvarJogo();
+};
+
+window.debugResetarCooldowns = function() {
+    jogo.herois.forEach(heroi => {
+        if (heroi.skills) {
+            heroi.skills.forEach(skill => {
+                skill.cooldownAtual = 0;
+                skill.duracaoAtual = 0;
+                skill.ativa = false;
+            });
+        }
+    });
+    atualizarInterface();
+};
