@@ -8,18 +8,21 @@
 <body>
 
     <h1>Idle Game</h1>
-    <p>Pontos: <span id="pontos">0</span></p>
+    <div class="hud">Tesouro do Reino: $<span id="pontos">0</span></div>
     <canvas id="jogoCanvas" width="800" height="450"></canvas>
     
     <div id="painelSkills" style="margin-top: 10px;">
         <button id="btnSkill_0_0" class="btn-upgrade btn-skill" onclick="ativarSkill(0, 0)">🔥 Lâmina Incandescente</button>
         <button id="btnSkill_1_0" class="btn-upgrade btn-skill" style="background: #2980b9;" onclick="ativarSkill(1, 0)">🏹 Rajada de Glifos</button>
+        <button id="btnSkill_2_0" class="btn-upgrade btn-skill" style="background: #8e44ad; display: none;" onclick="ativarSkill(2, 0)">🔮 Comet Azur</button>
+        <button id="btnSkill_3_0" class="btn-upgrade btn-skill" style="background: #7f8c8d; display: none;" onclick="ativarSkill(3, 0)">⚙️ Baluarte Vetorial</button>
     </div>
 
     <div class="menu-abas">
         <button class="btn-aba active" onclick="alternarAba('abaUpgrades')">⚔️ Upgrades</button>
         <button class="btn-aba" onclick="alternarAba('abaGacha')">🔮 Gacha</button>
         <button class="btn-aba" onclick="alternarAba('abaStatus')">📊 Status</button>
+        <button class="btn-aba" onclick="alternarAba('abaEquipe')">🛡️ Equipe</button>
     </div>
 
     <div id="abaUpgrades" class="aba-conteudo active">
@@ -38,6 +41,11 @@
 
     <div id="abaStatus" class="aba-conteudo">
         <div id="statusHerois"></div>
+    </div>
+
+    <div id="abaEquipe" class="aba-conteudo">
+        <h2>🛡️ Formação do Time (<span id="tamanhoTime">1</span>/3)</h2>
+        <div id="painelGerenciarEquipe" class="controles" style="flex-direction: column; gap: 15px; align-items: center;"></div>
     </div>
 
     <div class="controles">

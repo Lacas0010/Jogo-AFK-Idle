@@ -1,56 +1,183 @@
-body { background: #1a1a1a; color: white; text-align: center; font-family: sans-serif; }
-canvas { background: #111; border: 2px solid #333; margin-top: 20px; cursor: pointer; }
-.controles { margin-top: 15px; display: flex; justify-content: center; gap: 15px; }
-button { padding: 10px 20px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; font-size: 14px; transition: 0.2s; }
-.btn-upgrade { background: #2ecc71; color: #111; }
-.btn-upgrade:hover:not(:disabled) { background: #27ae60; }
-.btn-upgrade:disabled { background: #444; color: #888; cursor: not-allowed; }
-.btn-crit { background: #f39c12; color: #111; }
-.btn-crit:hover:not(:disabled) { background: #e67e22; }
-.btn-reset { background: #e74c3c; color: white; }
-.btn-reset:hover { background: #c0392b; }
+/* Configurações Gerais e Tipografia Medieval */
+body { 
+    background: #0f0b07; 
+    color: #e2d1b6; 
+    text-align: center; 
+    font-family: 'Georgia', 'Times New Roman', serif; 
+    margin: 0; 
+    padding: 20px;
+    background-image: radial-gradient(#1a120b 20%, #0f0b07 80%);
+}
 
-/* Gacha e Painéis (Substituindo os estilos inline) */
-.painel-gacha { margin-top: 20px; margin-bottom: 20px; background: #2c3e50; padding: 15px; border-radius: 8px; border: 2px solid #8e44ad; display: inline-block; }
-.painel-gacha h2 { margin: 0 0 10px 0; color: #fff; font-size: 18px; }
-.painel-gacha p { margin: 0 0 10px 0; }
-#gemas { color: #9b59b6; font-weight: bold; font-size: 18px; }
-#pityGacha { color: #f1c40f; font-weight: bold; font-size: 18px; }
-.btn-gacha-1 { background: #9b59b6; color: white; }
-.btn-gacha-10 { background: #8e44ad; color: white; margin-left: 10px; }
-.btn-gacha-teste { background: #f39c12; color: white; margin-left: 10px; font-size: 12px; padding: 6px 12px; }
-.painel-upgrades { flex-wrap: wrap; }
+h1 {
+    font-family: 'Palatino', 'Cinzel', serif;
+    color: #f1c40f;
+    text-shadow: 2px 2px 4px #000, 0 0 10px #d35400;
+    letter-spacing: 2px;
+    margin-bottom: 5px;
+}
 
-/* Cards de Heróis criados via JavaScript */
-.heroi-card { background: #222; padding: 10px; border-radius: 8px; border: 1px solid #444; flex: 1; min-width: 250px; }
-.heroi-stars { margin: 0; color: #f1c40f; font-size: 16px; min-height: 20px; }
-.heroi-title { margin: 5px 0 10px 0; font-size: 14px; color: #fff; }
-.heroi-actions { display: flex; justify-content: center; gap: 10px; }
+canvas { 
+    background: #111; 
+    border: 4px double #d35400; 
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(0,0,0,0.6);
+    border-radius: 4px;
+    margin-top: 10px;
+}
 
-/* Botão de Habilidade */
-.btn-skill { background: #c0392b; color: white; }
-.btn-skill:hover:not(:disabled) { background: #e67e22; }
+/* HUD Superior e Exibição de Moedas */
+.hud {
+    font-size: 26px;
+    color: #f1c40f;
+    font-weight: bold;
+    text-shadow: 1px 2px 2px #000;
+}
 
-/* Sistema de Abas */
+/* Painel Geral: Estrutura de Castelo (Muralha de Pedra) */
+.aba-conteudo {
+    display: none;
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 25px;
+    background: linear-gradient(135deg, #2c2c2c 25%, #222 25%, #222 50%, #2c2c2c 50%, #2c2c2c 75%, #222 75%, #222 100%);
+    background-size: 40px 40px; /* Efeito simulando blocos de tijolos escuros */
+    background-color: #252525;
+    border: 4px solid #4a3b2c;
+    outline: 2px solid #111;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.9), 0 10px 20px rgba(0,0,0,0.7);
+    border-radius: 6px;
+}
+
+.aba-conteudo.active {
+    display: block;
+}
+
+/* Card de Pergaminho Envelhecido (Injetado via JS) */
+.heroi-card, .painel-gacha { 
+    background: #f4eccf;
+    color: #2c1d11;
+    border: 1px solid #dcd1af;
+    border-left: 5px solid #8e7a53; /* Efeito de pergaminho enrolado na ponta */
+    box-shadow: 3px 3px 10px rgba(0,0,0,0.5), inset 0 0 30px rgba(210,195,145,0.7);
+    padding: 15px; 
+    border-radius: 4px; 
+    position: relative;
+}
+
+.heroi-title, .painel-gacha h2 { 
+    font-family: 'Palatino', serif;
+    margin: 5px 0 10px 0; 
+    font-size: 16px; 
+    color: #5c3a21;
+    font-weight: bold;
+    border-bottom: 1px dashed rgba(92,58,33,0.4);
+    padding-bottom: 5px;
+}
+
+/* Altar do Gacha Estilo Cripta */
+.painel-gacha {
+    border: 3px solid #8e44ad;
+    box-shadow: inset 0 0 20px rgba(142,68,173,0.2), 3px 3px 10px rgba(0,0,0,0.5);
+}
+
+/* Sistema de Abas (Menu de Navegação Estilo Portão/Ferro) */
 .menu-abas {
     display: flex;
     justify-content: center;
-    gap: 10px;
+    gap: 8px;
     margin: 15px 0;
 }
+
 .btn-aba {
-    background: #333;
-    color: white;
-    border-radius: 6px;
-    opacity: 0.7;
-}
-.btn-aba.active {
-    background: #3498db;
+    background: linear-gradient(to bottom, #4a4a4a, #2b2b2b);
+    color: #ccc;
+    border: 2px solid #1c1c1c;
+    border-radius: 4px 4px 0 0;
+    padding: 12px 24px;
+    font-weight: bold;
+    font-family: 'Georgia', serif;
+    cursor: pointer;
+    text-shadow: 1px 1px 2px #000;
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.3);
+    transition: all 0.2s;
     opacity: 1;
 }
-.aba-conteudo {
-    display: none;
+
+.btn-aba:hover {
+    color: #fff;
+    background: linear-gradient(to bottom, #5a5a5a, #3b3b3b);
 }
-.aba-conteudo.active {
-    display: block;
+
+.btn-aba.active {
+    background: linear-gradient(to bottom, #8e7a53, #5c4d33);
+    color: #f1c40f;
+    border: 2px solid #3d3221;
+    border-bottom: 2px solid #8e7a53; /* Funde o botão com a parede de pedra */
+    box-shadow: inset 0 2px 4px rgba(255,255,255,0.2);
+}
+
+/* Botões Nobres e de Ações (Estilo Forja/Guerra) */
+button { 
+    padding: 10px 15px; 
+    cursor: pointer; 
+    border: 2px solid #111; 
+    border-radius: 4px; 
+    font-weight: bold; 
+    font-family: 'Georgia', serif;
+    transition: 0.2s; 
+    box-shadow: 1px 2px 4px rgba(0,0,0,0.4);
+}
+
+.btn-upgrade { 
+    background: linear-gradient(to bottom, #27ae60, #1e7e43); 
+    color: #fff; 
+    text-shadow: 1px 1px 2px #000;
+}
+.btn-upgrade:hover:not(:disabled) { 
+    background: linear-gradient(to bottom, #2ecc71, #27ae60); 
+}
+.btn-upgrade:disabled { 
+    background: #95a5a6; 
+    color: #7f8c8d; 
+    border-color: #7f8c8d;
+    cursor: not-allowed; 
+    box-shadow: none;
+}
+
+.btn-crit { 
+    background: linear-gradient(to bottom, #d35400, #a04000); 
+    color: #fff; 
+}
+.btn-crit:hover:not(:disabled) { 
+    background: linear-gradient(to bottom, #e67e22, #d35400); 
+}
+
+.btn-skill { 
+    background: linear-gradient(to bottom, #c0392b, #962d22); 
+    color: white; 
+    border-color: #7c241b;
+    text-shadow: 1px 1px 2px #000;
+}
+.btn-skill:hover:not(:disabled) { 
+    background: linear-gradient(to bottom, #d35400, #c0392b); 
+}
+
+.btn-gacha-1 { background: linear-gradient(to bottom, #9b59b6, #7d3c98); color: white; }
+.btn-gacha-10 { background: linear-gradient(to bottom, #8e44ad, #6c3483); color: white; }
+.btn-gacha-teste { background: linear-gradient(to bottom, #f1c40f, #f39c12); color: #222; border-color: #b7950b; }
+
+.btn-reset { 
+    background: linear-gradient(to bottom, #7f8c8d, #626567); 
+    color: white; 
+    font-size: 11px;
+    padding: 6px 12px;
+    border-color: #4d4f50;
+}
+.btn-reset:hover { background: #c0392b; border-color: #7c241b; }
+
+.painel-upgrades { 
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 15px; 
+    width: 100%;
 }

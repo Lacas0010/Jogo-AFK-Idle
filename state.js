@@ -10,6 +10,7 @@ export let jogo = {
     monstrosMortos: 0,
     conquistas: { cliques100: false, monstros50: false },
     multiplicadorAscensao: 1,
+    timeAtivo: [0],
     herois: [
         {
             nome: "Herói Principal",
@@ -61,6 +62,62 @@ export let jogo = {
                     desbloqueada: true,
                     nivel: 1,
                     custoUpgrade: 200,
+                    multCusto: 1.9
+                }
+            ]
+        },
+        {
+            nome: "🔮 Mago de Glintstone (Gacha)",
+            dps: 0,
+            nivelDps: 0,
+            custoDps: 250,
+            chanceCritico: 0.05,
+            nivelCritico: 0,
+            custoCritico: 400,
+            multCusto: 1.6,
+            fragmentos: 0,
+            estrelas: 1,
+            skills: [
+                {
+                    nome: "🔮 Comet Azur",
+                    multiplicadorDanoMultiHit: 3,
+                    cooldownMax: 15,
+                    cooldownAtual: 0,
+                    duracaoMax: 3,
+                    duracaoAtual: 0,
+                    ativa: false,
+                    desbloqueada: true,
+                    nivel: 1,
+                    custoUpgrade: 250,
+                    multCusto: 1.8
+                }
+            ]
+        },
+        {
+            nome: "🛡️ Cavaleiro de Ferro (Gacha)",
+            dps: 0,
+            nivelDps: 0,
+            custoDps: 400,
+            chanceCritico: 0.15,
+            nivelCritico: 0,
+            custoCritico: 500,
+            multCusto: 1.8,
+            fragmentos: 0,
+            estrelas: 1,
+            buffPassivoDpsTime: 0.15,
+            skills: [
+                {
+                    nome: "⚙️ Baluarte Vetorial",
+                    multiplicadorDanoClique: 2.0,
+                    multiplicadorDpsAtivo: 1.5,
+                    cooldownMax: 20,
+                    cooldownAtual: 0,
+                    duracaoMax: 6,
+                    duracaoAtual: 0,
+                    ativa: false,
+                    desbloqueada: true,
+                    nivel: 1,
+                    custoUpgrade: 300,
                     multCusto: 1.9
                 }
             ]
@@ -166,13 +223,13 @@ export function executarAscensao() {
             let estavaDesbloqueado = index === 0 || heroi.nivelDps > 0;
             
             heroi.nivelDps = index === 0 ? 0 : (estavaDesbloqueado ? 1 : 0);
-            heroi.custoDps = index === 0 ? 10 : 150;
-            heroi.chanceCritico = index === 0 ? 0 : 0.10;
+            heroi.custoDps = index === 0 ? 10 : (index === 1 ? 150 : (index === 2 ? 250 : 400));
+            heroi.chanceCritico = index === 0 ? 0 : (index === 1 ? 0.10 : (index === 2 ? 0.05 : 0.15));
             heroi.nivelCritico = 0;
-            heroi.custoCritico = index === 0 ? 50 : 300;
+            heroi.custoCritico = index === 0 ? 50 : (index === 1 ? 300 : (index === 2 ? 400 : 500));
             
             // Reseta o DPS para o nível Base, mantendo os multiplicadores por Estrela do Gacha
-            let dpsBase = index === 0 ? 1 : (estavaDesbloqueado ? 2 : 0);
+            let dpsBase = index === 0 ? 1 : (estavaDesbloqueado ? (index === 1 ? 2 : (index === 3 ? 0 : 1)) : 0);
             for (let s = 1; s < (heroi.estrelas || 1); s++) dpsBase = Math.max(1, Math.ceil(dpsBase * 1.5));
             heroi.dps = dpsBase;
             
@@ -183,6 +240,15 @@ export function executarAscensao() {
                         skill.custoUpgrade = 200;
                         skill.multiplicadorDanoInstantaneo = 25;
                         skill.duracaoMax = 1;
+                    } else if (skill.nome === "🔮 Comet Azur") {
+                        skill.custoUpgrade = 250;
+                        skill.multiplicadorDanoMultiHit = 3;
+                        skill.duracaoMax = 3;
+                    } else if (skill.nome === "⚙️ Baluarte Vetorial") {
+                        skill.custoUpgrade = 300;
+                        skill.multiplicadorDanoClique = 2.0;
+                        skill.multiplicadorDpsAtivo = 1.5;
+                        skill.duracaoMax = 6;
                     } else {
                         skill.custoUpgrade = 100;
                         skill.multiplicadorDano = 5;

@@ -1,4 +1,5 @@
 import { jogo } from './state.js';
+import { atacar } from './engine.js';
 
 export let textosFlutuantes = [];
 export let animacao = { ativa: false, frameAtual: 0, duracao: 15, critico: false, tipo: 'normal' };
@@ -62,6 +63,8 @@ export function desenhar() {
     const marcoAtaque = animacao.duracao / 3; // Dinâmico (5 p/ ataque normal, 15 p/ a Elfa)
 
     const skillFogo = jogo.herois[0].skills?.find(s => s.nome === "🔥 Lâmina Incandescente");
+    const skillMago = jogo.herois[2]?.skills?.find(s => s.nome === "🔮 Comet Azur");
+    const skillCavaleiro = jogo.herois[3]?.skills?.find(s => s.nome === "⚙️ Baluarte Vetorial");
 
     // Gera as partículas de labaredas se a habilidade estiver ativa
     if (skillFogo && skillFogo.ativa) {
@@ -229,18 +232,19 @@ export function desenhar() {
         ctx.beginPath(); ctx.moveTo(385, 115); ctx.lineTo(390, 100); ctx.lineTo(395, 115); ctx.fill();
         ctx.beginPath(); ctx.moveTo(405, 115); ctx.lineTo(410, 100); ctx.lineTo(415, 115); ctx.fill();
     } else {
+        // Goblin ajustado para escala -25% (Y base mantido)
         ctx.fillStyle = "#8b4513"; 
-        ctx.fillRect(450, 130, 15, 90);
+        ctx.fillRect(438, 152, 11, 68);
         ctx.fillStyle = "#27ae60";
-        ctx.fillRect(360, 140, 80, 80);
+        ctx.fillRect(370, 160, 60, 60);
         ctx.beginPath();
-        ctx.moveTo(370, 110); ctx.lineTo(310, 90); ctx.lineTo(370, 130);
-        ctx.moveTo(430, 110); ctx.lineTo(490, 90); ctx.lineTo(430, 130);
+        ctx.moveTo(378, 138); ctx.lineTo(333, 123); ctx.lineTo(378, 153);
+        ctx.moveTo(422, 138); ctx.lineTo(467, 123); ctx.lineTo(422, 153);
         ctx.fill();
-        ctx.beginPath(); ctx.arc(400, 110, 35, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(400, 138, 26, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = "#000";
-        ctx.beginPath(); ctx.arc(385, 105, 5, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(415, 105, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(389, 134, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(411, 134, 4, 0, Math.PI * 2); ctx.fill();
     }
     ctx.restore();
 
@@ -281,6 +285,40 @@ export function desenhar() {
         }
     }
 
+    // IMPACTO MAGO (Gera partículas de cubos rodando)
+    if (animacao.ativa && animacao.tipo === 'passivoMago' && animacao.frameAtual === 1) {
+        for (let i = 0; i < 15; i++) {
+            particulasExplosao.push({
+                x: 400 + (Math.random() - 0.5) * 60,
+                y: 120 + (Math.random() - 0.5) * 60,
+                vx: (Math.random() - 0.5) * 8,
+                vy: (Math.random() - 0.5) * 8,
+                tamanho: 6 + Math.random() * 6,
+                alpha: 1,
+                cor: ["#9b59b6", "#8e44ad", "#3498db"][Math.floor(Math.random() * 3)],
+                tipo: "cubo",
+                rotacao: Math.random() * Math.PI,
+                vRotacao: (Math.random() - 0.5) * 0.5
+            });
+        }
+    }
+
+    // IMPACTO CAVALEIRO (Gera partículas de impacto prateado)
+    if (animacao.ativa && animacao.tipo === 'passivoCavaleiro' && animacao.frameAtual === 1) {
+        for (let i = 0; i < 20; i++) {
+            particulasExplosao.push({
+                x: 400 + (Math.random() - 0.5) * 80,
+                y: 120 + (Math.random() - 0.5) * 80,
+                vx: (Math.random() - 0.5) * 15,
+                vy: (Math.random() - 0.5) * 15,
+                tamanho: 3 + Math.random() * 5,
+                alpha: 1,
+                cor: ["#7f8c8d", "#bdc3c7", "#f39c12"][Math.floor(Math.random() * 3)],
+                tipo: "faisca"
+            });
+        }
+    }
+
     // GERADOR DE SANGUE GEOMÉTRICO (No impacto do ataque geral)
     if (animacao.ativa && animacao.frameAtual === 1) {
         for (let i = 0; i < 10; i++) {
@@ -304,15 +342,26 @@ export function desenhar() {
         p.y += p.vy;
         p.alpha -= 0.03;
         p.tamanho -= 0.1;
+        if (p.rotacao !== undefined) p.rotacao += p.vRotacao; // Usado pelos cubos
         
         if (p.alpha <= 0 || p.tamanho <= 0) {
             particulasExplosao.splice(i, 1);
         } else {
             ctx.globalAlpha = Math.max(0, p.alpha);
             ctx.fillStyle = p.cor;
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.tamanho, 0, Math.PI * 2);
-            ctx.fill();
+            if (p.tipo === "cubo") {
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotacao);
+                ctx.fillRect(-p.tamanho/2, -p.tamanho/2, p.tamanho, p.tamanho);
+                ctx.restore();
+            } else if (p.tipo === "faisca") {
+                ctx.fillRect(p.x, p.y, p.tamanho, p.tamanho / 2);
+            } else {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.tamanho, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
     }
 
@@ -334,112 +383,372 @@ export function desenhar() {
     }
     ctx.restore();
 
-    ctx.save();
-    ctx.translate(488, 329); 
-    if (animacao.ativa) {
-        ctx.beginPath();
-        ctx.arc(0, 0, 74, -Math.PI / 2, -Math.PI / 2 + (Math.PI / 4), false);
-        if (skillFogo && skillFogo.ativa) {
-            ctx.strokeStyle = `rgba(230, 126, 34, ${1 - (animacao.frameAtual / animacao.duracao)})`; // Laranja flamejante
-        } else {
-            ctx.strokeStyle = `rgba(255, 255, 255, ${1 - (animacao.frameAtual / animacao.duracao)})`;
-        }
-        ctx.lineWidth = 4;
-        ctx.lineCap = "round";
-        ctx.stroke();
-        const angulo = Math.sin((animacao.frameAtual / animacao.duracao) * Math.PI) * (Math.PI / 4);
-        ctx.rotate(angulo);
-    }
-    ctx.fillStyle = (skillFogo && skillFogo.ativa) ? "#e74c3c" : "#bdc3c7"; // Vermelho ou Prata
-    ctx.fillRect(-6, -74, 12, 70); 
-    ctx.fillStyle = "#f1c40f";
-    ctx.fillRect(-16, -4, 32, 8); 
-
-    // Renderiza as partículas de fogo atreladas à espada
-    for (let i = particulasFogo.length - 1; i >= 0; i--) {
-        let p = particulasFogo[i];
-        p.x += p.vx;
-        p.y += p.vy; // Como o Y local é negativo, a partícula corre para a ponta da espada
-        p.alpha -= 0.02;     // Vai sumindo
-        p.tamanho -= 0.05;   // Vai diminuindo o tamanho
-
-        if (p.alpha <= 0 || p.tamanho <= 0) {
-            particulasFogo.splice(i, 1);
-        } else {
-            ctx.globalAlpha = Math.max(0, p.alpha);
-            ctx.fillStyle = p.cor;
-            ctx.fillRect(p.x, p.y, p.tamanho, p.tamanho);
-        }
-    }
-    ctx.globalAlpha = 1; // Reseta a opacidade global
-
-    ctx.restore(); 
-
     const offsetYHeroi = 75 * (1 - escalaBreathe);
 
-    ctx.fillStyle = `hsl(200, 100%, ${Math.min(40 + jogo.herois[0].dps * 5, 80)}%)`;
-    ctx.fillRect(420, 300 + offsetYHeroi, 60, 75 * escalaBreathe);
-    ctx.fillStyle = "#ffcc99";
-    ctx.beginPath(); ctx.arc(450, 280 + offsetYHeroi, 22, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = "#5c3a21";
-    ctx.beginPath(); ctx.arc(450, 280 + offsetYHeroi, 23, Math.PI, 0); ctx.fill(); 
-    ctx.fillRect(430, 280 + offsetYHeroi, 40, 20); 
+    const numHerois = jogo.timeAtivo.length;
+    let posicoesX = [];
+    if (numHerois === 1) posicoesX = [420];
+    else if (numHerois === 2) posicoesX = [310, 490];
+    else if (numHerois === 3) posicoesX = [260, 420, 560];
 
-    if (jogo.herois.length > 1 && jogo.herois[1].nivelDps > 0) {
-        ctx.fillStyle = "#1abc9c"; 
-        ctx.fillRect(290, 300 + offsetYHeroi, 40, 75 * escalaBreathe);
-        ctx.fillStyle = "#ffcc99";
-        ctx.beginPath(); ctx.arc(310, 280 + offsetYHeroi, 20, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(295, 280 + offsetYHeroi); ctx.lineTo(275, 270 + offsetYHeroi); ctx.lineTo(292, 287 + offsetYHeroi); 
-        ctx.moveTo(325, 280 + offsetYHeroi); ctx.lineTo(345, 270 + offsetYHeroi); ctx.lineTo(328, 287 + offsetYHeroi); 
-        ctx.fill();
-        ctx.fillStyle = "#f1c40f";
-        ctx.beginPath(); ctx.arc(310, 280 + offsetYHeroi, 21, Math.PI, 0); ctx.fill(); 
-        ctx.fillRect(292, 280 + offsetYHeroi, 36, 45); 
-        
-        ctx.save();
-        ctx.translate(325, 315 + offsetYHeroi); 
-        ctx.rotate(Math.atan2(-155, 75));
-        if (animacao.ativa && animacao.frameAtual < marcoAtaque) ctx.translate(-5, 0);
-        
-        const skillElfaAtiva = animacao.ativa && animacao.tipo === 'burstElfa' && jogo.herois[1]?.skills?.some(s => s.nome === "🏹 Rajada de Glifos");
+    const buffCavaleiroAtivo = skillCavaleiro && skillCavaleiro.ativa && jogo.timeAtivo.includes(3);
 
-        ctx.strokeStyle = skillElfaAtiva ? "#00ffff" : "#f39c12"; 
-        ctx.lineWidth = skillElfaAtiva ? 8 : 4;
-        ctx.beginPath(); 
-        ctx.arc(10, 0, skillElfaAtiva ? 60 : 25, -Math.PI/2 + 0.2, Math.PI/2 - 0.2); 
-        ctx.stroke();
-        
-        ctx.strokeStyle = "#ecf0f1"; ctx.lineWidth = 1;
-        const cordaY = skillElfaAtiva ? 58 : 24; // A corda acompanha o tamanho do arco
-        ctx.beginPath(); ctx.moveTo(10, -cordaY);
-        const cordaX = (animacao.ativa && animacao.frameAtual >= marcoAtaque) ? 10 : (skillElfaAtiva ? -15 : 0); // Puxa a corda mais para trás se o arco for gigante
-        ctx.lineTo(cordaX, 0); ctx.lineTo(10, cordaY); ctx.stroke();
-        
-        if (!animacao.ativa || animacao.frameAtual < marcoAtaque) {
-            ctx.strokeStyle = "#bdc3c7"; ctx.lineWidth = 3; ctx.beginPath();
-            ctx.moveTo(cordaX, 0); ctx.lineTo(35, 0); ctx.stroke();
-        } else {
-            const progressoVoo = (animacao.frameAtual - marcoAtaque) / (animacao.duracao - marcoAtaque);
-            const distanciaVoo = progressoVoo * 150;
-            
-            if (skillElfaAtiva) {
-                ctx.strokeStyle = "#00ffff"; 
+    jogo.timeAtivo.forEach((heroiIndex, i) => {
+        const baseX = posicoesX[i];
+
+        // Barreira Dourada do Cavaleiro ao redor de todos os heróis escalados
+        if (buffCavaleiroAtivo) {
+            ctx.save();
+            ctx.strokeStyle = `rgba(241, 196, 15, ${0.4 + Math.sin(tempoAnimacao * 5) * 0.4})`; // Dourado pulsante
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.ellipse(baseX + 25, 310 + offsetYHeroi, 50, 75, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle = `rgba(241, 196, 15, 0.15)`;
+            ctx.fill();
+            ctx.restore();
+        }
+
+        if (heroiIndex === 0) {
+            ctx.save();
+            ctx.translate(baseX + 68, 329); 
+            if (animacao.ativa) {
+                ctx.beginPath();
+                ctx.arc(0, 0, 74, -Math.PI / 2, -Math.PI / 2 + (Math.PI / 4), false);
+                if (skillFogo && skillFogo.ativa) {
+                    ctx.strokeStyle = `rgba(230, 126, 34, ${1 - (animacao.frameAtual / animacao.duracao)})`;
+                } else {
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${1 - (animacao.frameAtual / animacao.duracao)})`;
+                }
                 ctx.lineWidth = 4;
-                [-15, -5, 5, 15].forEach(yOffset => {
-                    ctx.beginPath();
-                    ctx.moveTo(distanciaVoo, yOffset);
-                    ctx.lineTo(distanciaVoo + 35, yOffset);
-                    ctx.stroke();
-                });
-            } else {
+                ctx.lineCap = "round";
+                ctx.stroke();
+                const angulo = Math.sin((animacao.frameAtual / animacao.duracao) * Math.PI) * (Math.PI / 4);
+                ctx.rotate(angulo);
+            }
+            // Lâmina
+            ctx.fillStyle = (skillFogo && skillFogo.ativa) ? "#e74c3c" : "#bdc3c7"; 
+            ctx.fillRect(-6, -74, 12, 70); 
+            // Guarda da espada
+            ctx.fillStyle = "#f39c12";
+            ctx.fillRect(-20, -8, 40, 6); 
+            // Cabo e Pomo
+            ctx.fillStyle = "#8b4513";
+            ctx.fillRect(-4, -2, 8, 15);
+            ctx.fillStyle = "#f1c40f";
+            ctx.beginPath(); ctx.arc(0, 15, 5, 0, Math.PI*2); ctx.fill();
+
+            for (let j = particulasFogo.length - 1; j >= 0; j--) {
+                let p = particulasFogo[j];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.alpha -= 0.02;     
+                p.tamanho -= 0.05;   
+
+                if (p.alpha <= 0 || p.tamanho <= 0) {
+                    particulasFogo.splice(j, 1);
+                } else {
+                    ctx.globalAlpha = Math.max(0, p.alpha);
+                    ctx.fillStyle = p.cor;
+                    ctx.fillRect(p.x, p.y, p.tamanho, p.tamanho);
+                }
+            }
+            ctx.globalAlpha = 1; 
+            ctx.restore(); 
+
+            // Capa vermelha
+            ctx.fillStyle = "#c0392b";
+            ctx.beginPath();
+            ctx.moveTo(baseX + 10, 300 + offsetYHeroi);
+            ctx.lineTo(baseX - 15, 375 + offsetYHeroi);
+            ctx.lineTo(baseX + 75, 375 + offsetYHeroi);
+            ctx.lineTo(baseX + 50, 300 + offsetYHeroi);
+            ctx.fill();
+
+            // Túnica base
+            ctx.fillStyle = `hsl(200, 100%, ${Math.min(40 + jogo.herois[0].dps * 5, 80)}%)`;
+            ctx.fillRect(baseX, 300 + offsetYHeroi, 60, 75 * escalaBreathe);
+            
+            // Armadura de Placas (Peitoral e Ombreiras)
+            ctx.fillStyle = "#bdc3c7";
+            ctx.fillRect(baseX + 5, 305 + offsetYHeroi, 50, 35 * escalaBreathe);
+            ctx.beginPath(); ctx.arc(baseX + 5, 310 + offsetYHeroi, 12, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(baseX + 55, 310 + offsetYHeroi, 12, 0, Math.PI * 2); ctx.fill();
+            
+            // Botas de metal
+            ctx.fillStyle = "#7f8c8d";
+            ctx.fillRect(baseX, 355 + offsetYHeroi, 25, 20 * escalaBreathe);
+            ctx.fillRect(baseX + 35, 355 + offsetYHeroi, 25, 20 * escalaBreathe);
+
+            // Rosto
+            ctx.fillStyle = "#ffcc99";
+            ctx.beginPath(); ctx.arc(baseX + 30, 280 + offsetYHeroi, 22, 0, Math.PI * 2); ctx.fill();
+            
+            // Olhos
+            ctx.fillStyle = "#000";
+            ctx.beginPath(); ctx.arc(baseX + 35, 275 + offsetYHeroi, 3, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(baseX + 45, 275 + offsetYHeroi, 3, 0, Math.PI * 2); ctx.fill();
+
+            // Cabelo volumoso laranja
+            ctx.fillStyle = "#d35400";
+            ctx.beginPath(); ctx.arc(baseX + 30, 280 + offsetYHeroi, 23, Math.PI, 0); ctx.fill(); 
+            ctx.beginPath(); ctx.arc(baseX + 15, 270 + offsetYHeroi, 12, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(baseX + 25, 260 + offsetYHeroi, 14, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(baseX + 38, 262 + offsetYHeroi, 12, 0, Math.PI*2); ctx.fill();
+        } 
+        else if (heroiIndex === 1) {
+            // Corpo e Túnica Verde
+            ctx.fillStyle = "#1abc9c"; 
+            ctx.fillRect(baseX, 300 + offsetYHeroi, 40, 75 * escalaBreathe);
+            
+            // Cinto marrom e detalhes de couro
+            ctx.fillStyle = "#8b4513"; 
+            ctx.fillRect(baseX, 335 + offsetYHeroi, 40, 8); 
+            ctx.fillStyle = "#f1c40f"; 
+            ctx.fillRect(baseX + 15, 333 + offsetYHeroi, 10, 12);
+            ctx.fillStyle = "#a0522d"; 
+            ctx.fillRect(baseX + 5, 300 + offsetYHeroi, 8, 35 * escalaBreathe); 
+            ctx.fillRect(baseX + 27, 300 + offsetYHeroi, 8, 35 * escalaBreathe);
+
+            // Rosto
+            ctx.fillStyle = "#ffcc99";
+            ctx.beginPath(); ctx.arc(baseX + 20, 280 + offsetYHeroi, 20, 0, Math.PI * 2); ctx.fill();
+            
+            // Olhos expressivos (verdes)
+            ctx.fillStyle = "#2ecc71";
+            ctx.beginPath(); ctx.ellipse(baseX + 25, 276 + offsetYHeroi, 3, 5, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(baseX + 33, 276 + offsetYHeroi, 3, 5, 0, 0, Math.PI * 2); ctx.fill();
+
+            // Orelhas pontudas
+            ctx.fillStyle = "#ffcc99";
+            ctx.beginPath();
+            ctx.moveTo(baseX + 5, 280 + offsetYHeroi); ctx.lineTo(baseX - 15, 270 + offsetYHeroi); ctx.lineTo(baseX + 2, 287 + offsetYHeroi); 
+            ctx.moveTo(baseX + 35, 280 + offsetYHeroi); ctx.lineTo(baseX + 55, 270 + offsetYHeroi); ctx.lineTo(baseX + 38, 287 + offsetYHeroi); 
+            ctx.fill();
+            
+            // Cabelo em triângulos e franja
+            ctx.fillStyle = "#f1c40f";
+            ctx.beginPath(); ctx.arc(baseX + 20, 280 + offsetYHeroi, 21, Math.PI, 0); ctx.fill(); 
+            ctx.beginPath(); ctx.moveTo(baseX + 2, 280 + offsetYHeroi); ctx.lineTo(baseX + 12, 295 + offsetYHeroi); ctx.lineTo(baseX + 22, 275 + offsetYHeroi); ctx.fill();
+            ctx.fillRect(baseX + 2, 280 + offsetYHeroi, 15, 45); // Cabelo caindo atrás
+            
+            ctx.save();
+            const origemX = baseX + 50;
+            const origemY = 315 + offsetYHeroi;
+            ctx.translate(origemX, origemY); 
+            
+            const alvoX = 400;
+            const alvoY = 130 + flutuarMonstro;
+            const dx = alvoX - origemX;
+            const dy = alvoY - origemY;
+            ctx.rotate(Math.atan2(dy, dx));
+            if (animacao.ativa && animacao.frameAtual < marcoAtaque) ctx.translate(-5, 0);
+            
+            const skillElfaAtiva = animacao.ativa && animacao.tipo === 'burstElfa' && jogo.herois[1]?.skills?.some(s => s.nome === "🏹 Rajada de Glifos");
+
+            ctx.strokeStyle = skillElfaAtiva ? "#00ffff" : "#f39c12"; 
+            ctx.lineWidth = skillElfaAtiva ? 8 : 4;
+            ctx.beginPath(); 
+            ctx.arc(10, 0, skillElfaAtiva ? 60 : 25, -Math.PI/2 + 0.2, Math.PI/2 - 0.2); 
+            ctx.stroke();
+            
+            const cordaY = skillElfaAtiva ? 58 : 24; 
+            
+            // Pontas decorativas em dourado no arco
+            ctx.fillStyle = "#f1c40f";
+            ctx.beginPath(); ctx.arc(10, -cordaY, 4, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(10, cordaY, 4, 0, Math.PI*2); ctx.fill();
+            
+            ctx.strokeStyle = "#ecf0f1"; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(10, -cordaY);
+            const cordaX = (animacao.ativa && animacao.frameAtual >= marcoAtaque) ? 10 : (skillElfaAtiva ? -15 : 0); 
+            ctx.lineTo(cordaX, 0); ctx.lineTo(10, cordaY); ctx.stroke();
+            
+            if (!animacao.ativa || animacao.frameAtual < marcoAtaque) {
                 ctx.strokeStyle = "#bdc3c7"; ctx.lineWidth = 3; ctx.beginPath();
-                ctx.moveTo(distanciaVoo, 0); ctx.lineTo(distanciaVoo + 35, 0); ctx.stroke();
+                ctx.moveTo(cordaX, 0); ctx.lineTo(35, 0); ctx.stroke();
+            } else {
+                const progressoVoo = (animacao.frameAtual - marcoAtaque) / (animacao.duracao - marcoAtaque);
+                const distanciaTotal = Math.sqrt(dx * dx + dy * dy);
+                const distanciaVoo = progressoVoo * distanciaTotal;
+                
+                if (skillElfaAtiva) {
+                    ctx.strokeStyle = "#00ffff"; 
+                    ctx.lineWidth = 4;
+                    [-15, -5, 5, 15].forEach(yOffset => {
+                        ctx.beginPath();
+                        ctx.moveTo(distanciaVoo, yOffset);
+                        ctx.lineTo(distanciaVoo + 35, yOffset);
+                        ctx.stroke();
+                    });
+                } else {
+                    ctx.strokeStyle = "#bdc3c7"; ctx.lineWidth = 3; ctx.beginPath();
+                    ctx.moveTo(distanciaVoo, 0); ctx.lineTo(distanciaVoo + 35, 0); ctx.stroke();
+                }
+            }
+            ctx.restore();
+        }
+        else if (heroiIndex === 2) {
+            // Corpo e Túnica
+            ctx.fillStyle = "#9b59b6"; 
+            ctx.fillRect(baseX, 300 + offsetYHeroi, 50, 75 * escalaBreathe);
+            
+            // Runas verticais douradas
+            ctx.strokeStyle = "#f1c40f"; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.setLineDash([4, 4]); 
+            ctx.moveTo(baseX + 15, 300 + offsetYHeroi); ctx.lineTo(baseX + 15, 375 * escalaBreathe + 300 + offsetYHeroi); 
+            ctx.moveTo(baseX + 35, 300 + offsetYHeroi); ctx.lineTo(baseX + 35, 375 * escalaBreathe + 300 + offsetYHeroi); 
+            ctx.stroke(); ctx.setLineDash([]);
+
+            // Rosto
+            ctx.fillStyle = "#ffcc99";
+            ctx.beginPath(); ctx.arc(baseX + 25, 280 + offsetYHeroi, 20, 0, Math.PI * 2); ctx.fill();
+            
+            // Olhos
+            ctx.fillStyle = "#000";
+            ctx.beginPath(); ctx.arc(baseX + 30, 275 + offsetYHeroi, 3, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(baseX + 40, 275 + offsetYHeroi, 3, 0, Math.PI*2); ctx.fill();
+
+            // Barba geométrica branca
+            ctx.fillStyle = "#ecf0f1";
+            ctx.beginPath(); 
+            ctx.moveTo(baseX + 5, 285 + offsetYHeroi); 
+            ctx.lineTo(baseX + 45, 285 + offsetYHeroi); 
+            ctx.lineTo(baseX + 25, 315 + offsetYHeroi); 
+            ctx.fill();
+            
+            // Chapéu cônico azul escuro com aba e joia
+            ctx.fillStyle = "#2c3e50";
+            ctx.fillRect(baseX - 10, 260 + offsetYHeroi, 70, 6); // Aba
+            ctx.beginPath();
+            ctx.moveTo(baseX + 5, 260 + offsetYHeroi);
+            ctx.lineTo(baseX + 45, 260 + offsetYHeroi);
+            ctx.lineTo(baseX + 25, 195 + offsetYHeroi);
+            ctx.fill();
+            ctx.fillStyle = "#00ffff"; // Joia ciano
+            ctx.fillRect(baseX + 22, 190 + offsetYHeroi, 6, 6);
+            
+            // Cajado roxo
+            ctx.fillStyle = "#8e44ad";
+            ctx.fillRect(baseX + 40, 290 + offsetYHeroi, 8, 90);
+
+            // Pequenas faíscas azuis estáticas soltas do cajado/mãos
+            ctx.fillStyle = "#00ffff";
+            ctx.fillRect(baseX + 35 + Math.random()*15, 285 + offsetYHeroi + Math.random()*20, 2, 2);
+            ctx.fillRect(baseX + 35 + Math.random()*15, 285 + offsetYHeroi + Math.random()*20, 2, 2);
+
+            // Animação do Ataque Básico: Esferas ciano brilhantes
+            if (animacao.ativa && animacao.tipo === 'passivoMago') {
+                const progresso = animacao.frameAtual / animacao.duracao;
+                const esferaX = baseX + 44 + (400 - (baseX + 44)) * progresso;
+                const esferaY = 290 + offsetYHeroi + (130 - (290 + offsetYHeroi)) * progresso;
+                
+                ctx.save();
+                ctx.fillStyle = "#00ffff";
+                ctx.beginPath(); ctx.arc(esferaX, esferaY, 8, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = "rgba(0, 255, 255, 0.4)";
+                ctx.beginPath(); ctx.arc(esferaX, esferaY, 16, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            }
+
+            // Skill: 🔮 Comet Azur (Raio Colossal Contínuo)
+            if (skillMago && skillMago.ativa) {
+                const raioX = baseX + 44;
+                const raioY = 290 + offsetYHeroi;
+                const alvoX = 400;
+                const alvoY = 130 + flutuarMonstro; // Acompanha o monstro flutuando
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(raioX, raioY);
+                ctx.lineTo(alvoX, alvoY);
+                ctx.strokeStyle = Math.random() > 0.5 ? "#00ffff" : "#e0ffff"; // Pisca caótico
+                ctx.lineWidth = 15 + Math.random() * 10;
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(raioX, raioY);
+                ctx.lineTo(alvoX, alvoY);
+                ctx.strokeStyle = "#ffffff";
+                ctx.lineWidth = 8 + Math.random() * 4; // Núcleo brilhante
+                ctx.stroke();
+                
+                // Partículas caóticas do laser
+                for (let j = 0; j < 3; j++) {
+                    particulasExplosao.push({
+                        x: raioX + (alvoX - raioX) * Math.random(),
+                        y: raioY + (alvoY - raioY) * Math.random() + (Math.random() - 0.5) * 20,
+                        vx: (Math.random() - 0.5) * 8,
+                        vy: (Math.random() - 0.5) * 8,
+                        tamanho: 2 + Math.random() * 5,
+                        alpha: 1,
+                        cor: ["#00ffff", "#e0ffff", "#00bfff", "#ffffff"][Math.floor(Math.random() * 4)]
+                    });
+                }
+                ctx.restore();
+
+                // Multi-Hit no Canvas (Derretendo o Boss a ~60 frames por segundo)
+                if (jogo.herois[2].dps > 0) {
+                    let danoTick = jogo.herois[2].dps * (skillMago.multiplicadorDanoMultiHit || 3);
+                    
+                    // Considera também os multiplicadores providos pelo Cavaleiro
+                    let buffPassivo = 1.0;
+                    let buffAtivo = 1.0;
+                    if (jogo.timeAtivo.includes(3) && jogo.herois[3]) {
+                        buffPassivo = 1.15;
+                        if (jogo.herois[3].skills && jogo.herois[3].skills[0] && jogo.herois[3].skills[0].ativa) {
+                            buffAtivo = 1.5;
+                        }
+                    }
+                    danoTick *= buffPassivo * buffAtivo;
+                    
+                    let isCrit = Math.random() < jogo.herois[2].chanceCritico;
+                    
+                    // Chama a engine diretamente com um "tipo" exclusivo
+                    // Isso cria o caos visual de números vermelhos saltando de forma desenfreada na tela!
+                    atacar(danoTick, isCrit, 10, 'multiHitCometAzur'); 
+                }
             }
         }
-        ctx.restore();
-    }
+        else if (heroiIndex === 3) {
+            // Corpo blindado metálico
+            ctx.fillStyle = "#34495e"; 
+            ctx.fillRect(baseX - 5, 300 + offsetYHeroi, 70, 75 * escalaBreathe);
+            
+            // Rebites na armadura
+            ctx.fillStyle = "#111";
+            ctx.beginPath(); ctx.arc(baseX, 305 + offsetYHeroi, 2, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(baseX + 60, 305 + offsetYHeroi, 2, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(baseX, 365 + offsetYHeroi, 2, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(baseX + 60, 365 + offsetYHeroi, 2, 0, Math.PI*2); ctx.fill();
+
+            // Elmo
+            ctx.fillStyle = "#7f8c8d";
+            ctx.fillRect(baseX + 10, 255 + offsetYHeroi, 40, 45);
+            ctx.beginPath(); ctx.arc(baseX + 30, 255 + offsetYHeroi, 20, 0, Math.PI * 2); ctx.fill();
+            
+            // Fresta vermelha de visão
+            ctx.fillStyle = "#111"; 
+            ctx.fillRect(baseX + 15, 275 + offsetYHeroi, 30, 10);
+            ctx.fillStyle = "#e74c3c";
+            ctx.fillRect(baseX + 20, 277 + offsetYHeroi, 25, 6);
+            
+            // Escudo Quadrado do Cavaleiro com reforço em bronze
+            ctx.fillStyle = "#95a5a6";
+            ctx.fillRect(baseX - 25, 295 + offsetYHeroi, 40, 60);
+            ctx.strokeStyle = "#8b6508"; ctx.lineWidth = 4;
+            ctx.strokeRect(baseX - 25, 295 + offsetYHeroi, 40, 60);
+            
+            // Cruz no escudo
+            ctx.fillStyle = "#cd7f32";
+            ctx.fillRect(baseX - 10, 305 + offsetYHeroi, 10, 40);
+            ctx.fillRect(baseX - 20, 320 + offsetYHeroi, 30, 10);
+            
+            // Lança/Arma Secundária
+            ctx.fillStyle = "#bdc3c7";
+            ctx.fillRect(baseX + 55, 280 + offsetYHeroi, 12, 100);
+        }
+    });
 
     ctx.font = "bold 14px sans-serif";
     const textoNivel = isBoss ? `Nível ${jogo.nivel} (CHEFE)` : `Nível ${jogo.nivel}`;

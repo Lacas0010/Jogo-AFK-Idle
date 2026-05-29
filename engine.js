@@ -7,7 +7,7 @@ export function renderizarBotoesUpgrades() {
     if (!painel) return;
     painel.innerHTML = "";
     jogo.herois.forEach((heroi, index) => {
-        if (index === 0 || heroi.nivelDps > 0) {
+        if (jogo.timeAtivo.includes(index) && (index === 0 || heroi.nivelDps > 0)) {
             const starsHTML = '⭐'.repeat(heroi.estrelas || 1);
             painel.innerHTML += `
                 <div class="heroi-card">
@@ -24,8 +24,8 @@ export function renderizarBotoesUpgrades() {
                     ${heroi.skills ? heroi.skills.map((skill, sIdx) => {
                         let descUpgrade = skill.multiplicadorDanoInstantaneo !== undefined ? "+5 Mult. Burst" : "+1 Mult. Dano";
                         return `
-                            <div style="margin-top: 10px; border-top: 1px solid #444; padding-top: 10px;">
-                                <h4 style="margin: 0 0 5px 0; font-size: 13px; color: #e74c3c;">Melhorar ${skill.nome}</h4>
+                            <div style="margin-top: 10px; border-top: 1px dashed rgba(92,58,33,0.3); padding-top: 10px;">
+                                <h4 style="margin: 0 0 5px 0; font-size: 13px; color: #a04000;">Melhorar ${skill.nome}</h4>
                                 <button id="btnUpgradeSkill_${index}_${sIdx}" class="btn-upgrade" style="background: #c0392b; color: white;" onclick="comprarUpgradeSkill(${index}, ${sIdx})">
                                     ${descUpgrade}<br><small>Nvl: <span id="nivelSkill_${index}_${sIdx}">${skill.nivel || 1}</span> | Custo: <span id="custoSkill_${index}_${sIdx}">${skill.custoUpgrade || 100}</span></small>
                                 </button>
@@ -53,15 +53,48 @@ function renderizarStatusHerois() {
     `;
     
     jogo.herois.forEach((heroi, index) => {
-        if (index === 0 || heroi.nivelDps > 0) {
+        if (jogo.timeAtivo.includes(index) && (index === 0 || heroi.nivelDps > 0)) {
             const chanceCrit = Math.round(heroi.chanceCritico * 100);
             painel.innerHTML += `
                 <div class="heroi-card" style="margin-bottom: 10px; text-align: left;">
-                    <h3 class="heroi-title" style="color: #f1c40f;">${heroi.nome} ${'⭐'.repeat(heroi.estrelas || 1)}</h3>
+                    <h3 class="heroi-title">${heroi.nome} ${'⭐'.repeat(heroi.estrelas || 1)}</h3>
                     <p style="margin: 2px 0; font-size: 14px;"><strong>DPS Base:</strong> ${heroi.dps}</p>
                     <p style="margin: 2px 0; font-size: 14px;"><strong>Chance de Crítico:</strong> ${chanceCrit}%</p>
                     <p style="margin: 2px 0; font-size: 14px;"><strong>Nível DPS:</strong> ${heroi.nivelDps}</p>
                     <p style="margin: 2px 0; font-size: 14px;"><strong>Nível Crítico:</strong> ${heroi.nivelCritico}</p>
+                </div>
+            `;
+        }
+    });
+}
+
+export function renderizarPainelEquipe() {
+    const painel = document.getElementById("painelGerenciarEquipe");
+    if (!painel) return;
+
+    const spanTamanho = document.getElementById("tamanhoTime");
+    if (spanTamanho) spanTamanho.innerText = jogo.timeAtivo.length;
+
+    painel.innerHTML = "";
+    jogo.herois.forEach((heroi, index) => {
+        if (index === 0 || heroi.nivelDps > 0) {
+            const noTime = jogo.timeAtivo.includes(index);
+            const podeEscalar = jogo.timeAtivo.length < 3;
+            const ehPrincipal = index === 0;
+
+            let btnHTML = "";
+            if (noTime) {
+                btnHTML = `<button class="btn-upgrade" style="background: ${ehPrincipal ? '#7f8c8d' : '#e74c3c'}; color: white;" onclick="alternarHeroiNoTime(${index})" ${ehPrincipal ? 'disabled' : ''}>${ehPrincipal ? 'Obrigatório' : 'Remover'}</button>`;
+            } else {
+                btnHTML = `<button class="btn-upgrade" style="background: #2ecc71; color: white;" onclick="alternarHeroiNoTime(${index})" ${!podeEscalar ? 'disabled' : ''}>Escalar</button>`;
+            }
+
+            painel.innerHTML += `
+                <div class="heroi-card" style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 400px; text-align: left; margin-bottom: 5px;">
+                    <div>
+                        <h3 style="margin: 0; color: #f1c40f; font-size: 15px;">${heroi.nome}</h3>
+                    </div>
+                    ${btnHTML}
                 </div>
             `;
         }
@@ -104,38 +137,29 @@ export function atualizarInterface() {
         }
     });
 
-    const btnSkill = document.getElementById("btnSkill_0_0");
-    if (btnSkill && jogo.herois[0] && jogo.herois[0].skills && jogo.herois[0].skills[0]) {
-        let skill = jogo.herois[0].skills[0];
-        if (skill.ativa) {
-            btnSkill.innerText = `🔥 ATIVA (${skill.duracaoAtual}s)`;
-            btnSkill.disabled = true;
-        } else if (skill.cooldownAtual > 0) {
-            btnSkill.innerText = `⏳ Aguarde (${skill.cooldownAtual}s)`;
-            btnSkill.disabled = true;
-        } else {
-            btnSkill.innerText = "🔥 Lâmina Incandescente";
-            btnSkill.disabled = false;
-        }
-    }
+    const prefixos = ["🔥", "🏹", "🔮", "⚙️"];
 
-    const btnSkillElfa = document.getElementById("btnSkill_1_0");
-    if (btnSkillElfa) {
-        if (jogo.herois[1] && jogo.herois[1].nivelDps > 0 && jogo.herois[1].skills && jogo.herois[1].skills[0]) {
-            btnSkillElfa.style.display = "inline-block";
-            let skill = jogo.herois[1].skills[0];
-            if (skill.ativa) {
-                btnSkillElfa.innerText = `🏹 ATIVA (${skill.duracaoAtual}s)`;
-                btnSkillElfa.disabled = true;
-            } else if (skill.cooldownAtual > 0) {
-                btnSkillElfa.innerText = `⏳ Aguarde (${skill.cooldownAtual}s)`;
-                btnSkillElfa.disabled = true;
+    for (let index = 0; index < 4; index++) {
+        const btnSkill = document.getElementById(`btnSkill_${index}_0`);
+        if (btnSkill) {
+            if (jogo.timeAtivo.includes(index) && jogo.herois[index] && (index === 0 || jogo.herois[index].nivelDps > 0) && jogo.herois[index].skills && jogo.herois[index].skills[0]) {
+                btnSkill.style.display = "inline-block";
+                let skill = jogo.herois[index].skills[0];
+                let icone = prefixos[index];
+                
+                if (skill.ativa) {
+                    btnSkill.innerText = `${icone} ATIVA (${skill.duracaoAtual}s)`;
+                    btnSkill.disabled = true;
+                } else if (skill.cooldownAtual > 0) {
+                    btnSkill.innerText = `⏳ Aguarde (${skill.cooldownAtual}s)`;
+                    btnSkill.disabled = true;
+                } else {
+                    btnSkill.innerText = skill.nome;
+                    btnSkill.disabled = false;
+                }
             } else {
-                btnSkillElfa.innerText = "🏹 Rajada de Glifos";
-                btnSkillElfa.disabled = false;
+                btnSkill.style.display = "none";
             }
-        } else {
-            btnSkillElfa.style.display = "none";
         }
     }
 
@@ -193,6 +217,20 @@ window.darGemasTeste = darGemasTeste;
 window.resetarJogo = resetarJogo;
 window.ascender = executarAscensao;
 
+window.alternarHeroiNoTime = function(heroiIndex) {
+    if (heroiIndex === 0) return; // Regra: O Herói Principal (0) não pode ser removido
+    const pos = jogo.timeAtivo.indexOf(heroiIndex);
+    if (pos > -1) {
+        jogo.timeAtivo.splice(pos, 1);
+    } else if (jogo.timeAtivo.length < 3) {
+        jogo.timeAtivo.push(heroiIndex);
+    }
+    renderizarPainelEquipe();
+    renderizarBotoesUpgrades();
+    atualizarInterface();
+    salvarJogo();
+};
+
 window.ativarSkill = function(heroiIndex, skillIndex) {
     let heroi = jogo.herois[heroiIndex];
     let skill = heroi.skills[skillIndex];
@@ -230,6 +268,9 @@ window.alternarAba = function(abaId) {
     if (abaId === 'abaStatus') {
         renderizarStatusHerois();
     }
+    if (abaId === 'abaEquipe') {
+        renderizarPainelEquipe();
+    }
 };
 
 export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'normal') {
@@ -263,6 +304,20 @@ export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'no
         } else if (isBoss) {
             multiplicadorElemental = 0.5;
             textoAtaque = "🔷 FRACTAL MÁGICO ";
+        }
+    } else if (tipo === 'passivoMago') {
+        corTexto = "155, 89, 182"; 
+        if (jogo.herois[2] && jogo.herois[2].skills[0].ativa) {
+            textoAtaque = isCritico ? "🔮 CRÍTICO CÚBICO! " : "🔮 ";
+        } else {
+            textoAtaque = isCritico ? "CRÍTICO! " : "";
+        }
+    } else if (tipo === 'passivoCavaleiro') {
+        corTexto = "149, 165, 166"; 
+        if (jogo.herois[3] && jogo.herois[3].skills[0].ativa) {
+            textoAtaque = isCritico ? "⚙️ IMPACTO ESMAGADOR! " : "⚙️ ";
+        } else {
+            textoAtaque = isCritico ? "CRÍTICO! " : "";
         }
     }
 
@@ -334,14 +389,15 @@ window.addEventListener('DOMContentLoaded', () => {
     const tempoFora = jogo.ultimoAcesso ? Math.floor((Date.now() - jogo.ultimoAcesso) / 1000) : 0;
     carregarJogo();
     if (tempoFora > 0 && jogo.pontos > 0) { // Lógica básica de retroalimentação
-        let dpsTotal = jogo.herois.reduce((acc, h) => acc + h.dps, 0);
+        let dpsTotal = jogo.timeAtivo.reduce((acc, idx) => acc + jogo.herois[idx].dps, 0);
         let danoOffline = tempoFora * dpsTotal;
         if(danoOffline > 0) mostrarNotificacao(`Você ficou fora por ${tempoFora}s.\nSeu time progrediu!`);
     }
 
     setInterval(() => {
         // Loop para gerenciar as Habilidades Ativas e Cooldowns
-        jogo.herois.forEach(heroi => {
+        jogo.timeAtivo.forEach(idx => {
+            let heroi = jogo.herois[idx];
             if (heroi.skills) {
                 heroi.skills.forEach(skill => {
                     if (skill.ativa) {
@@ -355,11 +411,36 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        jogo.herois.forEach((heroi, index) => {
-            if (index === 0 || heroi.nivelDps > 0) {
+        // Lógica de Buffs do Cavaleiro de Ferro
+        let buffPassivoCavaleiro = 1.0;
+        let buffAtivoCavaleiro = 1.0;
+        if (jogo.timeAtivo.includes(3) && jogo.herois[3]) {
+            buffPassivoCavaleiro = 1.15; // +15% de DPS passivo para todos
+            if (jogo.herois[3].skills && jogo.herois[3].skills[0] && jogo.herois[3].skills[0].ativa) {
+                buffAtivoCavaleiro = 1.5; // +50% de DPS ativo
+            }
+        }
+
+        jogo.timeAtivo.forEach(index => {
+            let heroi = jogo.herois[index];
+            if (index === 0 || heroi.nivelDps > 0) { // Verificação de segurança adicional
+                // Mago de Glintstone (Índice 2): Multi-hit ativo não ataca por bloco (será delegado ao loop de renderização visual)
+                if (index === 2 && heroi.skills && heroi.skills[0] && heroi.skills[0].ativa) {
+                    return; 
+                }
+
                 let isCrit = Math.random() < heroi.chanceCritico;
                 let danoHeroi = isCrit ? heroi.dps * 3 : heroi.dps;
-                atacar(danoHeroi, isCrit, 15, index === 1 ? 'dpsPassivoElfa' : 'normal');
+                
+                if (heroi.skills && heroi.skills[0] && heroi.skills[0].ativa && heroi.skills[0].multiplicadorDano) {
+                    danoHeroi *= heroi.skills[0].multiplicadorDano;
+                }
+                
+                // Aplica os buffs provenientes do Cavaleiro em todo DPS gerado
+                danoHeroi *= buffPassivoCavaleiro * buffAtivoCavaleiro;
+                
+                let tipo = index === 1 ? 'dpsPassivoElfa' : (index === 2 ? 'passivoMago' : (index === 3 ? 'passivoCavaleiro' : 'normal'));
+                if (danoHeroi > 0) atacar(danoHeroi, isCrit, 15, tipo); // Ignora 0 DPS natural do Cavaleiro de Ferro
             }
         });
         salvarJogo();
