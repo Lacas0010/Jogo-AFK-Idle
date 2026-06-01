@@ -55,13 +55,26 @@ export function darTiroGacha(quantidade = 1) {
                 }
                 highestRarity = 'dourado';
                 bestHeroIndex = heroIndex;
-            } else if (roll < 0.30) { // 20 Fragmentos - Dourado
+            } else if (roll < 0.05) { // 5% Personagem - Dourado (Reseta o Pity)
+                jogo.tirosGacha = 0;
+                let heroIndex = Math.floor(Math.random() * jogo.herois.length);
+                let heroi = jogo.herois[heroIndex];
+                if (heroi.estrelas === 0 || !heroi.desbloqueada) {
+                    heroi.estrelas = 1; heroi.desbloqueada = true;
+                    heroisDesbloqueados.push(heroi.nome);
+                } else {
+                    totalGemasReembolso += adicionarFragmentos(heroIndex, 20);
+                    fragmentos20Ganhos[heroi.nome] = (fragmentos20Ganhos[heroi.nome] || 0) + 1;
+                }
+                highestRarity = 'dourado';
+                bestHeroIndex = heroIndex;
+            } else if (roll < 0.30) { // 25% (0.05 a 0.30) Fragmentos (20 Frags) - Roxo
                 let heroIndex = Math.floor(Math.random() * jogo.herois.length);
                 let heroi = jogo.herois[heroIndex];
                 totalGemasReembolso += adicionarFragmentos(heroIndex, 20);
                 fragmentos20Ganhos[heroi.nome] = (fragmentos20Ganhos[heroi.nome] || 0) + 1;
-                if (highestRarity !== 'dourado') highestRarity = 'dourado';
-                bestHeroIndex = heroIndex;
+                if (highestRarity === 'azul') highestRarity = 'roxo';
+                if (bestHeroIndex === null) bestHeroIndex = heroIndex;
             } else if (roll < 0.70) { // Pontos - Azul
                 let dpsTotal = jogo.herois.reduce((acc, h) => acc + h.dps, 0);
                 let ganho = (dpsTotal > 0 ? dpsTotal : 1) * 60;
