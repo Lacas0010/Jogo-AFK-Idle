@@ -401,3 +401,29 @@ button {
         grid-template-columns: repeat(4, 1fr);
     }
 }
+
+/* BLINDAGEM ABSOLUTA PARA TELEMÓVEIS (MOBILE OVERRIDE) */
+@media (max-width: 768px), (orientation: portrait) {
+    .btn-toggle-sidebar {
+        position: fixed !important;
+        top: auto !important;
+        bottom: 35px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        z-index: 999999 !important; /* Fica por cima de absolutamente tudo no ecrã */
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    #painelSkills {
+        position: fixed !important;
+        bottom: 95px !important; /* Levanta os botões de ataque para não tocarem no menu */
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: 95vw !important;
+        z-index: 100 !important;
+    }
+}
