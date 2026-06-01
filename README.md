@@ -8,6 +8,7 @@ Um jogo incremental (clicker/idle) épico e expansivo construído inteiramente e
 * **Gerenciamento de Equipe Tático:** Escale até **3 Heróis simultâneos** no campo de batalha. Combine sinergias de habilidades ativas, buffs passivos e danos elementais.
 * **Ciclo Dia/Noite e Biomas:** Cenários gerados processualmente que alternam entre **Floresta** e **Pântano**, com transição dinâmica de iluminação (Manhã, Tarde, Noite, Madrugada) e fases da Lua.
 * **Inimigos Únicos e Chefes:** Enfrente hordas de monstros e Chefes colossais a cada 5 níveis, como Orcs Furiosos, Goblins, Slimes Gigantes e a temível Hidra de 3 Cabeças com animações procedurais.
+* **Responsividade Mobile:** A interface e a câmera da engine (Canvas) se adaptam dinamicamente a telas verticais (smartphones), reposicionando heróis, HUD e painéis através de CSS Grid e Matemática de offsets para a melhor experiência em qualquer dispositivo.
 
 ##  Heróis e Classes (Sistema Gacha)
 
@@ -18,11 +19,11 @@ Invoque novos aliados no Altar usando **Gemas**, com um sistema justo de *Pity* 
 * **🏹 Elfa Arqueira:** Atiradora focada em dano passivo à distância com alto poder de *burst*.
   * *Skill:* **🏹 Rajada de Glifos** (Dispara múltiplas flechas mágicas que causam dano instantâneo estrondoso).
 * **🔮 Mago de Glintstone:** Conjurador cujos ataques básicos perseguem os inimigos.
-  * *Skill:* **🔮 Comet Azur** (Canaliza um feixe colossal contínuo de dano multi-hit que derrete o HP do inimigo frame a frame).
+  * *Skill:* **🔮 Comet Azur** (Canaliza um feixe colossal contínuo de dano multi-hit que derrete o HP do inimigo. Utiliza um *Throttle* matemático otimizado para não gargalar a engine).
 * **🛡️ Cavaleiro de Ferro:** O suporte definitivo. Não ataca, mas oferece buffs massivos para a equipe.
   * *Skill:* **⚙️ Baluarte Vetorial** (Ergue um escudo que amplifica temporariamente todo o DPS e dano de clique do time).
 * **🐍 Ladra de Presas:** Assassina ágil que acumula pilhas de veneno contínuo nos adversários.
-  * *Skill:* **🔮 Adagas de Glifos** (Consome instantaneamente todas as pilhas de veneno para um dano explosivo absurdo).
+  * *Skill:* **🔮 Adagas de Glifos** (Realiza um Dash/Blink ultra-rápido, consome todo o lodo tóxico com um Corte Duplo em 'X' devastador e retorna com um Backdash inercial).
 
 ## ⚔️ Mecânicas Avançadas de Combate
 
@@ -53,6 +54,9 @@ Abra portais para enfrentar inimigos com HP exponencialmente maior. Você tem ap
 * **Contratos Diários:** Cumpra missões variadas (dar X cliques, matar X chefes, dar X críticos) para receber infusões regulares de Gemas.
 * **Expedições:** Tem heróis sobrando? Envie aqueles que não estão no time ativo em missões de 1 hora de tempo real para buscar Pontos e Gemas extras (recompensa escala com o DPS do herói enviado).
 
+### 🏆 Sistema de Marcos (Conquistas)
+Ganhe recompensas progressivas e massivas de Gemas ao alcançar metas históricas no jogo: Cliques Manuais, Monstros Derrotados, Nível Alcançado e Tiros no Altar do Gacha.
+
 ### ⚒️ Forja e Inventário
 Chefes derrotados derrubam materiais baseados no bioma atual (*Couro de Orc* na Floresta e *Escamas de Hidra* no Pântano). Reúna materiais para forjar Artefatos Globais que alteram as regras do jogo, como prolongar o tempo de suas habilidades ou reduzir os cooldowns.
 
@@ -60,8 +64,10 @@ Chefes derrotados derrubam materiais baseados no bioma atual (*Couro de Orc* na 
 
 Todo o jogo é desenhado em tempo real utilizando Matemática e Canvas 2D, sem uso de imagens ou *spritesheets* externos!
 * Retratos (Portraits) desenhados via código para cada aba e painel.
+* **Animação Gacha e Splash Arts:** Ao invocar um herói, uma animação cinematográfica em tela cheia é disparada exibindo *Splash Arts* massivas desenhadas proceduralmente usando Camadas, Curvas de Bézier e Sombreamento (ShadowBlur).
 * Sistema de Partículas avançado: Fogo, Faíscas, Sangue com gravidade, Cubos rotativos e Explosões arcanas.
 * Animações ricas: Árvores balançando ao vento, grama dinâmica, névoa pantanosa e o movimento fluído (Curvas de Bézier) dos pescoços da Hidra.
+* **Otimizações de Engine:** Controle inteligente de poluição visual e cálculos de FPS (como o *Throttle* de Raio do Mago) evitando que dispositivos travem durante o *Late Game*.
 
 ## 💾 Gerenciamento de Save
 

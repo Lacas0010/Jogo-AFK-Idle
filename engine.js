@@ -674,6 +674,9 @@ window.alternarAba = function(abaId) {
 };
 
 export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'normal') {
+    // Flag para evitar poluição visual do Raio Arcino
+    let suprimirTextos = (tipo === 'burstMago');
+
     // Se a animação atual é o burst da elfa, não interrompe ela visualmente se houver um ataque ou clique normal!
     if (!(animacao.ativa && animacao.tipo === 'burstElfa' && tipo === 'normal')) {
         animacao.ativa = true;
@@ -732,14 +735,17 @@ export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'no
 
     let danoFinal = dano * multiplicadorElemental * (jogo.multiplicadorAscensao || 1);
 
-    textosFlutuantes.push({
-        texto: `${textoAtaque}-${danoFinal}`, 
-        x: 400 + (Math.random() * 80 - 40),
-        y: 60 + (Math.random() * 15),
-        alpha: 1, duracao: isCritico ? 60 : 45,
-        cor: corTexto,
-        tamanho: isCritico ? "bold 22px sans-serif" : "bold 18px sans-serif"
-    });
+    if (!suprimirTextos) {
+        textosFlutuantes.push({
+            texto: textoAtaque + `-${Math.floor(danoFinal)}`,
+            x: 400 + (Math.random() * 80 - 40),
+            y: 220 + (Math.random() * 40 - 20),
+            alpha: 1, 
+            duracao: 30,
+            cor: corTexto,
+            tamanho: isCritico ? "bold 28px Georgia" : "bold 20px Georgia"
+        });
+    }
 
     jogo.monstroHp -= danoFinal;
     if (jogo.monstroHp <= 0) {

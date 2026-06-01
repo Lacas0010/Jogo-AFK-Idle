@@ -761,6 +761,45 @@ export function desenhar() {
 
     jogo.timeAtivo.forEach((heroiIndex, i) => {
         const baseX = posicoesX[i];
+        
+        let x = baseX;
+        let animX = x;
+        let animY = 320;
+        let animRotacao = 0; // Permite inclinar os heróis durante o avanço
+
+        if (animacao.ativa && animacao.tipo === 'normal') {
+            animX += Math.sin(animacao.frameAtual * 0.5) * 20;
+        } else if (animacao.ativa && animacao.tipo === 'burstElfa' && heroiIndex === 1) {
+            animY -= Math.sin((animacao.frameAtual / animacao.duracao) * Math.PI) * 50;
+        } else if (animacao.ativa && animacao.tipo === 'burstLadra' && heroiIndex === 4) {
+            // Animação de Blink/Dash da Assassina
+            if (animacao.frameAtual < 8) { 
+                // Avanço extremamente rápido até a cara do monstro
+                let prog = animacao.frameAtual / 8;
+                animX = x + (320 - x) * prog;
+                animY = 320 + (230 - 320) * prog;
+                animRotacao = Math.PI / 6; // Inclina para frente (ataque)
+            } else if (animacao.frameAtual <= 35) { 
+                // Tempo de sustentação no ar durante os cortes
+                animX = 320;
+                animY = 230;
+            } else { 
+                // Retorno rápido (Backdash)
+                let prog = (animacao.frameAtual - 35) / 10;
+                animX = 320 + (x - 320) * prog;
+                animY = 230 + (320 - 230) * prog;
+                animRotacao = -Math.PI / 6; // Inclina para trás freando
+            }
+        }
+
+        ctx.save();
+        // Compensação aplicada para manter a compatibilidade com o desenho posicional fixo do código atual
+        ctx.translate(animX - x, animY - 320); 
+        if (animRotacao !== 0) {
+            ctx.translate(x, 320);
+            ctx.rotate(animRotacao);
+            ctx.translate(-x, -320);
+        }
 
         const isMaxStar = jogo.herois[heroiIndex].estrelas >= 5;
 
@@ -1067,27 +1106,17 @@ export function desenhar() {
                 }
                 ctx.restore();
 
-                // Multi-Hit no Canvas (Derretendo o Boss a ~60 frames por segundo)
-                if (jogo.herois[2].dps > 0) {
-                    let danoTick = jogo.herois[2].dps * (skillMago.multiplicadorDanoMultiHit || 3);
+                // --- OTIMIZAÇÃO: Throttle do Comet Azur ---
+                // O raio visual contínua liso a 60fps, mas o cálculo matemático pesa apenas 4x por segundo
+                if (tempoAnimacao % 15 === 0) { 
+                    let buffPassivo = jogo.timeAtivo.includes(3) ? 1.15 : 1.0;
+                    let buffAtivo = (jogo.timeAtivo.includes(3) && jogo.herois[3].skills && jogo.herois[3].skills[0].ativa) ? 1.5 : 1.0;
+                    let buffAres = 1 + ((jogo.reliquiasPantheon && jogo.reliquiasPantheon[0] ? jogo.reliquiasPantheon[0] : 0) * 0.01);
                     
-                    // Considera também os multiplicadores providos pelo Cavaleiro
-                    let buffPassivo = 1.0;
-                    let buffAtivo = 1.0;
-                    if (jogo.timeAtivo.includes(3) && jogo.herois[3]) {
-                        buffPassivo = 1.15;
-                        if (jogo.herois[3].skills && jogo.herois[3].skills[0] && jogo.herois[3].skills[0].ativa) {
-                            buffAtivo = 1.5;
-                        }
-                    }
-                    let buffAres = 1 + ((jogo.reliquiasPantheon[0] || 0) * 0.01);
-                    danoTick *= buffPassivo * buffAtivo * buffAres;
+                    // Condensa 15 micro-frames de dano em 1 hit concentrado (dividido por 4 porque ocorre 4x num segundo)
+                    let danoTick = (jogo.herois[2].dps * skillMago.multiplicadorDanoMultiHit * buffPassivo * buffAtivo * buffAres) / 4;
                     
-                    let isCrit = Math.random() < jogo.herois[2].chanceCritico;
-                    
-                    // Chama a engine diretamente com um "tipo" exclusivo
-                    // Isso cria o caos visual de números vermelhos saltando de forma desenfreada na tela!
-                    atacar(danoTick, isCrit, 10, 'multiHitCometAzur'); 
+                    atacar(danoTick, false, 0, 'burstMago'); // O zero desativa o peso das partículas de sangue
                 }
             }
         }
@@ -1144,6 +1173,8 @@ export function desenhar() {
             ctx.beginPath(); ctx.moveTo(baseX + 20, 290 + offsetYHeroi); ctx.lineTo(baseX - 5, 275 + offsetYHeroi); ctx.lineTo(baseX + 10, 265 + offsetYHeroi); ctx.fill();
             ctx.beginPath(); ctx.moveTo(baseX + 20, 290 + offsetYHeroi); ctx.lineTo(baseX + 45, 275 + offsetYHeroi); ctx.lineTo(baseX + 30, 265 + offsetYHeroi); ctx.fill();
         }
+        
+        ctx.restore();
     });
 
     ctx.font = "bold 14px sans-serif";
@@ -1172,6 +1203,43 @@ export function desenhar() {
         let floatPoison = Math.sin(tempoAnimacao * 5) * 4; 
         ctx.fillText(`☠️ Toxina: ${jogo.monstroLodoToxico}x`, 400, 115 + floatPoison);
         ctx.restore();
+    }
+
+    // --- EFEITO: CORTE DUPLO DA ASSASSINA (X) ---
+    if (animacao.ativa && animacao.tipo === 'burstLadra' && animacao.frameAtual >= 8) {
+        let hitFrame = animacao.frameAtual - 8;
+        if (hitFrame <= 15) { // O flash do corte dura exatos 15 frames para ser violento e nítido
+            let progressoX = hitFrame / 15;
+            ctx.save();
+            ctx.translate(400, 220); // Centro do corpo do Monstro
+            ctx.globalAlpha = Math.max(0, 1 - progressoX); // Vai sumindo aos poucos
+            
+            // O "X" cresce de tamanho enquanto some
+            let escalaX = 1 + (progressoX * 1.5);
+            ctx.scale(escalaX, escalaX);
+            
+            ctx.shadowBlur = 25;
+            ctx.lineWidth = 14;
+            ctx.lineCap = "round";
+
+            // Lâmina 1 (Corte Tóxico Verde Esmeralda)
+            ctx.shadowColor = "#58d68d";
+            ctx.strokeStyle = "#58d68d";
+            ctx.beginPath(); ctx.moveTo(-60, -60); ctx.lineTo(60, 60); ctx.stroke();
+
+            // Lâmina 2 (Corte Sombrio Roxo Veneno)
+            ctx.shadowColor = "#8e44ad";
+            ctx.strokeStyle = "#8e44ad";
+            ctx.beginPath(); ctx.moveTo(60, -60); ctx.lineTo(-60, 60); ctx.stroke();
+
+            // Núcleo de pura luz no centro do impacto
+            ctx.shadowColor = "#fff";
+            ctx.fillStyle = "#fff";
+            ctx.globalAlpha = (1 - progressoX) * 0.8;
+            ctx.beginPath(); ctx.arc(0, 0, 30 * (1 - progressoX), 0, Math.PI*2); ctx.fill();
+
+            ctx.restore();
+        }
     }
 
     for (let i = textosFlutuantes.length - 1; i >= 0; i--) {
