@@ -2,21 +2,28 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Joguinho AFK</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <h1>Idle Game</h1>
-    <div class="hud">Tesouro do Reino: $<span id="pontos">0</span></div>
+    <div class="area-jogo">
     <canvas id="jogoCanvas" width="800" height="450"></canvas>
     
-    <div id="painelSkills" style="margin-top: 15px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;">
+    <div id="painelSkills">
         <button id="btnSkill_0_0" class="btn-upgrade btn-skill" onclick="ativarSkill(0, 0)">🔥 Lâmina Incandescente</button>
         <button id="btnSkill_1_0" class="btn-upgrade btn-skill" onclick="ativarSkill(1, 0)">🏹 Rajada de Glifos</button>
         <button id="btnSkill_2_0" class="btn-upgrade btn-skill" style="display: none;" onclick="ativarSkill(2, 0)">🔮 Comet Azur</button>
         <button id="btnSkill_3_0" class="btn-upgrade btn-skill" style="display: none;" onclick="ativarSkill(3, 0)">⚙️ Baluarte Vetorial</button>
     </div>
+    </div>
+
+    <div id="sidebarAbas" class="sidebar-menus fechada">
+        <button class="btn-toggle-sidebar" onclick="window.toggleSidebar()">Menu</button>
+        
+        <h1 style="text-align: center; font-size: 24px; margin-top: 15px;">Idle Game</h1>
+        <div class="hud">Tesouro do Reino: $<span id="pontos">0</span></div>
 
     <div class="menu-abas">
         <button class="btn-aba active" onclick="alternarAba('abaUpgrades')">⚔️ Upgrades</button>
@@ -26,8 +33,13 @@
         <button class="btn-aba" onclick="alternarAba('abaSantuario')">✨ Santuário</button>
         <button class="btn-aba" onclick="alternarAba('abaForja')">⚒️ Forja</button>
         <button class="btn-aba" onclick="alternarAba('abaGuilda')">📜 Guilda</button>
+        <button class="btn-aba" onclick="alternarAba('abaMarcos')">🏆 Marcos</button>
+        <button class="btn-aba" onclick="alternarAba('abaPantheon')">🏛️ Panteão</button>
+        <button class="btn-aba" onclick="alternarAba('abaFrestas')">🌌 Frestas</button>
+        <button class="btn-aba" onclick="alternarAba('abaDebug')">🛠️ Debug</button>
     </div>
 
+        <div class="sidebar-conteudo">
     <div id="abaUpgrades" class="aba-conteudo active">
         <div id="painelUpgrades" class="controles painel-upgrades"></div>
     </div>
@@ -79,22 +91,27 @@
         <div id="painelGerenciarEquipe" class="controles" style="flex-direction: column; gap: 15px; align-items: center;"></div>
     </div>
 
-    <div class="controles" style="max-width: 800px; margin: 20px auto; text-align: center;">
-        <button class="btn-reset" onclick="resetarJogo()">Resetar Progresso</button>
+    <div id="abaMarcos" class="aba-conteudo">
+        <h2>🏆 Marcos de Progressão</h2>
+        <p style="color: #f1c40f; margin-bottom: 20px;">Complete metas para ganhar grandes injeções de Gemas!</p>
+        <div id="painelMarcos" class="painel-upgrades"></div>
     </div>
 
-    <div style="margin-top: 40px; text-align: center;">
-        <button class="btn-reset" style="background: #2c3e50; border-color: #34495e;" onclick="window.alternarPainelDebug()">🛠️ Painel de Desenvolvedor</button>
-    </div>
+            <div id="abaPantheon" class="aba-conteudo"><h2>🏛️ Panteão das Relíquias</h2><div id="painelPantheon" class="painel-upgrades"></div></div>
+            <div id="abaFrestas" class="aba-conteudo"><h2>🌌 Frestas Dimensionais</h2><div id="painelFrestas" class="painel-upgrades"></div></div>
+            
+            <div id="abaDebug" class="aba-conteudo">
+                <h3 style="color: #e74c3c;">⚡ Menu de Trapaças</h3>
+                <div class="painel-upgrades">
+                    <button class="btn-upgrade" style="background: #f1c40f; color: #111;" onclick="window.debugAdicionarPontos(100000)">💰 +100k Pontos</button>
+                    <button class="btn-upgrade" style="background: #9b59b6; color: #fff;" onclick="window.debugAdicionarGemas(500)">🔮 +500 Gemas</button>
+                    <button class="btn-upgrade" style="background: #00ffff; color: #111;" onclick="window.debugAdicionarAlmas(10)">✨ +10 Almas</button>
+                    <button class="btn-crit" onclick="window.debugAvancarNiveis(5)">⏩ Avançar 5 Níveis</button>
+                    <button class="btn-reset" onclick="window.debugResetarCooldowns()">⏳ Reset Cooldowns</button>
+                    <button class="btn-reset" onclick="resetarJogo()" style="margin-top: 20px; width: 100%;">Apagar Save Completo</button>
+                </div>
+            </div>
 
-    <div id="painelDebugAdmin" class="aba-conteudo" style="display: none; max-width: 800px; margin: 15px auto; padding: 15px; border: 2px dashed #e74c3c; background: #1c1c1c;">
-        <h3 style="color: #e74c3c; margin-top: 0;">⚡ Menu de Trapaças (Debug)</h3>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
-            <button class="btn-upgrade" style="background: #f1c40f; color: #111;" onclick="window.debugAdicionarPontos(100000)">💰 +100k Pontos</button>
-            <button class="btn-upgrade" style="background: #9b59b6; color: #fff;" onclick="window.debugAdicionarGemas(500)">🔮 +500 Gemas</button>
-            <button class="btn-upgrade" style="background: #00ffff; color: #111;" onclick="window.debugAdicionarAlmas(10)">✨ +10 Almas</button>
-            <button class="btn-crit" onclick="window.debugAvancarNiveis(5)">⏩ Avançar 5 Níveis</button>
-            <button class="btn-reset" onclick="window.debugResetarCooldowns()">⏳ Reset Cooldowns</button>
         </div>
     </div>
 

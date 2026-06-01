@@ -1,12 +1,17 @@
-/* Configurações Gerais e Tipografia Medieval */
-body { 
-    background: #0f0b07; 
+/* Configurações Globais Absolutas */
+* {
+    box-sizing: border-box;
+}
+
+html, body { 
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    overflow: hidden !important;
+    background: #000;
     color: #e2d1b6; 
-    text-align: center; 
-    font-family: 'Georgia', 'Times New Roman', serif; 
-    margin: 0; 
-    padding: 20px;
-    background-image: radial-gradient(#1a120b 20%, #0f0b07 80%);
+    font-family: 'Georgia', serif; 
 }
 
 h1 {
@@ -17,45 +22,86 @@ h1 {
     margin-bottom: 5px;
 }
 
-canvas { 
-    background: #111; 
-    border: 4px double #d35400; 
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(0,0,0,0.6);
-    border-radius: 4px;
-    max-width: 100%;
-    height: auto; /* Mantém a proporção de 16:9 dinâmica no navegador */
-    display: block;
-    margin: 10px auto;
+/* Área de Jogo atuando como Overlay Transparente */
+.area-jogo {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px;
+    z-index: 10;
+    pointer-events: none; /* Deixa o clique do mouse passar direto para o Canvas no fundo */
 }
 
-/* HUD Superior e Exibição de Moedas */
+/* Reativa os cliques nos botões da Interface */
+.area-jogo > * {
+    pointer-events: auto;
+}
+
+/* Canvas como Fundo Dinâmico (Fullscreen) */
+#jogoCanvas {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    max-height: none !important;
+    z-index: 1;
+    pointer-events: auto;
+    border: none;
+    border-radius: 0;
+}
+
+/* Ajustes da HUD (Agora na Sidebar) */
 .hud {
-    font-size: 26px;
+    font-size: 20px;
     color: #f1c40f;
     font-weight: bold;
-    text-shadow: 1px 2px 2px #000;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+    border-radius: 8px;
+    border: 2px solid #8e7a53;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.8);
+    margin: 0 10px 10px 10px;
+    text-align: center;
 }
 
-.hud, .menu-abas, #painelSkills {
-    max-width: 800px;
-    margin-left: auto;
-    margin-right: auto;
+.menu-abas {
+    width: 100%;
 }
 
+/* Base flutuante das Skills */
 #painelSkills {
     display: flex;
-    justify-content: center; /* Centraliza as skills abaixo do canvas */
+    justify-content: center;
+    flex-wrap: wrap;
     gap: 12px;
-    max-width: 800px;
-    margin: 15px auto;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 15px;
+    border-radius: 12px;
+    backdrop-filter: blur(3px);
+    margin-top: auto; /* Empurra para o rodapé da área de jogo */
+    margin-bottom: 20px;
+    width: auto;
+    max-width: 90%;
+    z-index: 20;
+    transition: opacity 0.3s ease;
+    opacity: 0.6; /* Semi-transparente para não esconder a ação do Canvas */
+}
+
+#painelSkills:hover {
+    opacity: 1; /* O painel ganha foco quando o mouse entra */
 }
 
 /* Painel Geral: Estrutura de Castelo (Muralha de Pedra) */
 .aba-conteudo {
     display: none;
-    max-width: 800px;
-    margin: 20px auto;
+    width: 100%;
     padding: 25px;
+    box-sizing: border-box;
     background: linear-gradient(135deg, #2c2c2c 25%, #222 25%, #222 50%, #2c2c2c 50%, #2c2c2c 75%, #222 75%, #222 100%);
     background-size: 40px 40px; /* Efeito simulando blocos de tijolos escuros */
     background-color: #252525;
@@ -79,6 +125,8 @@ canvas {
     padding: 15px; 
     border-radius: 4px; 
     position: relative;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .heroi-card {
@@ -91,6 +139,7 @@ canvas {
     border-radius: 4px;
     position: relative;
     box-sizing: border-box;
+    width: 100%;
 }
 
 /* Regra Exclusiva para os Cards de Upgrades (Fluxo Vertical Organizado) */
@@ -156,24 +205,23 @@ canvas {
 
 /* Sistema de Abas (Menu de Navegação Estilo Portão/Ferro) */
 .menu-abas {
-    display: flex;
-    justify-content: center; /* Centraliza os botões horizontalmente */
-    align-items: center;
-    gap: 10px;
-    max-width: 800px;
-    margin: 20px auto; /* O 'auto' nas laterais centraliza o bloco inteiro na tela */
-    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* Organiza em blocos de botões menores */
+    gap: 4px;
+    margin: 0;
+    background: #111;
+    padding: 5px;
+    box-sizing: border-box;
 }
 
 .btn-aba {
-    flex: 1; /* Faz todos os botões terem exatamente o mesmo tamanho */
-    max-width: 180px; /* Impede que eles fiquem gigantes em monitores ultra-wide */
     text-align: center;
     background: linear-gradient(to bottom, #4a4a4a, #2b2b2b);
     color: #ccc;
     border: 2px solid #1c1c1c;
-    border-radius: 4px 4px 0 0;
-    padding: 12px 24px;
+    padding: 8px 4px;
+    font-size: 11px;
+    border-radius: 0;
     font-weight: bold;
     font-family: 'Georgia', serif;
     cursor: pointer;
@@ -192,7 +240,6 @@ canvas {
     background: linear-gradient(to bottom, #8e7a53, #5c4d33);
     color: #f1c40f;
     border: 2px solid #3d3221;
-    border-bottom: 2px solid #8e7a53; /* Funde o botão com a parede de pedra */
     box-shadow: inset 0 2px 4px rgba(255,255,255,0.2);
 }
 
@@ -259,7 +306,75 @@ button {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Adapta o número de colunas baseado na largura da tela */
     gap: 15px; 
     width: 100%;
-    max-width: 800px;
-    margin: 0 auto;
     box-sizing: border-box;
+}
+
+/* Blindagem da Sidebar para Deslizar por cima de tudo */
+.sidebar-menus {
+    position: fixed !important;
+    right: 0; top: 0;
+    width: 360px; height: 100vh;
+    background: #1c1c1c;
+    border-left: 4px solid #4a3b2c;
+    box-shadow: -5px 0 15px rgba(0,0,0,0.7);
+    display: flex;
+    flex-direction: column;
+    z-index: 999; /* Fica por cima de absolutamente tudo */
+    transform: translateX(0);
+    transition: transform 0.3s ease;
+}
+.sidebar-menus.fechada {
+    transform: translateX(100%) !important;
+}
+
+/* Área interna de Rolagem das Abas */
+.sidebar-conteudo {
+    flex: 1;
+    overflow-y: auto; /* Permite rolar os pergaminhos de upgrades verticalmente ali dentro */
+    padding: 15px;
+}
+
+/* Botão de Alternar Sidebar (Toggle) */
+.btn-toggle-sidebar {
+    position: absolute;
+    left: -40px;
+    top: 20px;
+    width: 40px;
+    height: 40px;
+    background: #4a3b2c;
+    color: #f1c40f;
+    border: 2px solid #111;
+    border-right: none;
+    border-radius: 4px 0 0 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* Media Query: Orientação Vertical (Modo Retrato / Celulares) */
+@media (max-width: 768px), (orientation: portrait) {
+    #jogoCanvas {
+        max-width: 98vw;
+        max-height: 50vh;
+    }
+
+    .sidebar-menus {
+        width: 100vw !important;
+        height: 100vh !important;
+        border-left: none;
+        border-top: 4px solid #4a3b2c;
+        transform: translateY(0);
+    }
+    .sidebar-menus.fechada {
+        transform: translateY(100%) !important;
+    }
+
+    .btn-toggle-sidebar {
+        left: 20px;
+        top: -40px;
+        border-radius: 4px 4px 0 0;
+    }
+
+    .menu-abas {
+        grid-template-columns: repeat(4, 1fr);
+    }
 }

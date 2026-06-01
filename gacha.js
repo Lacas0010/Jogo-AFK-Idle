@@ -36,6 +36,8 @@ export function darTiroGacha(quantidade = 1) {
 
         for (let i = 0; i < quantidade; i++) {
             jogo.tirosGacha++;
+            if (jogo.totalTirosGacha === undefined) jogo.totalTirosGacha = 0;
+            jogo.totalTirosGacha++;
             let roll = Math.random();
             let isPity = jogo.tirosGacha >= 50;
 

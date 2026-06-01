@@ -2,15 +2,18 @@ export let jogo = {
     pontos: 0,
     gemas: 0,
     tirosGacha: 0,
+    totalTirosGacha: 0,
     ultimoAcesso: Date.now(),
     nivel: 1,
+    nivelMaximo: 1,
     monstroHp: 10,
     monstroHpMax: 10,
     cliquesTotais: 0,
     monstrosMortos: 0,
-    conquistas: { cliques100: false, monstros50: false },
+    marcos: { cliques: 0, mortes: 0, nivel: 0, gacha: 0 },
     inventario: { couroOrc: 0, escamasHidra: 0 },
     artefatos: { manoplaOrc: false, glandulaHidra: false },
+    multiplicadorAscensao: 1,
     almasPoligonais: 0,
     upgradesAlmas: [0, 0, 0, 0, 0],
     guilda: {
@@ -22,6 +25,9 @@ export let jogo = {
         expedicao: { ativa: false, heroiIndex: null, tempoFim: 0 }
     },
     timeAtivo: [0],
+    fragmentosUniversais: 0,
+    reliquiasPantheon: [0, 0, 0],
+    frestaDesafio: { andarAtual: 1, tempoRestante: 30, ativa: false, hpOriginalMonstro: 0 },
     herois: [
         {
             nome: "Herói Principal",
@@ -140,6 +146,16 @@ export let jogo = {
                     multCusto: 1.9
                 }
             ]
+        },
+        {
+            nome: "🐍 Ladra de Presas (Gacha)",
+            descricao: "Assassina do pântano. Seus golpes acumulam veneno corrosivo de efeito contínuo no alvo.",
+            dps: 0, nivelDps: 0, custoDps: 600, chanceCritico: 0.25, nivelCritico: 0, custoCritico: 700, multCusto: 1.9, fragmentos: 0, estrelas: 1,
+            skills: [{
+                nome: "🔮 Adagas de Glifos",
+                descricao: "Consome instantaneamente todo o lodo tóxico do monstro, descarregando um estouro de 40x de dano baseado nos acúmulos.",
+                multiplicadorDanoInstantaneo: 40, cooldownMax: 12, cooldownAtual: 0, duracaoMax: 1, duracaoAtual: 0, ativa: false, desbloqueada: true, nivel: 1, custoUpgrade: 400, multCusto: 2.0
+            }]
         }
     ]
 };
@@ -164,10 +180,10 @@ export function salvarJogo() {
 
 export function carregarJogo() {
     const salvo = localStorage.getItem("meuJogoAFK");
-    if (!salvo) return;
+    if (!salvo) return 0;
     
     const dadosSalvos = JSON.parse(salvo);
-    const tempoFora = Math.floor((Date.now() - dadosSalvos.ultimoAcesso) / 1000);
+    const tempoFora = dadosSalvos.ultimoAcesso ? Math.max(0, Math.floor((Date.now() - dadosSalvos.ultimoAcesso) / 1000)) : 0;
     
     // Migração de heróis mantida como no original
     if (dadosSalvos.herois) {
@@ -211,15 +227,21 @@ export function carregarJogo() {
     jogo.monstroHp = dadosSalvos.monstroHp || 10;
     jogo.gemas = Number(dadosSalvos.gemas) || 0;
     jogo.tirosGacha = Number(dadosSalvos.tirosGacha) || 0;
+    jogo.totalTirosGacha = dadosSalvos.totalTirosGacha || dadosSalvos.tirosGacha || 0;
+    jogo.nivelMaximo = dadosSalvos.nivelMaximo || dadosSalvos.nivel || 1;
     jogo.pontos = dadosSalvos.pontos;
     jogo.cliquesTotais = dadosSalvos.cliquesTotais || 0;
     jogo.monstrosMortos = dadosSalvos.monstrosMortos || 0;
-    jogo.conquistas = dadosSalvos.conquistas || { cliques100: false, monstros50: false };
+    jogo.marcos = dadosSalvos.marcos || { cliques: 0, mortes: 0, nivel: 0, gacha: 0 };
     jogo.inventario = dadosSalvos.inventario || { couroOrc: 0, escamasHidra: 0 };
     jogo.artefatos = dadosSalvos.artefatos || { manoplaOrc: false, glandulaHidra: false };
     jogo.multiplicadorAscensao = dadosSalvos.multiplicadorAscensao || 1;
     jogo.almasPoligonais = dadosSalvos.almasPoligonais || 0;
     jogo.upgradesAlmas = dadosSalvos.upgradesAlmas || [0, 0, 0, 0, 0];
+    jogo.timeAtivo = dadosSalvos.timeAtivo || [0];
+    jogo.fragmentosUniversais = dadosSalvos.fragmentosUniversais || 0;
+    jogo.reliquiasPantheon = dadosSalvos.reliquiasPantheon || [0, 0, 0];
+    jogo.frestaDesafio = dadosSalvos.frestaDesafio || { andarAtual: 1, tempoRestante: 30, ativa: false, hpOriginalMonstro: 0 };
 
     jogo.guilda = dadosSalvos.guilda || {
         ultimaRenovacao: new Date().toDateString(),
@@ -233,9 +255,21 @@ export function carregarJogo() {
     const hoje = new Date().toDateString();
     if (jogo.guilda.ultimaRenovacao !== hoje) {
         jogo.guilda.ultimaRenovacao = hoje;
-        jogo.guilda.contratos[0].atual = 0; jogo.guilda.contratos[0].resgatado = false;
-        jogo.guilda.contratos[1].atual = 0; jogo.guilda.contratos[1].resgatado = false;
+        
+        // Catálogo de missões possíveis
+        const poolContratos = [
+            { id: 'cliques', desc: 'Dedo Nervoso: 200 Cliques', atual: 0, meta: 200, resgatado: false, premioGemas: 30 },
+            { id: 'mortes', desc: 'Caçador: Derrotar 20 Monstros', atual: 0, meta: 20, resgatado: false, premioGemas: 40 },
+            { id: 'criticos', desc: 'Golpe Fatal: 50 Críticos', atual: 0, meta: 50, resgatado: false, premioGemas: 40 },
+            { id: 'chefes', desc: 'Matador: Derrotar 2 Chefes', atual: 0, meta: 2, resgatado: false, premioGemas: 60 },
+            { id: 'skills', desc: 'Conjurador: Ativar 10 Skills', atual: 0, meta: 10, resgatado: false, premioGemas: 40 }
+        ];
+
+        // Embaralha o array e corta os 2 primeiros
+        jogo.guilda.contratos = poolContratos.sort(() => 0.5 - Math.random()).slice(0, 2);
     }
+
+    return tempoFora;
 }
 
 export function resetarJogo() {
@@ -295,14 +329,20 @@ export function executarAscensao() {
         jogo.monstroHp = 10;
         jogo.monstroHpMax = 10;
 
+        jogo.frestaDesafio.ativa = false;
+        jogo.guilda.expedicao.ativa = false;
+        jogo.guilda.expedicao.heroiIndex = null;
+        jogo.guilda.expedicao.tempoFim = 0;
+        jogo.monstroLodoToxico = 0;
+
         jogo.herois.forEach((heroi, index) => {
             let estavaDesbloqueado = index === 0 || heroi.nivelDps > 0;
             
             heroi.nivelDps = index === 0 ? 0 : (estavaDesbloqueado ? 1 : 0);
-            heroi.custoDps = index === 0 ? 10 : (index === 1 ? 150 : (index === 2 ? 250 : 400));
-            heroi.chanceCritico = index === 0 ? 0 : (index === 1 ? 0.10 : (index === 2 ? 0.05 : 0.15));
+            heroi.custoDps = index === 0 ? 10 : (index === 1 ? 150 : (index === 2 ? 250 : (index === 3 ? 400 : 600)));
+            heroi.chanceCritico = index === 0 ? 0 : (index === 1 ? 0.10 : (index === 2 ? 0.05 : (index === 3 ? 0.15 : 0.25)));
             heroi.nivelCritico = 0;
-            heroi.custoCritico = index === 0 ? 50 : (index === 1 ? 300 : (index === 2 ? 400 : 500));
+            heroi.custoCritico = index === 0 ? 50 : (index === 1 ? 300 : (index === 2 ? 400 : (index === 3 ? 500 : 700)));
             
             // Reseta o DPS para o nível Base, mantendo os multiplicadores por Estrela do Gacha
             let dpsBase = index === 0 ? 1 : (estavaDesbloqueado ? (index === 1 ? 2 : (index === 3 ? 0 : 1)) : 0);
@@ -325,6 +365,10 @@ export function executarAscensao() {
                         skill.multiplicadorDanoClique = 2.0;
                         skill.multiplicadorDpsAtivo = 1.5;
                         skill.duracaoMax = 6;
+                    } else if (skill.nome === "🔮 Adagas de Glifos") {
+                        skill.custoUpgrade = 400;
+                        skill.multiplicadorDanoInstantaneo = 40;
+                        skill.duracaoMax = 1;
                     } else {
                         skill.custoUpgrade = 100;
                         skill.multiplicadorDano = 5;

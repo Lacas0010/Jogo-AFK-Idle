@@ -4,6 +4,35 @@ import { desenhar, textosFlutuantes, animacao, mostrarNotificacao, desenharPortr
 
 const custosAlmasBase = [1, 2, 1, 2, 5];
 
+const configMarcos = {
+    cliques: { titulo: "Dedo Nervoso", desc: "Cliques Manuais", limites: [100, 500, 1000, 5000, 10000], premioBase: 50, valorAtual: () => jogo.cliquesTotais },
+    mortes: { titulo: "Caçador Implacável", desc: "Monstros Derrotados", limites: [50, 200, 500, 2000, 5000], premioBase: 50, valorAtual: () => jogo.monstrosMortos },
+    nivel: { titulo: "Aventureiro Audaz", desc: "Nível Alcançado", limites: [10, 30, 50, 100, 200], premioBase: 100, valorAtual: () => jogo.nivelMaximo || jogo.nivel },
+    gacha: { titulo: "Sorte Grande", desc: "Tiros no Altar", limites: [10, 50, 100, 500, 1000], premioBase: 50, valorAtual: () => jogo.totalTirosGacha || jogo.tirosGacha }
+};
+
+function verificarMarcos() {
+    let ganhouGemas = false;
+    for (const chave in configMarcos) {
+        const conf = configMarcos[chave];
+        const tierAtual = jogo.marcos[chave];
+        if (tierAtual < conf.limites.length) {
+            const meta = conf.limites[tierAtual];
+            if (conf.valorAtual() >= meta) {
+                const premio = conf.premioBase * (tierAtual + 1);
+                jogo.gemas += premio;
+                jogo.marcos[chave]++;
+                mostrarNotificacao(`🏆 MARCO ATINGIDO!\n${conf.titulo} Nvl ${tierAtual + 1}\n+${premio} Gemas`);
+                ganhouGemas = true;
+            }
+        }
+    }
+    if (ganhouGemas) {
+        atualizarInterface();
+        if (window.renderizarMarcos) window.renderizarMarcos();
+    }
+}
+
 export function renderizarBotoesUpgrades() {
     const painel = document.getElementById("painelUpgrades");
     if (!painel) return;
@@ -365,7 +394,7 @@ export function atualizarInterface() {
                     btnSkill.innerText = `${icone} ATIVA (${skill.duracaoAtual}s)`;
                     btnSkill.disabled = true;
                 } else if (skill.cooldownAtual > 0) {
-                    btnSkill.innerText = `⏳ Aguarde (${skill.cooldownAtual}s)`;
+                    btnSkill.innerText = `⏳ Aguarde (${Math.ceil(skill.cooldownAtual)}s)`;
                     btnSkill.disabled = true;
                 } else {
                     btnSkill.innerText = skill.nome;
@@ -457,6 +486,10 @@ window.renderizarForja = renderizarForja;
 window.renderizarGuilda = renderizarGuilda;
 
 window.alternarHeroiNoTime = function(heroiIndex) {
+    if (!jogo.timeAtivo.includes(heroiIndex) && jogo.guilda.expedicao.ativa && jogo.guilda.expedicao.heroiIndex === heroiIndex) {
+        mostrarNotificacao("❌ Este herói está em uma expedição!");
+        return;
+    }
     if (heroiIndex === 0) return; // Regra: O Herói Principal (0) não pode ser removido
     const pos = jogo.timeAtivo.indexOf(heroiIndex);
     if (pos > -1) {
@@ -476,12 +509,26 @@ window.ativarSkill = function(heroiIndex, skillIndex) {
     if (skill && skill.cooldownAtual <= 0 && !skill.ativa) {
         let cooldownBuff = jogo.artefatos.glandulaHidra ? 2 : 0;
         skill.cooldownAtual = Math.max(1, skill.cooldownMax - cooldownBuff);
+        window.progredirContrato("skills");
         
         if (skill.multiplicadorDanoInstantaneo !== undefined) {
-            let danoBurst = heroi.dps * skill.multiplicadorDanoInstantaneo;
+            let buffAres = 1 + ((jogo.reliquiasPantheon[0] || 0) * 0.01);
+            let buffPassivoCavaleiro = jogo.timeAtivo.includes(3) ? 1.15 : 1.0;
+            let buffAtivoCavaleiro = (jogo.timeAtivo.includes(3) && jogo.herois[3].skills && jogo.herois[3].skills[0].ativa) ? 1.5 : 1.0;
+            
+            let dpsTotalBuffado = heroi.dps * buffAres * buffPassivoCavaleiro * buffAtivoCavaleiro;
+            let danoBurst = dpsTotalBuffado * skill.multiplicadorDanoInstantaneo;
+            
+            if (heroiIndex === 4) { // Ladra de Presas consome as pilhas
+                let acumulos = jogo.monstroLodoToxico || 1;
+                danoBurst *= acumulos;
+                jogo.monstroLodoToxico = 0; 
+            }
+
             let isCrit = Math.random() < heroi.chanceCritico;
             if (isCrit) danoBurst *= 3;
-            atacar(danoBurst, isCrit, 45, heroiIndex === 1 ? 'burstElfa' : 'normal'); // Dá à skill da Elfa uma animação mais longa e cinemática
+            let tipoBurst = heroiIndex === 1 ? 'burstElfa' : (heroiIndex === 4 ? 'burstLadra' : 'normal');
+            atacar(danoBurst, isCrit, 45, tipoBurst);
         } else {
             skill.ativa = true;
             let durationBuff = jogo.artefatos.manoplaOrc ? 2 : 0;
@@ -505,6 +552,81 @@ window.forjarArtefato = function(idArtefato) {
         atualizarInterface();
         if (window.renderizarForja) window.renderizarForja();
         salvarJogo();
+    }
+};
+
+window.renderizarMarcos = function() {
+    const painel = document.getElementById("painelMarcos");
+    if (!painel) return;
+    let html = "";
+    for (const chave in configMarcos) {
+        const conf = configMarcos[chave];
+        const tierAtual = jogo.marcos[chave];
+        const maxTier = conf.limites.length;
+        const isMax = tierAtual >= maxTier;
+        const meta = isMax ? "MÁXIMO" : conf.limites[tierAtual];
+        const atual = isMax ? meta : conf.valorAtual();
+        const progresso = isMax ? 100 : Math.min(100, (atual / meta) * 100);
+        const premioNext = isMax ? 0 : conf.premioBase * (tierAtual + 1);
+        
+        html += `
+            <div class="heroi-card" style="display: flex; flex-direction: column; gap: 10px;">
+                <h4 style="margin: 0; color: #f1c40f;">${conf.titulo} <small style="color: #bdc3c7;">(Tier ${tierAtual}/${maxTier})</small></h4>
+                <p style="margin: 0; font-size: 13px; color: #5c3a21;">${conf.desc}</p>
+                <div style="background: #111; border-radius: 4px; border: 1px solid #5c3a21; width: 100%; height: 12px; position: relative;">
+                    <div style="background: #2ecc71; width: ${progresso}%; height: 100%; border-radius: 4px;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 12px;">
+                    <span style="color: #e67e22; font-weight: bold;">${atual} / ${meta}</span>
+                    <span style="color: #9b59b6; font-weight: bold;">${isMax ? 'Concluído' : 'Prêmio: ' + premioNext + ' Gemas'}</span>
+                </div>
+            </div>
+        `;
+    }
+    painel.innerHTML = html;
+};
+
+window.renderizarPantheon = function() {
+    const painel = document.getElementById("painelPantheon");
+    if (!painel) return;
+    const nomes = ["⚔️ Bênção de Ares", "⏳ Bênção de Hermes", "💰 Bênção de Midas"];
+    const descricoes = ["+1% DPS Global", "+0.5% Velocidade Offline", "+1% Pontos de Monstros"];
+    let html = `<p style="color: #00ffff; text-align: center; width: 100%; font-weight: bold; margin-bottom: 20px;">Fragmentos Universais: ${jogo.fragmentosUniversais || 0}</p>`;
+    for(let i=0; i<3; i++) {
+        let nivel = jogo.reliquiasPantheon[i] || 0;
+        let custo = 10 + (nivel * 5);
+        let podeComprar = jogo.fragmentosUniversais >= custo;
+        html += `
+            <div class="heroi-card" style="display: flex; flex-direction: column; gap: 8px;">
+                <h4 style="color: #f1c40f; margin: 0;">${nomes[i]} (Nvl ${nivel})</h4>
+                <p style="font-size: 13px; color: #5c3a21; margin: 0;">Efeito: ${descricoes[i]} por nível.</p>
+                <button class="btn-upgrade" style="width: 100%; background: ${podeComprar ? '#9b59b6' : '#7f8c8d'}; margin-top: auto;" onclick="subirReliquia(${i})" ${!podeComprar ? 'disabled' : ''}>Subir Nível (Custo: 🧩 ${custo})</button>
+            </div>
+        `;
+    }
+    painel.innerHTML = html;
+};
+
+window.renderizarFrestas = function() {
+    const painel = document.getElementById("painelFrestas");
+    if (!painel) return;
+    if (jogo.frestaDesafio.ativa) {
+        painel.innerHTML = `
+            <div class="heroi-card" style="text-align: center; width: 100%;">
+                <h3 style="color: #e74c3c; margin-top: 0;">Desafio em Andamento!</h3>
+                <p style="font-size: 18px;">Andar Atual: <strong>${jogo.frestaDesafio.andarAtual}</strong></p>
+                <p style="color: #e67e22; font-weight: bold; font-size: 22px;">Tempo Restante: ${jogo.frestaDesafio.tempoRestante}s</p>
+                <button class="btn-upgrade" style="background: #7f8c8d; width: 100%; margin-top: 15px;" disabled>Foque no Combate!</button>
+            </div>
+        `;
+    } else {
+        painel.innerHTML = `
+            <div class="heroi-card" style="text-align: center; width: 100%;">
+                <h3 style="color: #8e44ad; margin-top: 0;">Abrir Portal Dimensional</h3>
+                <p style="font-size: 14px; color: #5c3a21;">Inimigos ficam drasticamente mais fortes a cada andar. As habilidades recarregam <strong>2x mais rápido</strong>. Você tem apenas 30s para matar a criatura.</p>
+                <button class="btn-upgrade" style="background: #8e44ad; width: 100%; margin-top: 15px;" onclick="iniciarDesafioFresta()">Entrar na Fresta</button>
+            </div>
+        `;
     }
 };
 
@@ -540,6 +662,15 @@ window.alternarAba = function(abaId) {
     if (abaId === 'abaGuilda') {
         renderizarGuilda();
     }
+    if (abaId === 'abaMarcos') {
+        window.renderizarMarcos();
+    }
+    if (abaId === 'abaPantheon') {
+        if (window.renderizarPantheon) window.renderizarPantheon();
+    }
+    if (abaId === 'abaFrestas') {
+        if (window.renderizarFrestas) window.renderizarFrestas();
+    }
 };
 
 export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'normal') {
@@ -552,6 +683,8 @@ export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'no
         animacao.tipo = tipo;
     }
     
+    if (isCritico) window.progredirContrato("criticos");
+
     const isBoss = (jogo.nivel % 5 === 0);
     const espadaFogoAtiva = jogo.herois[0].skills[0].ativa;
 
@@ -588,13 +721,20 @@ export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'no
         } else {
             textoAtaque = isCritico ? "CRÍTICO! " : "";
         }
+    } else if (tipo === 'lodoToxico') {
+        corTexto = "46, 204, 113";
+        textoAtaque = "☠️ ";
+    } else if (tipo === 'burstLadra') {
+        multiplicadorElemental = 1.5;
+        corTexto = "142, 68, 173";
+        textoAtaque = "☠️ EXPLOSÃO TÓXICA! ";
     }
 
-    let danoFinal = dano * multiplicadorElemental * jogo.multiplicadorAscensao;
+    let danoFinal = dano * multiplicadorElemental * (jogo.multiplicadorAscensao || 1);
 
     textosFlutuantes.push({
         texto: `${textoAtaque}-${danoFinal}`, 
-        x: 180 + (Math.random() * 40) - (isCritico ? 30 : 0),
+        x: 400 + (Math.random() * 80 - 40),
         y: 60 + (Math.random() * 15),
         alpha: 1, duracao: isCritico ? 60 : 45,
         cor: corTexto,
@@ -603,53 +743,76 @@ export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'no
 
     jogo.monstroHp -= danoFinal;
     if (jogo.monstroHp <= 0) {
-        const recompensa = calcularRecompensa(jogo.nivel);
-        jogo.pontos += recompensa;
-        
-        jogo.monstrosMortos++;
-        if (jogo.guilda.contratos[1].atual < jogo.guilda.contratos[1].meta) jogo.guilda.contratos[1].atual++;
-        if (jogo.monstrosMortos >= 50 && !jogo.conquistas.monstros50) {
-            jogo.conquistas.monstros50 = true;
-            jogo.gemas += 50;
-            mostrarNotificacao("🏆 Conquista Desbloqueada!\nCaçador de Polígonos (+50 Gemas!)");
+        jogo.monstroLodoToxico = 0;
+
+        if (jogo.frestaDesafio.ativa) {
+            jogo.frestaDesafio.andarAtual++;
+            jogo.frestaDesafio.tempoRestante = 30;
+            jogo.monstroHpMax = Math.floor(jogo.monstroHpMax * 2.5); // Multiplica drasticamente o HP
+            jogo.monstroHp = jogo.monstroHpMax;
+            
+            let recompensaFresta = calcularRecompensa(jogo.nivel) * jogo.frestaDesafio.andarAtual;
+            if (Math.random() < ((jogo.reliquiasPantheon[2] || 0) * 0.01)) recompensaFresta *= 2; // Bênção de Midas
+            jogo.pontos += recompensaFresta;
+            textosFlutuantes.push({ texto: `+${recompensaFresta} pts`, x: 400 + (Math.random() * 60 - 30), y: 80, alpha: 1, duracao: 60, cor: "241, 196, 15" });
+            
+            atualizarInterface();
+            return; // Impede que o nível normal da campanha avance
         }
 
+        const recompensa = calcularRecompensa(jogo.nivel);
+        let ganhoPontos = recompensa;
+        if (Math.random() < ((jogo.reliquiasPantheon[2] || 0) * 0.01)) ganhoPontos *= 2; // Bênção de Midas
+        jogo.pontos += ganhoPontos;
+        
+        jogo.monstrosMortos++;
+        window.progredirContrato("mortes");
+
         if (jogo.nivel % 5 === 0) {
+            window.progredirContrato("chefes");
             let gemasGanhos = 5 + (jogo.upgradesAlmas[2] || 0);
             jogo.gemas += gemasGanhos;
-            textosFlutuantes.push({ texto: `+${gemasGanhos} Gemas`, x: 170 + (Math.random() * 20), y: 60, alpha: 1, duracao: 80, cor: "155, 89, 182", tamanho: "bold 18px sans-serif" });
+            textosFlutuantes.push({ texto: `+${gemasGanhos} Gemas`, x: 400 + (Math.random() * 60 - 30), y: 60, alpha: 1, duracao: 80, cor: "155, 89, 182", tamanho: "bold 18px sans-serif" });
 
             const isPantano = Math.floor((jogo.nivel - 1) / 15) % 2 === 1;
             if (isPantano) {
                 jogo.inventario.escamasHidra += 1;
-                textosFlutuantes.push({ texto: "+1 Escama de Hidra", x: 170 + (Math.random() * 20), y: 40, alpha: 1, duracao: 100, cor: "46, 204, 113", tamanho: "bold 16px sans-serif" });
+                textosFlutuantes.push({ texto: "+1 Escama de Hidra", x: 400 + (Math.random() * 60 - 30), y: 40, alpha: 1, duracao: 100, cor: "46, 204, 113", tamanho: "bold 16px sans-serif" });
             } else {
                 jogo.inventario.couroOrc += 1;
-                textosFlutuantes.push({ texto: "+1 Couro de Orc", x: 170 + (Math.random() * 20), y: 40, alpha: 1, duracao: 100, cor: "139, 69, 19", tamanho: "bold 16px sans-serif" });
+                textosFlutuantes.push({ texto: "+1 Couro de Orc", x: 400 + (Math.random() * 60 - 30), y: 40, alpha: 1, duracao: 100, cor: "139, 69, 19", tamanho: "bold 16px sans-serif" });
             }
         }
-        textosFlutuantes.push({ texto: `+${recompensa} pts`, x: 170 + (Math.random() * 20), y: 80, alpha: 1, duracao: 60, cor: "241, 196, 15" });
+        textosFlutuantes.push({ texto: `+${recompensa} pts`, x: 400 + (Math.random() * 60 - 30), y: 80, alpha: 1, duracao: 60, cor: "241, 196, 15" });
 
         jogo.nivel++;
         jogo.monstroHpMax = calcularHpMaximo(jogo.nivel);
         jogo.monstroHp = jogo.monstroHpMax;
+        if (jogo.nivel > (jogo.nivelMaximo || 1)) jogo.nivelMaximo = jogo.nivel;
     }
     atualizarInterface();
 }
 
+function regularResolucaoCanvas() {
+    const canvas = document.getElementById("jogoCanvas");
+    if (!canvas) return;
+    
+    // Captura a resolução real do monitor/celular para nitidez extrema (Retina/4K)
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = window.innerWidth * dpr;
+    canvas.height = window.innerHeight * dpr;
+}
+
 // Boot do Sistema e Bindings de Evento
 window.addEventListener('DOMContentLoaded', () => {
+    regularResolucaoCanvas();
+    window.addEventListener("resize", regularResolucaoCanvas);
+
     const canvas = document.getElementById("jogoCanvas");
     if (canvas) {
         canvas.addEventListener("mousedown", () => {
             jogo.cliquesTotais++;
-            if (jogo.guilda.contratos[0].atual < jogo.guilda.contratos[0].meta) jogo.guilda.contratos[0].atual++;
-            if (jogo.cliquesTotais >= 100 && !jogo.conquistas.cliques100) {
-                jogo.conquistas.cliques100 = true;
-                jogo.gemas += 50;
-                atualizarInterface();
-                mostrarNotificacao("🏆 Conquista Desbloqueada!\nDedo Nervoso (+50 Gemas!)");
-            }
+            window.progredirContrato("cliques");
 
             let dpsTotal = jogo.herois.reduce((acc, h) => acc + h.dps, 0);
             let heroi = jogo.herois[0];
@@ -667,20 +830,59 @@ window.addEventListener('DOMContentLoaded', () => {
             let chanceCritFinal = heroi.chanceCritico + ((jogo.upgradesAlmas[1] || 0) * 0.02);
             let isCrit = Math.random() < chanceCritFinal;
             if (isCrit) dano *= 3;
+            
+            let buffAres = 1 + ((jogo.reliquiasPantheon[0] || 0) * 0.01);
+            let buffCavaleiroClique = (jogo.timeAtivo.includes(3) && jogo.herois[3].skills && jogo.herois[3].skills[0].ativa) ? 2.0 : 1.0;
+            dano *= buffAres * buffCavaleiroClique;
+
             atacar(dano, isCrit);
         });
     }
 
     // Processamento de Tempo Offline (foi movido para cá na migração)
-    const tempoFora = jogo.ultimoAcesso ? Math.floor((Date.now() - jogo.ultimoAcesso) / 1000) : 0;
-    carregarJogo();
-    if (tempoFora > 0 && jogo.pontos > 0) { // Lógica básica de retroalimentação
+        const tempoFora = carregarJogo() || 0;
+        if (tempoFora > 0) { 
         let dpsTotal = jogo.timeAtivo.reduce((acc, idx) => acc + jogo.herois[idx].dps, 0);
-        let danoOffline = tempoFora * dpsTotal;
-        if(danoOffline > 0) mostrarNotificacao(`Você ficou fora por ${tempoFora}s.\nSeu time progrediu!`);
+            let buffPassivoCavaleiro = jogo.timeAtivo.includes(3) ? 1.15 : 1.0;
+            let tempoBuffado = tempoFora * (1 + ((jogo.reliquiasPantheon[1] || 0) * 0.005)); // Bênção de Hermes
+            let buffAres = 1 + ((jogo.reliquiasPantheon[0] || 0) * 0.01);
+            let buffPrimordial = 1 + ((jogo.upgradesAlmas[0] || 0) * 0.10);
+            let pontosOffline = Math.floor(tempoBuffado * (dpsTotal * buffPassivoCavaleiro * buffAres * buffPrimordial));
+            
+            if(pontosOffline > 0) {
+                jogo.pontos += pontosOffline;
+                mostrarNotificacao(`Você ficou fora por ${tempoFora}s.\nSeu time farmou ${pontosOffline} pontos!`);
+            }
     }
 
     setInterval(() => {
+        verificarMarcos();
+
+        // Lógica de Tempo do Desafio das Frestas
+        if (jogo.frestaDesafio.ativa) {
+            jogo.frestaDesafio.tempoRestante--;
+            
+            if (jogo.frestaDesafio.tempoRestante <= 0) {
+                jogo.frestaDesafio.ativa = false;
+                jogo.monstroHpMax = calcularHpMaximo(jogo.nivel);
+                jogo.monstroHp = jogo.monstroHpMax;
+                let ganhoFrags = jogo.frestaDesafio.andarAtual * 2;
+                jogo.fragmentosUniversais += ganhoFrags;
+                mostrarNotificacao(`🌌 Masmorra Encerrada!\nTempo esgotado no Andar ${jogo.frestaDesafio.andarAtual}.\nVocê obteve +${ganhoFrags} Fragmentos Universais.`);
+                atualizarInterface();
+                if (window.renderizarFrestas) window.renderizarFrestas();
+            }
+        }
+
+        // Sistema de Veneno (Ladra de Presas)
+        if (jogo.timeAtivo.includes(4) && jogo.herois[4] && jogo.herois[4].nivelDps > 0) {
+            let danoPoison = Math.floor(jogo.herois[4].dps * 0.5);
+            if (danoPoison > 0) {
+                atacar(danoPoison, false, 10, "lodoToxico");
+                jogo.monstroLodoToxico = (jogo.monstroLodoToxico || 0) + 1;
+            }
+        }
+
         // Upgrade 4: Conjurador Automático (Auto-Cast)
         if ((jogo.upgradesAlmas[4] || 0) >= 1) {
             jogo.timeAtivo.forEach(idx => {
@@ -706,6 +908,7 @@ window.addEventListener('DOMContentLoaded', () => {
                     if (skill.cooldownAtual > 0) {
                     // Buff 3: Fluxo Temporal (Acelera cooldown)
                     let aceleracao = 1 + ((jogo.upgradesAlmas[3] || 0) * 0.10);
+                    if (jogo.frestaDesafio.ativa) aceleracao *= 2; // Regra exclusiva do Desafio
                     skill.cooldownAtual = Math.max(0, skill.cooldownAtual - aceleracao);
                     }
                 });
@@ -739,12 +942,10 @@ window.addEventListener('DOMContentLoaded', () => {
                     danoHeroi *= heroi.skills[0].multiplicadorDano;
                 }
                 
-                // Aplica os buffs provenientes do Cavaleiro em todo DPS gerado
-                danoHeroi *= buffPassivoCavaleiro * buffAtivoCavaleiro;
+                // Aplica os buffs provenientes do Cavaleiro e do Panteão (Ares)
+                let buffAres = 1 + ((jogo.reliquiasPantheon[0] || 0) * 0.01);
+                danoHeroi *= buffPassivoCavaleiro * buffAtivoCavaleiro * buffAres;
                 
-                // Buff 4: Aura Poligonal (+10% DPS Passivo)
-                danoHeroi *= (1 + ((jogo.upgradesAlmas[4] || 0) * 0.10));
-
                 let tipo = index === 1 ? 'dpsPassivoElfa' : (index === 2 ? 'passivoMago' : (index === 3 ? 'passivoCavaleiro' : 'normal'));
                 if (danoHeroi > 0) atacar(danoHeroi, isCrit, 15, tipo); // Ignora 0 DPS natural do Cavaleiro de Ferro
             }
@@ -797,6 +998,7 @@ window.debugAvancarNiveis = function(qtd) {
     jogo.nivel += qtd;
     jogo.monstroHpMax = calcularHpMaximo(jogo.nivel);
     jogo.monstroHp = jogo.monstroHpMax;
+    if (jogo.nivel > (jogo.nivelMaximo || 1)) jogo.nivelMaximo = jogo.nivel;
     atualizarInterface();
     salvarJogo();
 };
@@ -823,6 +1025,44 @@ window.resgatarContrato = function(index) {
         atualizarInterface();
         if (window.renderizarGuilda) window.renderizarGuilda();
         salvarJogo();
+    }
+};
+
+window.toggleSidebar = function() {
+    const sb = document.getElementById("sidebarAbas");
+    if (sb) sb.classList.toggle("fechada");
+};
+
+window.subirReliquia = function(idx) {
+    let custo = 10 + ((jogo.reliquiasPantheon[idx] || 0) * 5); // Exemplo de custo incremental
+    if (jogo.fragmentosUniversais >= custo) {
+        jogo.fragmentosUniversais -= custo;
+        jogo.reliquiasPantheon[idx]++;
+        atualizarInterface();
+        if (window.renderizarPantheon) window.renderizarPantheon();
+        salvarJogo();
+    } else {
+        mostrarNotificacao("❌ Fragmentos Universais insuficientes!");
+    }
+};
+
+window.iniciarDesafioFresta = function() {
+    if (!jogo.frestaDesafio.ativa) {
+        jogo.frestaDesafio.ativa = true;
+        jogo.frestaDesafio.andarAtual = 1;
+        jogo.frestaDesafio.tempoRestante = 30;
+        jogo.frestaDesafio.hpOriginalMonstro = jogo.monstroHpMax;
+        jogo.monstroHpMax = calcularHpMaximo(jogo.nivel) * 3; // Multiplicador inicial do desafio
+        jogo.monstroHp = jogo.monstroHpMax;
+        atualizarInterface();
+        if (window.renderizarFrestas) window.renderizarFrestas();
+    }
+};
+
+window.progredirContrato = function(idContrato, quantidade = 1) {
+    let contrato = jogo.guilda.contratos.find(c => c.id === idContrato);
+    if (contrato && contrato.atual < contrato.meta && !contrato.resgatado) {
+        contrato.atual = Math.min(contrato.meta, contrato.atual + quantidade);
     }
 };
 

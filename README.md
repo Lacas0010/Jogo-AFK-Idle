@@ -1,46 +1,86 @@
-# Jogo Incremental AFK & Gacha ⚔️
+# Vibe Game: Incremental AFK & Gacha RPG ⚔️
 
-Um jogo incremental (clicker/idle) construído em JavaScript modular utilizando a API HTML5 Canvas para renderização. O jogo apresenta progressão por níveis, sistema de Gacha, habilidades ativas e ciclo dinâmico de tempo.
+Um jogo incremental (clicker/idle) épico e expansivo construído inteiramente em JavaScript modular utilizando a API HTML5 Canvas para renderização visual avançada. O jogo combina combate ativo, gerenciamento de equipe, invocações via Gacha e múltiplos sistemas de progressão de longo prazo.
 
-## 🌟 Funcionalidades
+## 🌟 Funcionalidades Principais
 
-* **Combate Incremental:** Clique ativamente para atacar monstros ou dependa do DPS passivo da sua equipe.
-* **Gerenciamento de Equipe:** Escale até 3 heróis simultâneos no seu time ativo, combinando sinergias de DPS passivo e habilidades em combate.
-* **Sistema de Upgrades & Estrelas:** Utilize pontos para aprimorar Dano e Crítico. Colete fragmentos repetidos no Gacha para evoluir heróis até **5 Estrelas (Despertar Máximo)**, ganhando grandes bônus de multiplicadores e auras visuais únicas.
-* **Sistema de Gacha Aprimorado:** Gaste "Gemas" para invocar heróis com sistema de *Pity* garantido aos 50 tiros.
-* **Heróis & Habilidades Especiais Visuais:**
-  * ⚔️ *Guerreiro Principal:* 🔥 Lâmina Incandescente (Multiplicador massivo de dano e chamas contínuas).
-  * 🏹 *Elfa Arqueira:* 🏹 Rajada de Glifos (Burst damage formidável de Glintstone).
-  * 🔮 *Mago de Glintstone:* 🔮 Comet Azur (Raio multi-hit frame-a-frame que derrete inimigos).
-  * 🛡️ *Cavaleiro de Ferro:* ⚙️ Baluarte Vetorial (Suporte focado em aumentar o DPS e clique de todo o time).
-* **Biomas & Novos Chefes:** Enfrente Bosses a cada 5 níveis (Orcs, Goblins, Hidras e Slimes) enquanto viaja por transições dinâmicas entre os biomas de **Floresta** e **Pântano**.
-* **Inventário & Forja:** Derrote chefes para obter *Couro de Orc* e *Escamas de Hidra*. Utilize-os na Forja para criar Artefatos poderosos (como Manopla Orc e Glândula Hidra) que alteram tempo de recarga e duração das habilidades globais.
-* **Guilda dos Aventureiros:** Cumpra Contratos Diários para ganhar Gemas extras e envie seus heróis inativos em **Expedições** em busca de tesouros com duração de tempo real (1 hora).
-* **Ascensão & Santuário:** Ao atingir o nível 30, realize uma "Ascensão Cósmica" e obtenha *Almas Poligonais*. Troque as Almas no Santuário por melhorias permanentes (Poder Primordial, Fluxo Temporal, e até Conjurador Automático de Habilidades).
-* **Ciclo Dia/Noite:** Céu e ambiente totalmente desenhados em Canvas que transitam entre dia, pôr do sol e fases da lua.
-* **Save Local e Progresso Offline:** O jogo salva automaticamente no seu navegador (`localStorage`) e calcula os ataques passivos que ocorreram enquanto você estava fora.
-* **Exportação/Importação Física:** Baixe um arquivo local (`.dat`) contendo o save completo para garantir que nunca perderá seu progresso e possa jogá-lo em outros dispositivos.
+* **Combate Misto:** Progrida clicando ativamente para causar dano massivo ou escale heróis para dizimar os inimigos passivamente com DPS.
+* **Gerenciamento de Equipe Tático:** Escale até **3 Heróis simultâneos** no campo de batalha. Combine sinergias de habilidades ativas, buffs passivos e danos elementais.
+* **Ciclo Dia/Noite e Biomas:** Cenários gerados processualmente que alternam entre **Floresta** e **Pântano**, com transição dinâmica de iluminação (Manhã, Tarde, Noite, Madrugada) e fases da Lua.
+* **Inimigos Únicos e Chefes:** Enfrente hordas de monstros e Chefes colossais a cada 5 níveis, como Orcs Furiosos, Goblins, Slimes Gigantes e a temível Hidra de 3 Cabeças com animações procedurais.
 
-## 📁 Estrutura de Arquivos
+##  Heróis e Classes (Sistema Gacha)
 
-O jogo foi modularizado para melhor manutenção do código:
+Invoque novos aliados no Altar usando **Gemas**, com um sistema justo de *Pity* (herói garantido a cada 50 tiros). Obter cópias repetidas concede Fragmentos para evoluir os heróis até **5 Estrelas (Despertar Máximo)**, desbloqueando auras visuais exclusivas e dobrando o poder base.
 
-* `state.js` - Gerencia a persistência (Salvar/Carregar), o objeto principal do jogo (`jogo`), a matemática de status e a mecânica de reset (Ascensão).
-* `engine.js` - O motor principal do jogo. Faz a ponte (bind) das funções para a interface HTML, processa loops em tempo real (DPS, Cooldown de skills) e cuida das lógicas de combate.
-* `render.js` - Cuida exclusivamente dos visuais e animações (Cenário, monstros, sistema de partículas e textos flutuantes de dano/notificação) usando HTML5 Canvas.
-* `gacha.js` - Controla toda a roleta de heróis, porcentagens de queda (drop rates), conversão de duplicatas em fragmentos e evolução por estrelas.
+* **⚔️ Guerreiro Principal:** O líder do grupo. Seu dano provém inteiramente dos seus cliques.
+  * *Skill:* **🔥 Lâmina Incandescente** (Multiplica o dano de clique e incendeia a espada).
+* **🏹 Elfa Arqueira:** Atiradora focada em dano passivo à distância com alto poder de *burst*.
+  * *Skill:* **🏹 Rajada de Glifos** (Dispara múltiplas flechas mágicas que causam dano instantâneo estrondoso).
+* **🔮 Mago de Glintstone:** Conjurador cujos ataques básicos perseguem os inimigos.
+  * *Skill:* **🔮 Comet Azur** (Canaliza um feixe colossal contínuo de dano multi-hit que derrete o HP do inimigo frame a frame).
+* **🛡️ Cavaleiro de Ferro:** O suporte definitivo. Não ataca, mas oferece buffs massivos para a equipe.
+  * *Skill:* **⚙️ Baluarte Vetorial** (Ergue um escudo que amplifica temporariamente todo o DPS e dano de clique do time).
+* **🐍 Ladra de Presas:** Assassina ágil que acumula pilhas de veneno contínuo nos adversários.
+  * *Skill:* **🔮 Adagas de Glifos** (Consome instantaneamente todas as pilhas de veneno para um dano explosivo absurdo).
 
-## 🚀 Como Executar
+## ⚔️ Mecânicas Avançadas de Combate
 
-Como o projeto utiliza `ES6 Modules` (com as declarações de `import` e `export`), ele precisa rodar através de um servidor web local por conta das políticas de segurança de navegadores (CORS).
+* **Sinergias Elementais:** 
+  * *Degradação Poligonal:* Usar a espada de fogo contra Chefes triplica o dano.
+  * *Derretimento de Pixels:* Atingir um Chefe em chamas com a Rajada de Glifos da Elfa dobra o dano da habilidade.
+* **Feedback Visual:** Números de dano saltitantes, indicação de acertos Críticos e efeitos de tela tremendo durante impactos pesados.
 
-1. Abra a pasta do projeto no VS Code (ou sua IDE favorita).
-2. Utilize uma extensão como **Live Server**.
-3. Inicie o servidor, o jogo abrirá através do seu arquivo `index.html`.
-4. Clique na tela, melhore seus personagens e divirta-se!
+## ⚙️ Sistemas de Progressão e Meta-Jogo
+
+### 🏛️ Santuário & Ascensão Cósmica
+Ao atingir o Nível 30, reinicie sua jornada através da Ascensão para obter **Almas Poligonais**. Troque essas almas na Árvore de Upgrades do Santuário por melhorias permanentes:
+* Aumento de Dano de Clique e Chance de Crítico Global.
+* Bônus de Gemas ao derrotar Chefes.
+* Aceleração na recarga de habilidades (Cooldown).
+* **Conjurador Automático:** Uma melhoria suprema que ativa as habilidades da sua equipe automaticamente assim que estiverem prontas.
+
+### 🏺 Panteão dos Deuses
+Uma progressão secundária utilizando **Fragmentos Universais**. Melhore relíquias divinas infinitamente:
+* **Bênção de Ares:** Multiplicador global de DPS.
+* **Bênção de Hermes:** Acelera o ganho de recursos enquanto você estiver offline.
+* **Bênção de Midas:** Aumenta a chance de dobrar os pontos recebidos ao derrotar monstros.
+
+### 🌌 Frestas Dimensionais (Desafio de Tempo)
+Abra portais para enfrentar inimigos com HP exponencialmente maior. Você tem apenas **30 segundos** para matar o alvo, mas suas habilidades recarregam **2x mais rápido**. Até onde você consegue chegar? A recompensa são preciosos Fragmentos Universais.
+
+### 📜 Guilda dos Aventureiros
+* **Contratos Diários:** Cumpra missões variadas (dar X cliques, matar X chefes, dar X críticos) para receber infusões regulares de Gemas.
+* **Expedições:** Tem heróis sobrando? Envie aqueles que não estão no time ativo em missões de 1 hora de tempo real para buscar Pontos e Gemas extras (recompensa escala com o DPS do herói enviado).
+
+### ⚒️ Forja e Inventário
+Chefes derrotados derrubam materiais baseados no bioma atual (*Couro de Orc* na Floresta e *Escamas de Hidra* no Pântano). Reúna materiais para forjar Artefatos Globais que alteram as regras do jogo, como prolongar o tempo de suas habilidades ou reduzir os cooldowns.
+
+## 🎨 Arte e Renderização Dinâmica
+
+Todo o jogo é desenhado em tempo real utilizando Matemática e Canvas 2D, sem uso de imagens ou *spritesheets* externos!
+* Retratos (Portraits) desenhados via código para cada aba e painel.
+* Sistema de Partículas avançado: Fogo, Faíscas, Sangue com gravidade, Cubos rotativos e Explosões arcanas.
+* Animações ricas: Árvores balançando ao vento, grama dinâmica, névoa pantanosa e o movimento fluído (Curvas de Bézier) dos pescoços da Hidra.
+
+## 💾 Gerenciamento de Save
+
+* **Salvamento Automático:** Seu progresso é salvo no `localStorage` do navegador instantaneamente a cada ação importante.
+* **Progresso Offline:** Fechou o jogo? Seus heróis continuam lutando! Ao retornar, o jogo calcula todo o DPS gerado no período de ausência e recompensa você com os pontos devidos.
+* **Exportar/Importar Fisicamente:** Exporte seu save para um arquivo `.dat` e baixe para o seu computador, permitindo backups seguros ou a migração do seu progresso para outro navegador ou dispositivo.
+
+## � Como Executar
+
+Como o projeto utiliza a arquitetura de Módulos do ES6 (`import`/`export`), ele requer um servidor web local devido às políticas de segurança (CORS) dos navegadores.
+
+1. Clone o repositório ou baixe os arquivos.
+2. Abra a pasta do projeto no VS Code (ou na sua IDE favorita).
+3. Utilize uma extensão como **Live Server** (VS Code) para hospedar a pasta.
+4. O jogo será aberto no seu navegador através do arquivo `index.html`.
+5. Prepare sua equipe, clique sem parar e boa sorte na caçada!
 
 ## 🛠️ Tecnologias Utilizadas
 
-* **Vanilla JavaScript (ES6+)**
-* **HTML5 Canvas Context 2D**
-* **CSS3**
+* **JavaScript Vanilla (ES6+)** - Lógica, Física, Motor de Combate.
+* **HTML5 Canvas API Context 2D** - Renderização gráfica e animações procedurais.
+* **CSS3** - Interface de Usuário (HUD), Layout Flexbox/Grid e Responsividade.

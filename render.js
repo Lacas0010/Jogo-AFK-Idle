@@ -9,6 +9,7 @@ let ctx;
 let particulasFogo = [];
 let particulasExplosao = [];
 let particulasSangue = [];
+let estrelas = [];
 let tempoAnimacao = 0;
 
 let cicloTempo = 0; // Cronômetro geral para o céu
@@ -18,10 +19,16 @@ let nivelAnterior = null; // Rastreador de mortes
 let frameMorte = 0; // Temporizador para esconder o monstro
 
 export function mostrarNotificacao(mensagem) {
+    if (!canvas) {
+        canvas = document.getElementById("jogoCanvas");
+        if (canvas) ctx = canvas.getContext("2d");
+    }
+    const centroX = 400;
+
     const linhas = mensagem.split('\n').filter(l => l.trim() !== '');
     textosFlutuantes.push({
         linhas: linhas, // Passa o array completo de texto
-        x: canvas.width / 2,
+        x: centroX,
         y: 150,
         alpha: 1,
         duracao: 180, 
@@ -34,7 +41,18 @@ export function mostrarNotificacao(mensagem) {
 export function desenhar() {
     if (!canvas) {
         canvas = document.getElementById("jogoCanvas");
-        if (canvas) ctx = canvas.getContext("2d");
+        if (canvas) {
+            ctx = canvas.getContext("2d");
+            for (let i = 0; i < 80; i++) {
+                estrelas.push({
+                    x: Math.random() * 800,
+                    y: Math.random() * 180,
+                    tamanho: Math.random() * 1.2 + 0.5,
+                    fasePiscar: Math.random() * Math.PI * 2,
+                    velocidadePiscar: 0.02 + Math.random() * 0.03
+                });
+            }
+        }
     }
     if (!ctx) {
         requestAnimationFrame(desenhar);
@@ -73,10 +91,10 @@ export function desenhar() {
     cicloTempo += 0.00175; // Aproximadamente 60 segundos por ciclo (60 fps)
     const angulo = cicloTempo;
     
-    const solX = canvas.width / 2 + Math.cos(angulo) * 380;
+    const solX = 400 + Math.cos(angulo) * 380;
     const solY = 180 + Math.sin(angulo) * 150;
     
-    const luaX = canvas.width / 2 + Math.cos(angulo + Math.PI) * 380;
+    const luaX = 400 + Math.cos(angulo + Math.PI) * 380;
     const luaY = 180 + Math.sin(angulo + Math.PI) * 150;
 
     if (luaY < 180) foiNoite = true;
@@ -110,12 +128,22 @@ export function desenhar() {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    const dpr = window.devicePixelRatio || 1;
+    ctx.save(); // Salva estado global
+    
+    // Calcula o zoom exato para caber os 800x450 lógicos na tela sem cortar nada importante
+    const scale = Math.min(canvas.width / (800 * dpr), canvas.height / (450 * dpr)) * dpr;
+    ctx.translate(canvas.width / 2, canvas.height / 2); // Eixo vai pro meio da tela
+    ctx.scale(scale, scale); // Aplica Zoom Responsivo
+    ctx.translate(-400, -225); // Puxa de volta pra coordenada lógica central
+
     if (animacao.ativa) {
         animacao.frameAtual++;
         if (animacao.frameAtual >= animacao.duracao) animacao.ativa = false;
     }
 
     // COR DO CÉU DINÂMICA (Linear Gradient)
+    let isNoite = false;
     let gradientCeu = ctx.createLinearGradient(0, 0, 0, 180);
     if (solY < 140) { // Dia alto
         gradientCeu.addColorStop(0, "#4a90e2");
@@ -126,9 +154,23 @@ export function desenhar() {
     } else { // Noite / Madrugada
         gradientCeu.addColorStop(0, "#010a15");
         gradientCeu.addColorStop(1, "#0b1d3a");
+        isNoite = true;
     }
     ctx.fillStyle = gradientCeu;
-    ctx.fillRect(0, 0, canvas.width, 180);
+    ctx.fillRect(-2500, -2500, 5800, 2680); // O céu preenche todo o topo até a linha de Y=180
+
+    // DESENHO DAS ESTRELAS (Apenas a noite)
+    if (isNoite) {
+        ctx.fillStyle = "#ffffff";
+        estrelas.forEach(estrela => {
+            estrela.fasePiscar += estrela.velocidadePiscar;
+            ctx.globalAlpha = 0.2 + ((Math.sin(estrela.fasePiscar) + 1) / 2) * 0.8; // Oscila entre 0.2 e 1.0
+            ctx.beginPath();
+            ctx.arc(estrela.x, estrela.y, estrela.tamanho, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        ctx.globalAlpha = 1.0; // Resetar opacidade para o resto do canvas
+    }
 
     // DESENHO DO SOL
     if (solY < 210) {
@@ -159,7 +201,7 @@ export function desenhar() {
     ctx.beginPath(); ctx.arc(600, 80, 18, 0, Math.PI * 2); ctx.arc(630, 80, 25, 0, Math.PI * 2); ctx.arc(660, 80, 18, 0, Math.PI * 2); ctx.fill();
 
     ctx.fillStyle = "#2ecc71"; 
-    ctx.fillRect(0, 180, canvas.width, canvas.height - 180);
+    ctx.fillRect(-2500, 180, 5800, 4000);
 
     const isPantano = Math.floor((jogo.nivel - 1) / 15) % 2 === 1;
     const balancoVento = Math.sin(cicloTempo * 4) * 0.05; // Movimento contínuo do vento
@@ -167,7 +209,7 @@ export function desenhar() {
     if (!isPantano) {
         // Bioma Floresta
         ctx.fillStyle = "#2ecc71"; 
-        ctx.fillRect(0, 180, canvas.width, canvas.height - 180);
+        ctx.fillRect(-2500, 180, 5800, 4000);
 
         // Árvore 1 balançando
         ctx.fillStyle = "#8b4513"; 
@@ -211,15 +253,33 @@ export function desenhar() {
     } else {
         // Bioma Pântano
         ctx.fillStyle = "#2c3e20"; // Chão lodo escuro
-        ctx.fillRect(0, 180, canvas.width, canvas.height - 180);
+        ctx.fillRect(-2500, 180, 5800, 4000);
 
-        // Poças de água tóxica
-        ctx.fillStyle = "#808000"; // Verde oliva
-        ctx.beginPath(); ctx.ellipse(120, 230, 50, 12, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(650, 310, 60, 15, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = "#4b0082"; // Roxo escuro
-        ctx.beginPath(); ctx.ellipse(350, 280, 40, 10, 0, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(100, 370, 70, 18, 0, 0, Math.PI * 2); ctx.fill();
+        // Poças de água com lodo (Azul esverdeado) e formato irregular
+        ctx.fillStyle = "#2e7a68"; // Azul esverdeado claro
+        ctx.beginPath(); 
+        ctx.ellipse(110, 230, 45, 10, -0.1, 0, Math.PI * 2); 
+        ctx.ellipse(140, 233, 30, 8, 0.1, 0, Math.PI * 2); 
+        ctx.ellipse(125, 226, 25, 6, 0, 0, Math.PI * 2); 
+        ctx.fill();
+
+        ctx.beginPath(); 
+        ctx.ellipse(630, 310, 55, 12, -0.05, 0, Math.PI * 2); 
+        ctx.ellipse(670, 314, 45, 15, 0.1, 0, Math.PI * 2); 
+        ctx.ellipse(660, 304, 30, 8, -0.1, 0, Math.PI * 2); 
+        ctx.fill();
+
+        ctx.fillStyle = "#226355"; // Azul esverdeado mais escuro
+        ctx.beginPath(); 
+        ctx.ellipse(340, 280, 38, 9, -0.1, 0, Math.PI * 2); 
+        ctx.ellipse(370, 282, 25, 8, 0.2, 0, Math.PI * 2); 
+        ctx.fill();
+
+        ctx.beginPath(); 
+        ctx.ellipse(90, 370, 65, 15, -0.05, 0, Math.PI * 2); 
+        ctx.ellipse(135, 375, 45, 12, 0.15, 0, Math.PI * 2); 
+        ctx.ellipse(110, 362, 40, 10, -0.1, 0, Math.PI * 2); 
+        ctx.fill();
 
         // Árvores Mortas
         ctx.save();
@@ -253,7 +313,7 @@ export function desenhar() {
         gradientNeblina.addColorStop(1, "rgba(220, 220, 220, 0)");
         
         ctx.fillStyle = gradientNeblina;
-        ctx.fillRect(0, 160, canvas.width, 100);
+        ctx.fillRect(-2500, 160, 5800, 100);
     }
 
     const isBoss = jogo.nivel % 5 === 0;
@@ -660,7 +720,7 @@ export function desenhar() {
         p.y += p.vy;
         p.alpha -= 0.02;
         
-        if (p.alpha <= 0 || p.y > canvas.height) {
+        if (p.alpha <= 0 || p.y > 450) {
             particulasSangue.splice(i, 1);
         } else {
             ctx.globalAlpha = Math.max(0, p.alpha);
@@ -675,8 +735,8 @@ export function desenhar() {
     const numHerois = jogo.timeAtivo.length;
     let posicoesX = [];
     if (numHerois === 1) posicoesX = [420];
-    else if (numHerois === 2) posicoesX = [310, 490];
-    else if (numHerois === 3) posicoesX = [260, 420, 560];
+    else if (numHerois === 2) posicoesX = [330, 480];
+    else if (numHerois === 3) posicoesX = [290, 420, 520];
 
     const buffCavaleiroAtivo = skillCavaleiro && skillCavaleiro.ativa && jogo.timeAtivo.includes(3);
 
@@ -716,6 +776,12 @@ export function desenhar() {
                 let flutuoEscudo = Math.sin(tempoAnimacao * 4) * 10;
                 ctx.fillRect(baseX - 25, 290 + offsetYHeroi + flutuoEscudo, 10, 30);
                 ctx.fillRect(baseX + 65, 290 + offsetYHeroi - flutuoEscudo, 10, 30);
+            } else if (heroiIndex === 4) {
+                // Ladra de Presas: Névoas/fumaças quadradas de veneno roxas subindo do chão
+                ctx.fillStyle = `rgba(142, 68, 173, ${0.3 + Math.sin(tempoAnimacao * 3) * 0.2})`;
+                ctx.fillRect(baseX - 10, 360 + offsetYHeroi - Math.sin(tempoAnimacao * 2) * 15, 15, 15);
+                ctx.fillRect(baseX + 35, 350 + offsetYHeroi - Math.cos(tempoAnimacao * 2.5) * 15, 12, 12);
+                ctx.fillRect(baseX + 15, 370 + offsetYHeroi - Math.sin(tempoAnimacao * 3.5) * 10, 18, 18);
             }
             ctx.restore();
         }
@@ -995,7 +1061,8 @@ export function desenhar() {
                             buffAtivo = 1.5;
                         }
                     }
-                    danoTick *= buffPassivo * buffAtivo;
+                    let buffAres = 1 + ((jogo.reliquiasPantheon[0] || 0) * 0.01);
+                    danoTick *= buffPassivo * buffAtivo * buffAres;
                     
                     let isCrit = Math.random() < jogo.herois[2].chanceCritico;
                     
@@ -1037,10 +1104,34 @@ export function desenhar() {
             ctx.fillStyle = "#bdc3c7";
             ctx.fillRect(baseX + 55, 280 + offsetYHeroi, 12, 100);
         }
+        else if (heroiIndex === 4) {
+            // Túnica preta/roxa
+            ctx.fillStyle = "#34263a"; 
+            ctx.fillRect(baseX, 300 + offsetYHeroi, 40, 75 * escalaBreathe);
+            
+            // Adagas de osso cruzadas nas costas (Lâminas verdes)
+            ctx.strokeStyle = "#58d68d"; 
+            ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(baseX + 5, 310 + offsetYHeroi); ctx.lineTo(baseX + 35, 340 + offsetYHeroi); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(baseX + 35, 310 + offsetYHeroi); ctx.lineTo(baseX + 5, 340 + offsetYHeroi); ctx.stroke();
+            
+            // Cinto
+            ctx.fillStyle = "#111"; 
+            ctx.fillRect(baseX, 345 + offsetYHeroi, 40, 6); 
+
+            // Cabelo curto espetado verde-escuro
+            ctx.fillStyle = "#145a32";
+            ctx.beginPath(); ctx.arc(baseX + 20, 285 + offsetYHeroi, 18, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(baseX + 20, 290 + offsetYHeroi); ctx.lineTo(baseX - 5, 275 + offsetYHeroi); ctx.lineTo(baseX + 10, 265 + offsetYHeroi); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(baseX + 20, 290 + offsetYHeroi); ctx.lineTo(baseX + 45, 275 + offsetYHeroi); ctx.lineTo(baseX + 30, 265 + offsetYHeroi); ctx.fill();
+        }
     });
 
     ctx.font = "bold 14px sans-serif";
-    const textoNivel = isBoss ? `Nível ${jogo.nivel} (CHEFE)` : `Nível ${jogo.nivel}`;
+    let textoNivel = isBoss ? `Nível ${jogo.nivel} (CHEFE)` : `Nível ${jogo.nivel}`;
+    if (jogo.frestaDesafio && jogo.frestaDesafio.ativa) {
+        textoNivel = `🌌 FRESTA DIMENSIONAL: Andar ${jogo.frestaDesafio.andarAtual}`;
+    }
     ctx.lineWidth = 3; ctx.strokeStyle = "#000";
     ctx.strokeText(textoNivel, 400 - (ctx.measureText(textoNivel).width / 2), 25);
     ctx.fillStyle = "#fff";
@@ -1100,6 +1191,7 @@ export function desenhar() {
         if (flutuante.alpha <= 0) textosFlutuantes.splice(i, 1);
     }
 
+    ctx.restore();
     requestAnimationFrame(desenhar);
 }
 
@@ -1217,5 +1309,25 @@ export function desenharPortrait(canvasId, heroiIndex) {
         ctx.fillRect(cx - 25, cy, 50, 12);
         ctx.fillStyle = "#e74c3c";
         ctx.fillRect(cx - 15, cy + 2, 30, 8);
+    } else if (heroiIndex === 4) {
+        // Ladra de Presas
+        // Capuz/Capa preta cobrindo os ombros
+        ctx.fillStyle = "#2c3e50"; 
+        ctx.fillRect(cx - 30, cy + 15, 60, 35);
+        ctx.beginPath(); ctx.arc(cx, cy - 5, 25, Math.PI, 0); ctx.fill();
+
+        // Rosto
+        ctx.fillStyle = "#ffcc99";
+        ctx.beginPath(); ctx.arc(cx, cy, 20, 0, Math.PI * 2); ctx.fill();
+
+        // Máscara ninja cobrindo a boca
+        ctx.fillStyle = "#1c2833";
+        ctx.beginPath(); ctx.arc(cx, cy + 5, 20, 0, Math.PI); ctx.fill();
+        ctx.fillRect(cx - 20, cy + 5, 40, 15);
+
+        // Olhos amendoados e expressivos brilhando em verde
+        ctx.fillStyle = "#2ecc71";
+        ctx.beginPath(); ctx.ellipse(cx - 8, cy - 5, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(cx + 8, cy - 5, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
     }
 }
