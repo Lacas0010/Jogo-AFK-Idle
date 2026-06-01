@@ -7,7 +7,7 @@ html, body {
     margin: 0 !important;
     padding: 0 !important;
     width: 100vw !important;
-    height: 100vh !important;
+    height: 100dvh !important; /* Alterado para dvh */
     overflow: hidden !important;
     background: #000;
     color: #e2d1b6; 
@@ -27,7 +27,7 @@ h1 {
     position: absolute;
     top: 0; left: 0;
     width: 100vw;
-    height: 100vh;
+    height: 100dvh; /* Alterado para dvh */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -46,7 +46,7 @@ h1 {
     position: absolute;
     top: 0; left: 0;
     width: 100vw !important;
-    height: 100vh !important;
+    height: 100dvh !important; /* Alterado para dvh */
     max-width: none !important;
     max-height: none !important;
     z-index: 1;
@@ -350,30 +350,59 @@ button {
     font-weight: bold;
 }
 
-/* Media Query: Orientação Vertical (Modo Retrato / Celulares) */
+/* Media Query: Celulares e Modo Retrato (9:21) */
 @media (max-width: 768px), (orientation: portrait) {
-    #jogoCanvas {
-        max-width: 98vw;
-        max-height: 50vh;
-    }
-
+    /* O menu ocupa a tela de baixo pra cima */
     .sidebar-menus {
         width: 100vw !important;
-        height: calc(100vh - 40px) !important; /* Deixa espaço para o botão/aba no topo */
+        height: 85dvh !important; 
+        top: auto;
+        bottom: 0;
         border-left: none;
         border-top: 4px solid #4a3b2c;
-        transform: translateY(40px); /* Desce o painel para a aba ficar visível */
+        transform: translateY(0);
+        z-index: 999;
     }
+    
+    /* Esconde o menu 100% para baixo */
     .sidebar-menus.fechada {
-        transform: translateY(calc(100% - 60px)) !important; /* Sobe o menu para escapar da barra de navegação do celular */
+        transform: translateY(100%) !important; 
     }
 
+    /* Transforma o botão de menu em uma pílula flutuante sempre visível */
     .btn-toggle-sidebar {
-        left: 20px;
-        top: -40px;
-        border-right: 2px solid #111; /* Restaura a borda direita */
-        border-bottom: none; /* Remove a borda de baixo para se fundir com o painel */
-        border-radius: 4px 4px 0 0;
+        position: fixed !important;
+        left: 50% !important;
+        top: auto !important;
+        bottom: 15px !important;
+        transform: translateX(-50%);
+        width: 180px !important;
+        height: 45px !important;
+        border-radius: 25px !important;
+        border: 2px solid #f1c40f !important;
+        z-index: 1000 !important;
+        background: linear-gradient(to bottom, #8e7a53, #4a3b2c) !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.8) !important;
+        font-size: 16px;
+    }
+
+    /* Arruma os botões de habilidades para não quebrarem em telas estreitas */
+    #painelSkills {
+        position: fixed;
+        bottom: 75px; /* Fica logo acima do botão de Menu flutuante */
+        left: 50%;
+        transform: translateX(-50%);
+        width: 98%;
+        padding: 10px;
+        gap: 6px;
+        justify-content: center;
+        background: rgba(0, 0, 0, 0.6);
+    }
+
+    #painelSkills button {
+        font-size: 11px;
+        padding: 8px 4px;
+        flex: 1 1 45%; /* Divide em colunas perfeitas */
     }
 
     .menu-abas {

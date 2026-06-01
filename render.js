@@ -142,7 +142,17 @@ export function desenhar() {
     
     // Calcula o zoom exato para caber os 800x450 lógicos na tela sem cortar nada importante
     const scale = Math.min(canvas.width / (800 * dpr), canvas.height / (450 * dpr)) * dpr;
-    ctx.translate(canvas.width / 2, canvas.height / 2); // Eixo vai pro meio da tela
+    
+    // --- INTELIGÊNCIA DE CÂMERA MOBILE ---
+    let offsetY = 0;
+    // Se a tela for mais alta do que larga (Modo Retrato/Mobile)
+    if (window.innerHeight > window.innerWidth) {
+        // Sobe a câmera 15% da altura da tela para afastar os heróis do painel de habilidades
+        offsetY = -(window.innerHeight * 0.15) * dpr; 
+    }
+    
+    // Aplica as transformações da câmera
+    ctx.translate(canvas.width / 2, (canvas.height / 2) + offsetY); 
     ctx.scale(scale, scale); // Aplica Zoom Responsivo
     ctx.translate(-400, -225); // Puxa de volta pra coordenada lógica central
 
