@@ -38,7 +38,7 @@ export function renderizarBotoesUpgrades() {
     if (!painel) return;
     painel.innerHTML = "";
     jogo.herois.forEach((heroi, index) => {
-        if (jogo.timeAtivo.includes(index) && (index === 0 || heroi.nivelDps > 0)) {
+        if (jogo.timeAtivo.includes(index) && (index === 0 || heroi.desbloqueada || heroi.nivelDps > 0)) {
             const starsHTML = '⭐'.repeat(heroi.estrelas || 1);
             painel.innerHTML += `
                 <div class="heroi-card">
@@ -86,7 +86,7 @@ function renderizarStatusHerois() {
     `;
     
     jogo.herois.forEach((heroi, index) => {
-        if (jogo.timeAtivo.includes(index) && (index === 0 || heroi.nivelDps > 0)) {
+        if (jogo.timeAtivo.includes(index) && (index === 0 || heroi.desbloqueada || heroi.nivelDps > 0)) {
             const chanceCrit = Math.round(heroi.chanceCritico * 100);
             painel.innerHTML += `
                 <div class="heroi-card" style="margin-bottom: 10px; text-align: left;">
@@ -106,7 +106,7 @@ function renderizarStatusHerois() {
     });
 
     jogo.herois.forEach((heroi, index) => {
-        if (jogo.timeAtivo.includes(index) && (index === 0 || heroi.nivelDps > 0)) {
+        if (jogo.timeAtivo.includes(index) && (index === 0 || heroi.desbloqueada || heroi.nivelDps > 0)) {
             desenharPortrait(`portrait_${index}`, index);
         }
     });
@@ -121,7 +121,7 @@ export function renderizarPainelEquipe() {
 
     painel.innerHTML = "";
     jogo.herois.forEach((heroi, index) => {
-        if (index === 0 || heroi.nivelDps > 0) {
+        if (index === 0 || heroi.desbloqueada || heroi.nivelDps > 0) {
             const noTime = jogo.timeAtivo.includes(index);
             const podeEscalar = jogo.timeAtivo.length < 3;
             const ehPrincipal = index === 0;
@@ -295,7 +295,7 @@ export function renderizarGuilda() {
         let options = "";
         let temDisponivel = false;
         jogo.herois.forEach((heroi, i) => {
-            if ((i === 0 || heroi.nivelDps > 0) && !jogo.timeAtivo.includes(i)) {
+            if ((i === 0 || heroi.desbloqueada || heroi.nivelDps > 0) && !jogo.timeAtivo.includes(i)) {
                 options += `<option value="${i}">${heroi.nome} (DPS: ${heroi.dps})</option>`;
                 temDisponivel = true;
             }
@@ -380,12 +380,12 @@ export function atualizarInterface() {
         }
     });
 
-    const prefixos = ["🔥", "🏹", "🔮", "⚙️"];
+    const prefixos = ["🔥", "🏹", "🔮", "⚙️", "☠️"];
 
-    for (let index = 0; index < 4; index++) {
+    for (let index = 0; index < 5; index++) {
         const btnSkill = document.getElementById(`btnSkill_${index}_0`);
         if (btnSkill) {
-            if (jogo.timeAtivo.includes(index) && jogo.herois[index] && (index === 0 || jogo.herois[index].nivelDps > 0) && jogo.herois[index].skills && jogo.herois[index].skills[0]) {
+            if (jogo.timeAtivo.includes(index) && jogo.herois[index] && (index === 0 || jogo.herois[index].desbloqueada || jogo.herois[index].nivelDps > 0) && jogo.herois[index].skills && jogo.herois[index].skills[0]) {
                 btnSkill.style.display = "inline-block";
                 let skill = jogo.herois[index].skills[0];
                 let icone = prefixos[index];
@@ -745,10 +745,11 @@ export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'no
     if (jogo.monstroHp <= 0) {
         jogo.monstroLodoToxico = 0;
 
-        if (jogo.frestaDesafio.ativa) {
+        if (jogo.frestaDesafio && jogo.frestaDesafio.ativa) {
             jogo.frestaDesafio.andarAtual++;
-            jogo.frestaDesafio.tempoRestante = 30;
-            jogo.monstroHpMax = Math.floor(jogo.monstroHpMax * 2.5); // Multiplica drasticamente o HP
+            jogo.frestaDesafio.tempoRestante = 30; // Reseta o tempo
+            // O HP sofre um aumento exponencial de 50% por andar
+            jogo.monstroHpMax = Math.floor(calcularHpMaximo(jogo.nivel) * Math.pow(1.5, jogo.frestaDesafio.andarAtual));
             jogo.monstroHp = jogo.monstroHpMax;
             
             let recompensaFresta = calcularRecompensa(jogo.nivel) * jogo.frestaDesafio.andarAtual;
@@ -859,17 +860,20 @@ window.addEventListener('DOMContentLoaded', () => {
         verificarMarcos();
 
         // Lógica de Tempo do Desafio das Frestas
-        if (jogo.frestaDesafio.ativa) {
+        if (jogo.frestaDesafio && jogo.frestaDesafio.ativa) {
             jogo.frestaDesafio.tempoRestante--;
-            
-            if (jogo.frestaDesafio.tempoRestante <= 0) {
+            if (window.renderizarFrestas) window.renderizarFrestas();
+
+            if (jogo.frestaDesafio.tempoRestante <= 0) { // O tempo acabou!
                 jogo.frestaDesafio.ativa = false;
+                let premio = jogo.frestaDesafio.andarAtual * 2;
+                jogo.fragmentosUniversais = (jogo.fragmentosUniversais || 0) + premio;
+                
+                // Reverte o monstro para a dificuldade da campanha normal
                 jogo.monstroHpMax = calcularHpMaximo(jogo.nivel);
                 jogo.monstroHp = jogo.monstroHpMax;
-                let ganhoFrags = jogo.frestaDesafio.andarAtual * 2;
-                jogo.fragmentosUniversais += ganhoFrags;
-                mostrarNotificacao(`🌌 Masmorra Encerrada!\nTempo esgotado no Andar ${jogo.frestaDesafio.andarAtual}.\nVocê obteve +${ganhoFrags} Fragmentos Universais.`);
-                atualizarInterface();
+                
+                mostrarNotificacao(`🌌 Fresta Colapsou!\nVocê chegou ao Andar ${jogo.frestaDesafio.andarAtual}\nPrêmio: +${premio} Fragmentos Universais`);
                 if (window.renderizarFrestas) window.renderizarFrestas();
             }
         }
@@ -927,7 +931,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
         jogo.timeAtivo.forEach(index => {
             let heroi = jogo.herois[index];
-            if (index === 0 || heroi.nivelDps > 0) { // Verificação de segurança adicional
+            if (index === 0 || heroi.desbloqueada || heroi.nivelDps > 0) { // Verificação de segurança adicional
                 // Mago de Glintstone (Índice 2): Multi-hit ativo não ataca por bloco (será delegado ao loop de renderização visual)
                 if (index === 2 && heroi.skills && heroi.skills[0] && heroi.skills[0].ativa) {
                     return; 
@@ -1034,15 +1038,16 @@ window.toggleSidebar = function() {
 };
 
 window.subirReliquia = function(idx) {
-    let custo = 10 + ((jogo.reliquiasPantheon[idx] || 0) * 5); // Exemplo de custo incremental
+    let nivel = jogo.reliquiasPantheon[idx] || 0;
+    let custo = 10 + (nivel * 5);
     if (jogo.fragmentosUniversais >= custo) {
         jogo.fragmentosUniversais -= custo;
-        jogo.reliquiasPantheon[idx]++;
-        atualizarInterface();
-        if (window.renderizarPantheon) window.renderizarPantheon();
+        jogo.reliquiasPantheon[idx] = nivel + 1;
         salvarJogo();
+        if (window.renderizarPantheon) window.renderizarPantheon();
+        atualizarInterface();
     } else {
-        mostrarNotificacao("❌ Fragmentos Universais insuficientes!");
+        mostrarNotificacao("❌ Fragmentos Universais Insuficientes!");
     }
 };
 
@@ -1051,11 +1056,18 @@ window.iniciarDesafioFresta = function() {
         jogo.frestaDesafio.ativa = true;
         jogo.frestaDesafio.andarAtual = 1;
         jogo.frestaDesafio.tempoRestante = 30;
-        jogo.frestaDesafio.hpOriginalMonstro = jogo.monstroHpMax;
-        jogo.monstroHpMax = calcularHpMaximo(jogo.nivel) * 3; // Multiplicador inicial do desafio
+        
+        // Inicia o desafio dobrando o HP atual do nível base
+        jogo.monstroHpMax = calcularHpMaximo(jogo.nivel) * 2;
         jogo.monstroHp = jogo.monstroHpMax;
-        atualizarInterface();
+        
+        salvarJogo();
         if (window.renderizarFrestas) window.renderizarFrestas();
+        atualizarInterface();
+        
+        // Força a UI a esconder a sidebar para o jogador focar na luta
+        const sb = document.getElementById("sidebarAbas");
+        if (sb) sb.classList.add("fechada");
     }
 };
 

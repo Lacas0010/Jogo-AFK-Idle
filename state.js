@@ -336,7 +336,7 @@ export function executarAscensao() {
         jogo.monstroLodoToxico = 0;
 
         jogo.herois.forEach((heroi, index) => {
-            let estavaDesbloqueado = index === 0 || heroi.nivelDps > 0;
+            let estavaDesbloqueado = index === 0 || heroi.desbloqueada || heroi.nivelDps > 0;
             
             heroi.nivelDps = index === 0 ? 0 : (estavaDesbloqueado ? 1 : 0);
             heroi.custoDps = index === 0 ? 10 : (index === 1 ? 150 : (index === 2 ? 250 : (index === 3 ? 400 : 600)));

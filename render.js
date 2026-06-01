@@ -1161,6 +1161,19 @@ export function desenhar() {
     const hpPercent = Math.max(0, jogo.monstroHp / jogo.monstroHpMax);
     ctx.fillRect(250, 40, 300 * hpPercent, 12);
 
+    if (jogo.monstroLodoToxico > 0) {
+        ctx.save();
+        ctx.fillStyle = "#8e44ad"; // Roxo veneno
+        ctx.font = "bold 16px Georgia";
+        ctx.textAlign = "center";
+        ctx.shadowColor = "#000";
+        ctx.shadowBlur = 4;
+        // O texto flutua suavemente para cima e para baixo
+        let floatPoison = Math.sin(tempoAnimacao * 5) * 4; 
+        ctx.fillText(`☠️ Toxina: ${jogo.monstroLodoToxico}x`, 400, 115 + floatPoison);
+        ctx.restore();
+    }
+
     for (let i = textosFlutuantes.length - 1; i >= 0; i--) {
         let flutuante = textosFlutuantes[i];
         ctx.font = flutuante.tamanho || "bold 18px sans-serif";
@@ -1416,41 +1429,213 @@ export function desenharPortrait(canvasId, heroiIndex) {
 function desenharSplashArt(ctx, cx, cy, heroiIndex, tick) {
     ctx.save();
     ctx.translate(cx, cy);
-    let floatY = Math.sin(tick * 0.1) * 10;
-    ctx.translate(0, floatY);
+    let breath = Math.sin(tick * 0.05);
+    ctx.translate(0, breath * 5); // Flutuação suave
     ctx.scale(2.5, 2.5); // Escala épica
 
-    // Desenhos focados nos detalhes superiores dos personagens
+    // Sistema de desenho por camadas: Fundo/Capa -> Corpo/Anatomia -> Rosto/Cabelo -> Armas/Efeitos Mágicos
+
     if (heroiIndex === 0) {
-        ctx.fillStyle = "#e67e22"; ctx.fillRect(-15, -10, 30, 25);
-        ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(0, -20, 12, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = "#e74c3c"; ctx.fillRect(-20, -25, 40, 5);
-        ctx.fillStyle = "#bdc3c7"; ctx.fillRect(15, -40, 8, 50);
-        ctx.fillStyle = "#c0392b"; ctx.fillRect(10, -5, 18, 5);
+        // ⚔️ GUERREIRO PRINCIPAL (Pose de Salto Ofensivo)
+        ctx.shadowBlur = 0;
+        
+        // Capa Vermelha Esvoaçante (Fundo)
+        ctx.fillStyle = "#a10000";
+        ctx.beginPath(); ctx.moveTo(-15, 0); ctx.bezierCurveTo(-50, 20, -70, -10, -40, 50); ctx.lineTo(-15, 30); ctx.fill();
+
+        // Corpo e Armadura (Prata e Ouro)
+        let gradArmadura = ctx.createLinearGradient(0, -20, 0, 30);
+        gradArmadura.addColorStop(0, "#ecf0f1"); gradArmadura.addColorStop(1, "#7f8c8d");
+        ctx.fillStyle = gradArmadura;
+        ctx.beginPath(); ctx.moveTo(-15, 25); ctx.lineTo(15, 20); ctx.lineTo(20, -5); ctx.lineTo(-20, -5); ctx.fill(); // Torso
+        ctx.fillStyle = "#e67e22"; ctx.fillRect(-10, -5, 20, 15); // Placa Peitoral de Ouro
+        ctx.fillStyle = "#c0392b"; ctx.fillRect(-12, 10, 24, 6); // Cinto Vermelho
+
+        // Braços e Ombreiras Metálicas
+        ctx.fillStyle = "#95a5a6";
+        ctx.beginPath(); ctx.arc(-22, -2, 10, 0, Math.PI*2); ctx.fill(); // Ombro Esq
+        ctx.beginPath(); ctx.arc(22, -2, 10, 0, Math.PI*2); ctx.fill(); // Ombro Dir
+        ctx.fillStyle = "#34495e"; ctx.fillRect(-28, -2, 8, 20); // Braço Esq segurando espada
+
+        // Rosto e Cabelo Espetado Laranja
+        ctx.fillStyle = "#ffcc99"; ctx.beginPath(); ctx.arc(0, -18, 12, 0, Math.PI*2); ctx.fill(); // Rosto
+        ctx.fillStyle = "#000"; ctx.beginPath(); ctx.arc(-4, -20, 2, 0, Math.PI*2); ctx.arc(5, -21, 2, 0, Math.PI*2); ctx.fill(); // Olhos furiosos
+        ctx.beginPath(); ctx.moveTo(-6, -24); ctx.lineTo(-2, -22); ctx.moveTo(7, -25); ctx.lineTo(3, -23); ctx.stroke(); // Sobrancelhas
+        
+        ctx.fillStyle = "#d35400"; // Cabelo Laranja
+        ctx.beginPath(); ctx.moveTo(-12, -18); ctx.lineTo(-20, -35); ctx.lineTo(-5, -28); ctx.lineTo(0, -45); ctx.lineTo(8, -28); ctx.lineTo(22, -35); ctx.lineTo(12, -18); ctx.fill();
+
+        // Montante (Espada Gigante Incandescente)
+        ctx.save();
+        ctx.rotate(-Math.PI / 6);
+        ctx.translate(-25, 0);
+        let gradEspada = ctx.createLinearGradient(0, -60, 0, 10);
+        gradEspada.addColorStop(0, "#fff"); gradEspada.addColorStop(0.3, "#f1c40f"); gradEspada.addColorStop(1, "#c0392b");
+        ctx.shadowColor = "#e67e22"; ctx.shadowBlur = 25;
+        ctx.fillStyle = gradEspada;
+        ctx.beginPath(); ctx.moveTo(-6, 10); ctx.lineTo(6, 10); ctx.lineTo(10, -60); ctx.lineTo(0, -85); ctx.lineTo(-10, -60); ctx.fill(); // Lâmina
+        ctx.fillStyle = "#f39c12"; ctx.shadowBlur = 5; ctx.fillRect(-18, 10, 36, 6); // Guarda-Mão Ouro
+        ctx.fillStyle = "#5c3a21"; ctx.fillRect(-4, 16, 8, 15); // Cabo
+        ctx.restore();
+
     } else if (heroiIndex === 1) {
-        ctx.fillStyle = "#27ae60"; ctx.fillRect(-12, -10, 25, 30);
-        ctx.fillStyle = "#f39c12"; ctx.beginPath(); ctx.arc(0, -20, 11, 0, Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(-10, -20); ctx.lineTo(-20, -25); ctx.lineTo(-10, -15); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(10, -20); ctx.lineTo(20, -25); ctx.lineTo(10, -15); ctx.fill();
-        ctx.strokeStyle = "#8e44ad"; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(15, 0, 20, -Math.PI/2, Math.PI/2); ctx.stroke();
+        // 🏹 ELFA ARQUEIRA (Pose de Puxada de Arco)
+        ctx.shadowBlur = 0;
+        
+        // Cabelo Loiro Flutuando (Fundo)
+        ctx.fillStyle = "#f1c40f";
+        ctx.beginPath(); ctx.moveTo(0, -15); ctx.quadraticCurveTo(-30, 0, -40, 30); ctx.quadraticCurveTo(-10, 10, 0, -5); ctx.fill();
+
+        // Torso Esmeralda e Cintos de Couro
+        ctx.fillStyle = "#1abc9c";
+        ctx.beginPath(); ctx.moveTo(-12, 25); ctx.lineTo(12, 25); ctx.lineTo(16, -10); ctx.lineTo(-10, -10); ctx.fill(); // Vestido
+        ctx.fillStyle = "#8b4513"; ctx.fillRect(-12, 5, 24, 5); // Cinto
+        ctx.beginPath(); ctx.moveTo(-10, -10); ctx.lineTo(10, 5); ctx.lineWidth = 3; ctx.strokeStyle = "#8b4513"; ctx.stroke(); // Alça da Aljava
+
+        // Braços Tensionando o Arco
+        ctx.fillStyle = "#ffcc99";
+        ctx.beginPath(); ctx.moveTo(-10, -5); ctx.lineTo(-30, 5); ctx.lineWidth = 6; ctx.strokeStyle = "#1abc9c"; ctx.stroke(); // Braço trás
+        ctx.beginPath(); ctx.moveTo(15, -5); ctx.lineTo(35, 0); ctx.lineWidth = 5; ctx.strokeStyle = "#ffcc99"; ctx.stroke(); // Braço frente (Pele)
+
+        // Rosto, Capuz e Orelhas
+        ctx.fillStyle = "#ffcc99"; ctx.beginPath(); ctx.arc(0, -18, 11, 0, Math.PI*2); ctx.fill(); // Rosto
+        ctx.fillStyle = "#ffcc99"; ctx.beginPath(); ctx.moveTo(-10, -18); ctx.lineTo(-25, -25); ctx.lineTo(-8, -12); ctx.fill(); // Orelha Esq
+        ctx.beginPath(); ctx.moveTo(10, -18); ctx.lineTo(25, -25); ctx.lineTo(8, -12); ctx.fill(); // Orelha Dir
+        ctx.fillStyle = "#2ecc71"; ctx.shadowColor = "#2ecc71"; ctx.shadowBlur = 10; 
+        ctx.beginPath(); ctx.ellipse(-4, -18, 3, 4, 0, 0, Math.PI*2); ctx.ellipse(5, -18, 3, 4, 0, 0, Math.PI*2); ctx.fill(); // Olhos Esmeralda Brilhantes Corrigidos
+        ctx.fillStyle = "#1e8449"; ctx.beginPath(); ctx.moveTo(-14, -24); ctx.lineTo(0, -35); ctx.lineTo(14, -24); ctx.lineTo(0, -15); ctx.fill(); // Capuz
+
+        // Arco de Energia Ciano e Flecha
+        ctx.save();
+        ctx.translate(35, 0);
+        ctx.shadowColor = "#00ffff"; ctx.shadowBlur = 20;
+        ctx.strokeStyle = "#00ffff"; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(0, 0, 35, -Math.PI/2.5, Math.PI/2.5); ctx.stroke(); // Corpo do arco
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.7)"; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(Math.cos(-Math.PI/2.5)*35, Math.sin(-Math.PI/2.5)*35); ctx.lineTo(-40, 5); ctx.lineTo(Math.cos(Math.PI/2.5)*35, Math.sin(Math.PI/2.5)*35); ctx.stroke(); // Corda
+        // Flecha Brilhante
+        ctx.fillStyle = "#fff"; ctx.shadowBlur = 30; ctx.shadowColor = "#fff";
+        ctx.beginPath(); ctx.moveTo(-45, 5); ctx.lineTo(15, 0); ctx.lineWidth = 3; ctx.strokeStyle = "#fff"; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(15, 0); ctx.lineTo(5, -6); ctx.lineTo(5, 6); ctx.fill(); // Ponta
+        ctx.restore();
+        
     } else if (heroiIndex === 2) {
-        ctx.fillStyle = "#8e44ad"; ctx.beginPath(); ctx.moveTo(-18, 20); ctx.lineTo(18, 20); ctx.lineTo(0, -15); ctx.fill();
-        ctx.fillStyle = "#ecf0f1"; ctx.beginPath(); ctx.arc(0, -18, 10, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = "#2c3e50"; ctx.fillRect(-22, -22, 45, 5);
-        ctx.beginPath(); ctx.moveTo(-15, -22); ctx.lineTo(15, -22); ctx.lineTo(0, -50); ctx.fill();
+        // 🔮 MAGO DE GLINTSTONE (Canalizando Feixe)
+        ctx.shadowBlur = 0;
+        
+        // Túnica e Capa Roxa Profunda
+        let gradTunica = ctx.createLinearGradient(0, -20, 0, 40);
+        gradTunica.addColorStop(0, "#9b59b6"); gradTunica.addColorStop(1, "#4a235a");
+        ctx.fillStyle = gradTunica;
+        ctx.beginPath(); ctx.moveTo(-25, 40); ctx.lineTo(25, 40); ctx.lineTo(15, -10); ctx.lineTo(-15, -10); ctx.fill(); // Corpo
+        ctx.fillStyle = "#8e44ad";
+        ctx.beginPath(); ctx.moveTo(-15, -10); ctx.lineTo(-35, 20); ctx.lineTo(-20, 30); ctx.fill(); // Manga Esq
+        ctx.beginPath(); ctx.moveTo(15, -10); ctx.lineTo(35, 20); ctx.lineTo(20, 30); ctx.fill(); // Manga Dir
+
+        // Rosto e Barba Flutuante
+        ctx.fillStyle = "#ffcc99"; ctx.beginPath(); ctx.arc(0, -15, 12, 0, Math.PI*2); ctx.fill(); // Rosto
+        ctx.fillStyle = "#ecf0f1"; 
+        ctx.beginPath(); ctx.moveTo(-12, -10); ctx.quadraticCurveTo(0, 30 + breath*5, 12, -10); ctx.fill(); // Barba majestosa
+
+        // Chapéu Cônico de Bruxo
+        ctx.fillStyle = "#2c3e50"; ctx.beginPath(); ctx.ellipse(0, -22, 25, 6, 0, 0, Math.PI*2); ctx.fill(); // Aba
+        ctx.fillStyle = "#34495e"; ctx.beginPath(); ctx.moveTo(-15, -22); ctx.quadraticCurveTo(0, -60, 25, -65); ctx.lineTo(15, -22); ctx.fill(); // Ponta curva
+        ctx.fillStyle = "#00ffff"; ctx.shadowColor = "#00ffff"; ctx.shadowBlur = 15; ctx.beginPath(); ctx.arc(23, -63, 4, 0, Math.PI*2); ctx.fill(); // Joia do Chapéu
+        
+        // Aura Cósmica nas Mãos (Comet Azur Preparando)
+        ctx.globalCompositeOperation = "lighter";
+        let gradMagia = ctx.createRadialGradient(0, 15, 0, 0, 15, 30);
+        gradMagia.addColorStop(0, "rgba(255, 255, 255, 0.9)");
+        gradMagia.addColorStop(0.3, "rgba(0, 255, 255, 0.6)");
+        gradMagia.addColorStop(1, "transparent");
+        ctx.fillStyle = gradMagia;
+        ctx.fillRect(-35, -15, 70, 70);
+        
+        // Glifos ao redor da magia
+        ctx.save();
+        ctx.translate(0, 15); ctx.rotate(-tick * 0.05);
+        ctx.fillStyle = "#00ffff"; ctx.font = "12px Arial"; ctx.fillText("✧", -25, -20); ctx.fillText("✦", 20, 20); ctx.fillText("⟡", 20, -20);
+        ctx.restore();
+        ctx.globalCompositeOperation = "source-over";
+
     } else if (heroiIndex === 3) {
-        ctx.fillStyle = "#34495e"; ctx.fillRect(-18, -10, 35, 30);
-        ctx.fillStyle = "#7f8c8d"; ctx.beginPath(); ctx.arc(0, -20, 12, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = "#111"; ctx.fillRect(-12, -22, 25, 5);
-        ctx.fillStyle = "#e74c3c"; ctx.fillRect(-5, -21, 10, 3);
+        // 🛡️ CAVALEIRO DE FERRO (Defesa Impenetrável)
+        ctx.shadowBlur = 0;
+
+        // Corpo Robusto Blindado
+        let gradArmadura = ctx.createLinearGradient(0, -20, 0, 30);
+        gradArmadura.addColorStop(0, "#7f8c8d"); gradArmadura.addColorStop(1, "#2c3e50");
+        ctx.fillStyle = gradArmadura;
+        ctx.beginPath(); ctx.moveTo(-25, 30); ctx.lineTo(35, 30); ctx.lineTo(25, -15); ctx.lineTo(-15, -15); ctx.fill(); // Torso Gigante
+        ctx.fillStyle = "#34495e"; ctx.beginPath(); ctx.arc(-20, -10, 14, 0, Math.PI*2); ctx.arc(20, -10, 14, 0, Math.PI*2); ctx.fill(); // Ombreiras Redondas
+
+        // Capacete Fechado
+        ctx.fillStyle = "#95a5a6"; ctx.beginPath(); ctx.arc(0, -25, 14, 0, Math.PI*2); ctx.fill(); // Base Elmo
+        ctx.fillStyle = "#111"; ctx.fillRect(-10, -30, 20, 6); // Fenda Visor
+        ctx.fillStyle = "#e74c3c"; ctx.shadowColor = "#e74c3c"; ctx.shadowBlur = 15; ctx.beginPath(); ctx.arc(-3, -27, 2, 0, Math.PI*2); ctx.fill(); // Olho Terminator Brilhando
+
+        // Escudo de Torre (Cobrindo metade do corpo, plantado no chão)
+        ctx.save();
+        ctx.translate(-15, 5);
+        let gradEscudo = ctx.createLinearGradient(-15, -40, 15, 40);
+        gradEscudo.addColorStop(0, "#bdc3c7"); gradEscudo.addColorStop(1, "#34495e");
+        ctx.shadowColor = "#000"; ctx.shadowBlur = 20;
+        ctx.fillStyle = gradEscudo;
+        ctx.beginPath(); ctx.moveTo(-20, -35); ctx.lineTo(20, -35); ctx.lineTo(15, 45); ctx.lineTo(0, 55); ctx.lineTo(-15, 45); ctx.fill(); // Forma do Escudo
+        ctx.strokeStyle = "#c0392b"; ctx.lineWidth = 4; ctx.strokeRect(-15, -30, 30, 70); // Borda Sangue
+        ctx.fillStyle = "#e67e22"; ctx.fillRect(-5, -20, 10, 50); ctx.fillRect(-15, 0, 30, 10); // Cruz de Ouro
+        
+        // Impacto no Chão do Escudo
+        ctx.globalCompositeOperation = "destination-over";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.5)"; ctx.beginPath(); ctx.ellipse(0, 55, 30, 8, 0, 0, Math.PI*2); ctx.fill();
+        ctx.globalCompositeOperation = "source-over";
+        ctx.restore();
+
+        // Lança Plantada na Direita
+        ctx.fillStyle = "#7f8c8d"; ctx.fillRect(25, -40, 6, 80); // Haste
+        ctx.fillStyle = "#bdc3c7"; ctx.beginPath(); ctx.moveTo(28, -60); ctx.lineTo(34, -40); ctx.lineTo(22, -40); ctx.fill(); // Ponta
+
     } else if (heroiIndex === 4) {
-        ctx.fillStyle = "#2c3e50"; ctx.fillRect(-15, -10, 30, 25);
-        ctx.fillStyle = "#1c2833"; ctx.beginPath(); ctx.arc(0, -20, 11, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(-4, -22, 2, 0, Math.PI*2); ctx.arc(4, -22, 2, 0, Math.PI*2); ctx.fill();
-        ctx.fillStyle = "#58d68d";
-        ctx.beginPath(); ctx.moveTo(-20, -10); ctx.lineTo(-30, 10); ctx.lineTo(-15, 0); ctx.fill();
-        ctx.beginPath(); ctx.moveTo(20, -10); ctx.lineTo(30, 10); ctx.lineTo(15, 0); ctx.fill();
+        // ☠️ LADRA DE PRESAS (Pulo Ágil Invertido)
+        ctx.shadowBlur = 0;
+        
+        // Efeito Lodo Tóxico no Fundo (Rastro do pulo)
+        ctx.shadowColor = "#2ecc71"; ctx.shadowBlur = 20;
+        ctx.fillStyle = "rgba(46, 204, 113, 0.4)";
+        ctx.beginPath(); ctx.moveTo(-30, 40); ctx.quadraticCurveTo(0, 0, -15, -20); ctx.lineTo(15, -20); ctx.quadraticCurveTo(30, 0, 10, 40); ctx.fill();
+
+        // Cachecol Ninja (Fluindo agressivamente pra cima)
+        ctx.shadowBlur = 5; ctx.shadowColor = "#000";
+        ctx.fillStyle = "#111";
+        ctx.beginPath(); ctx.moveTo(0, -10); ctx.quadraticCurveTo(30, -30, 40, -50); ctx.quadraticCurveTo(20, -20, 10, -15); ctx.fill();
+
+        // Traje de Couro Justo
+        ctx.fillStyle = "#2c3e50";
+        ctx.beginPath(); ctx.moveTo(-12, 20); ctx.lineTo(12, 20); ctx.lineTo(15, -10); ctx.lineTo(-15, -10); ctx.fill(); // Torso
+        ctx.fillStyle = "#1c2833"; ctx.beginPath(); ctx.moveTo(-10, -10); ctx.lineTo(-25, 10); ctx.lineTo(-18, 15); ctx.fill(); // Braço Esq
+        ctx.beginPath(); ctx.moveTo(10, -10); ctx.lineTo(25, 10); ctx.lineTo(18, 15); ctx.fill(); // Braço Dir
+
+        // Cabeça Mascarada
+        ctx.fillStyle = "#ffcc99"; ctx.beginPath(); ctx.arc(0, -18, 11, 0, Math.PI*2); ctx.fill(); // Pele
+        ctx.fillStyle = "#1c2833"; ctx.beginPath(); ctx.arc(0, -15, 12, 0, Math.PI); ctx.fill(); ctx.fillRect(-12, -15, 24, 8); // Máscara Inferior
+        ctx.fillStyle = "#145a32"; ctx.beginPath(); ctx.arc(0, -22, 12, Math.PI, 0); ctx.fill(); // Cabelo Verde Escuro
+
+        // Olhos Verdes Fatais
+        ctx.fillStyle = "#2ecc71"; ctx.shadowColor = "#2ecc71"; ctx.shadowBlur = 15;
+        ctx.beginPath(); ctx.moveTo(-8, -20); ctx.lineTo(-3, -16); ctx.lineTo(-9, -17); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(8, -20); ctx.lineTo(3, -16); ctx.lineTo(9, -17); ctx.fill();
+
+        // Adagas de Osso Venenosas Cruzadas
+        ctx.shadowColor = "#58d68d"; ctx.shadowBlur = 20;
+        let gradAdaga = ctx.createLinearGradient(0, 0, -30, 20);
+        gradAdaga.addColorStop(0, "#ecf0f1"); gradAdaga.addColorStop(1, "#27ae60");
+        ctx.fillStyle = gradAdaga;
+        
+        // Adaga Esq (Pegada Invertida)
+        ctx.beginPath(); ctx.moveTo(-25, 10); ctx.quadraticCurveTo(-45, 0, -30, -30); ctx.quadraticCurveTo(-20, -5, -18, 5); ctx.fill();
+        // Adaga Dir (Pegada Invertida)
+        ctx.beginPath(); ctx.moveTo(25, 10); ctx.quadraticCurveTo(45, 0, 30, -30); ctx.quadraticCurveTo(20, -5, 18, 5); ctx.fill();
     }
+
     ctx.restore();
 }
