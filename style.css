@@ -359,13 +359,13 @@ button {
 
     .sidebar-menus {
         width: 100vw !important;
-        height: 100vh !important;
+        height: calc(100vh - 40px) !important; /* Deixa espaço para o botão/aba no topo */
         border-left: none;
         border-top: 4px solid #4a3b2c;
-        transform: translateY(0);
+        transform: translateY(40px); /* Desce o painel para a aba ficar visível */
     }
     .sidebar-menus.fechada {
-        transform: translateY(100%) !important;
+        transform: translateY(100vh) !important; /* Esconde o painel para baixo, mas mantém a aba visível */
     }
 
     .btn-toggle-sidebar {
