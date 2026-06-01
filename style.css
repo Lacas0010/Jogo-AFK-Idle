@@ -365,12 +365,14 @@ button {
         transform: translateY(40px); /* Desce o painel para a aba ficar visível */
     }
     .sidebar-menus.fechada {
-        transform: translateY(100vh) !important; /* Esconde o painel para baixo, mas mantém a aba visível */
+        transform: translateY(calc(100% - 60px)) !important; /* Sobe o menu para escapar da barra de navegação do celular */
     }
 
     .btn-toggle-sidebar {
         left: 20px;
         top: -40px;
+        border-right: 2px solid #111; /* Restaura a borda direita */
+        border-bottom: none; /* Remove a borda de baixo para se fundir com o painel */
         border-radius: 4px 4px 0 0;
     }
 
