@@ -3,6 +3,7 @@ import { atacar } from './engine.js';
 
 export let textosFlutuantes = [];
 export let animacao = { ativa: false, frameAtual: 0, duracao: 15, critico: false, tipo: 'normal' };
+export let animacaoGacha = { ativa: false, tick: 0, raridade: 'azul', heroiIndex: null, msg: "" };
 
 let canvas;
 let ctx;
@@ -17,6 +18,14 @@ let noitesPassadas = 0; // Para calcular a fase da Lua
 let foiNoite = false; // Flag para detectar quando a noite vira dia
 let nivelAnterior = null; // Rastreador de mortes
 let frameMorte = 0; // Temporizador para esconder o monstro
+
+export function dispararAnimacaoGacha(raridade, heroiIndex, msg) {
+    animacaoGacha.ativa = true;
+    animacaoGacha.tick = 0;
+    animacaoGacha.raridade = raridade;
+    animacaoGacha.heroiIndex = heroiIndex;
+    animacaoGacha.msg = msg;
+}
 
 export function mostrarNotificacao(mensagem) {
     if (!canvas) {
@@ -1191,6 +1200,68 @@ export function desenhar() {
         if (flutuante.alpha <= 0) textosFlutuantes.splice(i, 1);
     }
 
+    // --- ANIMAÇÃO DE GACHA TELA CHEIA ---
+    if (animacaoGacha.ativa) {
+        let cx = 400;
+        let cy = 225;
+        let tick = animacaoGacha.tick;
+        animacaoGacha.tick++;
+
+        let corRaio = "0, 191, 255"; // Comum = Azul
+        if (animacaoGacha.raridade === 'roxo') corRaio = "155, 89, 182"; // Épico = Roxo
+        if (animacaoGacha.raridade === 'dourado') corRaio = "241, 196, 15"; // Lendário = Dourado
+
+        let alphaFundo = Math.min(0.9, tick / 20);
+        ctx.fillStyle = `rgba(0,0,0,${alphaFundo})`;
+        ctx.fillRect(-2500, -2500, 5800, 5800);
+
+        if (tick < 40) { // Fase 1: Meteoro Caindo
+            let yEstrela = -400 + (tick * 16);
+            ctx.fillStyle = `rgb(${corRaio})`;
+            ctx.beginPath(); ctx.arc(cx, yEstrela, 8, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.moveTo(cx, yEstrela); ctx.lineTo(cx - 4, yEstrela - 80); ctx.lineTo(cx + 4, yEstrela - 80); ctx.fill();
+        }
+        else if (tick < 60) { // Fase 2: Explosão
+            let raioExp = (tick - 40) * 40;
+            ctx.fillStyle = `rgba(${corRaio}, ${1 - (tick-40)/20})`;
+            ctx.beginPath(); ctx.arc(cx, cy, raioExp, 0, Math.PI*2); ctx.fill();
+        }
+        else if (tick < 260) { // Fase 3: Splash Art
+            let popAlpha = Math.min(1, (tick - 60) / 10);
+            ctx.globalAlpha = popAlpha;
+
+            // Fundo de Raios Giratórios
+            ctx.save();
+            ctx.translate(cx, cy - 20);
+            ctx.rotate(tick * 0.02);
+            ctx.fillStyle = `rgba(${corRaio}, 0.3)`;
+            for(let i=0; i<8; i++) {
+                ctx.rotate(Math.PI / 4);
+                ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-20, 800); ctx.lineTo(20, 800); ctx.fill();
+            }
+            ctx.restore();
+
+            if (animacaoGacha.heroiIndex !== null) {
+                desenharSplashArt(ctx, cx, cy - 40, animacaoGacha.heroiIndex, tick);
+            } else {
+                ctx.font = "80px Arial"; ctx.textAlign = "center"; ctx.fillText("💰", cx, cy - 40);
+            }
+
+            // Textos de Resultado
+            ctx.fillStyle = "#fff";
+            ctx.font = "bold 20px Georgia";
+            ctx.textAlign = "center";
+            let linhas = animacaoGacha.msg.split('\n');
+            linhas.forEach((l, i) => {
+                ctx.fillText(l, cx, cy + 80 + (i * 24));
+            });
+
+            ctx.globalAlpha = 1.0;
+        } else {
+            animacaoGacha.ativa = false; // Fim
+        }
+    }
+
     ctx.restore();
     requestAnimationFrame(desenhar);
 }
@@ -1330,4 +1401,46 @@ export function desenharPortrait(canvasId, heroiIndex) {
         ctx.beginPath(); ctx.ellipse(cx - 8, cy - 5, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.ellipse(cx + 8, cy - 5, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
     }
+}
+
+function desenharSplashArt(ctx, cx, cy, heroiIndex, tick) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    let floatY = Math.sin(tick * 0.1) * 10;
+    ctx.translate(0, floatY);
+    ctx.scale(2.5, 2.5); // Escala épica
+
+    // Desenhos focados nos detalhes superiores dos personagens
+    if (heroiIndex === 0) {
+        ctx.fillStyle = "#e67e22"; ctx.fillRect(-15, -10, 30, 25);
+        ctx.fillStyle = "#f1c40f"; ctx.beginPath(); ctx.arc(0, -20, 12, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = "#e74c3c"; ctx.fillRect(-20, -25, 40, 5);
+        ctx.fillStyle = "#bdc3c7"; ctx.fillRect(15, -40, 8, 50);
+        ctx.fillStyle = "#c0392b"; ctx.fillRect(10, -5, 18, 5);
+    } else if (heroiIndex === 1) {
+        ctx.fillStyle = "#27ae60"; ctx.fillRect(-12, -10, 25, 30);
+        ctx.fillStyle = "#f39c12"; ctx.beginPath(); ctx.arc(0, -20, 11, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-10, -20); ctx.lineTo(-20, -25); ctx.lineTo(-10, -15); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(10, -20); ctx.lineTo(20, -25); ctx.lineTo(10, -15); ctx.fill();
+        ctx.strokeStyle = "#8e44ad"; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(15, 0, 20, -Math.PI/2, Math.PI/2); ctx.stroke();
+    } else if (heroiIndex === 2) {
+        ctx.fillStyle = "#8e44ad"; ctx.beginPath(); ctx.moveTo(-18, 20); ctx.lineTo(18, 20); ctx.lineTo(0, -15); ctx.fill();
+        ctx.fillStyle = "#ecf0f1"; ctx.beginPath(); ctx.arc(0, -18, 10, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = "#2c3e50"; ctx.fillRect(-22, -22, 45, 5);
+        ctx.beginPath(); ctx.moveTo(-15, -22); ctx.lineTo(15, -22); ctx.lineTo(0, -50); ctx.fill();
+    } else if (heroiIndex === 3) {
+        ctx.fillStyle = "#34495e"; ctx.fillRect(-18, -10, 35, 30);
+        ctx.fillStyle = "#7f8c8d"; ctx.beginPath(); ctx.arc(0, -20, 12, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = "#111"; ctx.fillRect(-12, -22, 25, 5);
+        ctx.fillStyle = "#e74c3c"; ctx.fillRect(-5, -21, 10, 3);
+    } else if (heroiIndex === 4) {
+        ctx.fillStyle = "#2c3e50"; ctx.fillRect(-15, -10, 30, 25);
+        ctx.fillStyle = "#1c2833"; ctx.beginPath(); ctx.arc(0, -20, 11, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = "#2ecc71"; ctx.beginPath(); ctx.arc(-4, -22, 2, 0, Math.PI*2); ctx.arc(4, -22, 2, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = "#58d68d";
+        ctx.beginPath(); ctx.moveTo(-20, -10); ctx.lineTo(-30, 10); ctx.lineTo(-15, 0); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(20, -10); ctx.lineTo(30, 10); ctx.lineTo(15, 0); ctx.fill();
+    }
+    ctx.restore();
 }
