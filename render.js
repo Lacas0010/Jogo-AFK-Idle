@@ -5,6 +5,13 @@ export let textosFlutuantes = [];
 export let animacao = { ativa: false, frameAtual: 0, duracao: 15, critico: false, tipo: 'normal' };
 export let animacaoGacha = { ativa: false, tick: 0, raridade: 'azul', heroiIndex: null, msg: "" };
 
+export let efeitosJuice = { shake: 0, hitStop: 0 };
+
+export function ativarJuice(shakeIntensidade, hitStopFrames) {
+    efeitosJuice.shake = shakeIntensidade;
+    efeitosJuice.hitStop = hitStopFrames;
+}
+
 let canvas;
 let ctx;
 let particulasFogo = [];
@@ -135,6 +142,13 @@ export function desenhar() {
         }
     }
 
+    // --- HIT STOP (Congelamento de Impacto) ---
+    if (efeitosJuice.hitStop > 0) {
+        efeitosJuice.hitStop--;
+        requestAnimationFrame(desenhar);
+        return; // Aborta o frame, congelando a tela perfeitamente!
+    }
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const dpr = window.devicePixelRatio || 1;
@@ -153,6 +167,16 @@ export function desenhar() {
     
     // Aplica as transformações da câmera
     ctx.translate(canvas.width / 2, (canvas.height / 2) + offsetY); 
+
+    // --- SCREEN SHAKE (Tremor de Câmera) ---
+    if (efeitosJuice.shake > 0) {
+        let dx = (Math.random() - 0.5) * efeitosJuice.shake;
+        let dy = (Math.random() - 0.5) * efeitosJuice.shake;
+        ctx.translate(dx, dy);
+        efeitosJuice.shake *= 0.85; // O tremor perde força rapidamente
+        if (efeitosJuice.shake < 0.5) efeitosJuice.shake = 0;
+    }
+
     ctx.scale(scale, scale); // Aplica Zoom Responsivo
     ctx.translate(-400, -225); // Puxa de volta pra coordenada lógica central
 
@@ -767,8 +791,14 @@ export function desenhar() {
         let animY = 320;
         let animRotacao = 0; // Permite inclinar os heróis durante o avanço
 
-        if (animacao.ativa && animacao.tipo === 'normal') {
+        if (animacao.ativa && (animacao.tipo === 'normal' || animacao.tipo === 'lodoToxico')) {
             animX += Math.sin(animacao.frameAtual * 0.5) * 20;
+            // Dá mais agressividade e um pequeno salto felino para a Ladra nos ataques manuais e automáticos
+            if (heroiIndex === 4) {
+                animX += Math.sin(animacao.frameAtual * 0.5) * 15; // Avança mais longe
+                animY -= Math.sin(animacao.frameAtual * 0.5) * 15; // Salta no ar
+                animRotacao = Math.sin(animacao.frameAtual * 0.5) * 0.3; // Inclina o corpo
+            }
         } else if (animacao.ativa && animacao.tipo === 'burstElfa' && heroiIndex === 1) {
             animY -= Math.sin((animacao.frameAtual / animacao.duracao) * Math.PI) * 50;
         } else if (animacao.ativa && animacao.tipo === 'burstLadra' && heroiIndex === 4) {
@@ -1172,6 +1202,34 @@ export function desenhar() {
             ctx.beginPath(); ctx.arc(baseX + 20, 285 + offsetYHeroi, 18, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.moveTo(baseX + 20, 290 + offsetYHeroi); ctx.lineTo(baseX - 5, 275 + offsetYHeroi); ctx.lineTo(baseX + 10, 265 + offsetYHeroi); ctx.fill();
             ctx.beginPath(); ctx.moveTo(baseX + 20, 290 + offsetYHeroi); ctx.lineTo(baseX + 45, 275 + offsetYHeroi); ctx.lineTo(baseX + 30, 265 + offsetYHeroi); ctx.fill();
+
+            // --- ANIMAÇÃO DE ATAQUE BÁSICO (Corte de Adagas) ---
+            if (animacao.ativa && (animacao.tipo === 'normal' || animacao.tipo === 'lodoToxico') && animacao.frameAtual > 2 && animacao.frameAtual < 12) {
+                ctx.save();
+                ctx.translate(baseX + 20, 310 + offsetYHeroi); // Posiciona o corte em frente à Assassina
+                ctx.shadowBlur = 15;
+                ctx.lineWidth = 5; // Lâminas grossas e visíveis
+                ctx.lineCap = "round";
+                
+                // O corte voa agressivamente para a frente
+                let slashProg = animacao.frameAtual * 6;
+                
+                // Corte 1 (Lâmina Verde Tóxica - Cima)
+                ctx.shadowColor = "#2ecc71";
+                ctx.strokeStyle = "#2ecc71";
+                ctx.beginPath();
+                ctx.arc(10 + slashProg, 5, 25, -Math.PI/2, Math.PI/4); // 'cy' removido para ancorar no peito
+                ctx.stroke();
+                
+                // Corte 2 (Lâmina Roxa Veneno - Baixo)
+                ctx.shadowColor = "#8e44ad";
+                ctx.strokeStyle = "#8e44ad";
+                ctx.beginPath();
+                ctx.arc(5 + slashProg, 15, 22, -Math.PI/4, Math.PI*0.75); // 'cy' removido para ancorar no peito
+                ctx.stroke();
+                
+                ctx.restore();
+            }
         }
         
         ctx.restore();
@@ -1238,6 +1296,34 @@ export function desenhar() {
             ctx.globalAlpha = (1 - progressoX) * 0.8;
             ctx.beginPath(); ctx.arc(0, 0, 30 * (1 - progressoX), 0, Math.PI*2); ctx.fill();
 
+            ctx.restore();
+        }
+    }
+
+    // --- EFEITO: SHIELD BASH DO CAVALEIRO (Onda de Choque) ---
+    if (animacao.ativa && animacao.tipo === 'shieldBash') {
+        let maxFrames = 20; // Animação rápida de explosão
+        if (animacao.frameAtual <= maxFrames) {
+            let progresso = animacao.frameAtual / maxFrames;
+            ctx.save();
+            ctx.translate(400, 250); // Posição de impacto no chão perto do chefe
+            
+            // Círculo de expansão sísmica
+            let raioX = 50 + (progresso * 200);
+            let raioY = 15 + (progresso * 60); // Achatado para simular o chão em perspectiva 3D
+            
+            ctx.beginPath();
+            ctx.ellipse(0, 0, raioX, raioY, 0, 0, Math.PI * 2);
+            ctx.lineWidth = 15 * (1 - progresso);
+            ctx.strokeStyle = `rgba(241, 196, 15, ${1 - progresso})`;
+            ctx.shadowColor = "#e67e22";
+            ctx.shadowBlur = 20;
+            ctx.stroke();
+            
+            // Poço de impacto interno
+            ctx.fillStyle = `rgba(192, 57, 43, ${(1 - progresso) * 0.5})`;
+            ctx.fill();
+            
             ctx.restore();
         }
     }

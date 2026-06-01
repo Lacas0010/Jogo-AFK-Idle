@@ -1,6 +1,41 @@
 import { jogo, salvarJogo, carregarJogo, calcularHpMaximo, calcularRecompensa, resetarJogo, executarAscensao, exportarProgressoFisico, importarProgressoFisico } from './state.js';
 import { darTiroGacha } from './gacha.js';
-import { desenhar, textosFlutuantes, animacao, mostrarNotificacao, desenharPortrait } from './render.js';
+import { desenhar, textosFlutuantes, animacao, mostrarNotificacao, desenharPortrait, ativarJuice } from './render.js';
+
+// --- CHIP DE SOM 8-BIT (SINTETIZADOR) ---
+let audioCtx;
+function initAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+// Navegadores exigem interação do usuário para liberar o áudio
+window.addEventListener('mousedown', initAudio, { once: true });
+window.addEventListener('keydown', initAudio, { once: true });
+
+window.tocarSom = function(tipo) {
+    if (!audioCtx) return;
+    let osc = audioCtx.createOscillator();
+    let gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    let agora = audioCtx.currentTime;
+    
+    if (tipo === 'ataque') { // Som de corte rápido (Espada/Adaga)
+        osc.type = 'triangle'; osc.frequency.setValueAtTime(400, agora); osc.frequency.exponentialRampToValueAtTime(50, agora + 0.1);
+        gain.gain.setValueAtTime(0.08, agora); gain.gain.exponentialRampToValueAtTime(0.01, agora + 0.1);
+        osc.start(agora); osc.stop(agora + 0.1);
+    } else if (tipo === 'moeda') { // Som de Plim (Ouro/Morte)
+        osc.type = 'sine'; osc.frequency.setValueAtTime(1200, agora); osc.frequency.setValueAtTime(1800, agora + 0.05);
+        gain.gain.setValueAtTime(0.05, agora); gain.gain.exponentialRampToValueAtTime(0.01, agora + 0.3);
+        osc.start(agora); osc.stop(agora + 0.3);
+    } else if (tipo === 'laser') { // Som sci-fi/arcano (Mago)
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(600, agora); osc.frequency.linearRampToValueAtTime(150, agora + 0.2);
+        gain.gain.setValueAtTime(0.05, agora); gain.gain.linearRampToValueAtTime(0.01, agora + 0.2);
+        osc.start(agora); osc.stop(agora + 0.2);
+    } else if (tipo === 'impacto') { // Som pesado (Escudada/Explosão da Ladra)
+        osc.type = 'square'; osc.frequency.setValueAtTime(100, agora); osc.frequency.exponentialRampToValueAtTime(20, agora + 0.3);
+        gain.gain.setValueAtTime(0.15, agora); gain.gain.exponentialRampToValueAtTime(0.01, agora + 0.3);
+        osc.start(agora); osc.stop(agora + 0.3);
+    }
+};
 
 const custosAlmasBase = [1, 2, 1, 2, 5];
 
@@ -513,7 +548,10 @@ window.ativarSkill = function(heroiIndex, skillIndex) {
         
         if (skill.multiplicadorDanoInstantaneo !== undefined) {
             let buffAres = 1 + ((jogo.reliquiasPantheon[0] || 0) * 0.01);
-            let buffPassivoCavaleiro = jogo.timeAtivo.includes(3) ? 1.15 : 1.0;
+            let buffPassivoCavaleiro = 1.0;
+            if (jogo.timeAtivo.includes(3) && jogo.herois[3] && (jogo.herois[3].desbloqueada || jogo.herois[3].nivelDps > 0)) {
+                buffPassivoCavaleiro = 1.05 + ((jogo.herois[3].nivelDps || 0) * 0.01);
+            }
             let buffAtivoCavaleiro = (jogo.timeAtivo.includes(3) && jogo.herois[3].skills && jogo.herois[3].skills[0].ativa) ? 1.5 : 1.0;
             
             let dpsTotalBuffado = heroi.dps * buffAres * buffPassivoCavaleiro * buffAtivoCavaleiro;
@@ -688,12 +726,17 @@ export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'no
     
     if (isCritico) window.progredirContrato("criticos");
 
+    if (isCritico && tipo === 'normal') ativarJuice(5, 2); // Tremorzinho rápido e congelamento de 2 frames
+
     const isBoss = (jogo.nivel % 5 === 0);
     const espadaFogoAtiva = jogo.herois[0].skills[0].ativa;
 
     let multiplicadorElemental = 1.0;
     let corTexto = isCritico ? "243, 156, 18" : "231, 76, 60";
     let textoAtaque = isCritico ? "CRÍTICO! " : "";
+
+    if (tipo === 'normal') if (window.tocarSom) window.tocarSom('ataque');
+    if (tipo === 'burstMago') if (window.tocarSom) window.tocarSom('laser');
 
     if (tipo === 'normal' && espadaFogoAtiva) {
         if (isBoss) {
@@ -702,6 +745,7 @@ export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'no
             textoAtaque = "🔥 DEGRADAÇÃO POLIGONAL! ";
         }
     } else if (tipo === 'burstElfa') {
+        ativarJuice(15, 5); // Tremor forte, impacto de 5 frames
         if (espadaFogoAtiva) {
             multiplicadorElemental = 2.0;
             corTexto = "191, 0, 255";
@@ -728,9 +772,17 @@ export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'no
         corTexto = "46, 204, 113";
         textoAtaque = "☠️ ";
     } else if (tipo === 'burstLadra') {
+        ativarJuice(25, 8); // Tremor massivo, congelamento violento de 8 frames (estilo anime)
         multiplicadorElemental = 1.5;
         corTexto = "142, 68, 173";
         textoAtaque = "☠️ EXPLOSÃO TÓXICA! ";
+        if (window.tocarSom) window.tocarSom('impacto');
+    } else if (tipo === 'shieldBash') {
+        multiplicadorElemental = 1.0; // Dano físico puro
+        corTexto = "241, 196, 15"; // Dourado
+        textoAtaque = "🛡️ ESMAGAR! ";
+        ativarJuice(12, 3); // Tremor pesado
+        if (window.tocarSom) window.tocarSom('impacto');
     }
 
     let danoFinal = dano * multiplicadorElemental * (jogo.multiplicadorAscensao || 1);
@@ -749,6 +801,7 @@ export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'no
 
     jogo.monstroHp -= danoFinal;
     if (jogo.monstroHp <= 0) {
+        if (window.tocarSom) window.tocarSom('moeda');
         jogo.monstroLodoToxico = 0;
 
         if (jogo.frestaDesafio && jogo.frestaDesafio.ativa) {
@@ -850,7 +903,10 @@ window.addEventListener('DOMContentLoaded', () => {
         const tempoFora = carregarJogo() || 0;
         if (tempoFora > 0) { 
         let dpsTotal = jogo.timeAtivo.reduce((acc, idx) => acc + jogo.herois[idx].dps, 0);
-            let buffPassivoCavaleiro = jogo.timeAtivo.includes(3) ? 1.15 : 1.0;
+        let buffPassivoCavaleiro = 1.0;
+        if (jogo.timeAtivo.includes(3) && jogo.herois[3] && (jogo.herois[3].desbloqueada || jogo.herois[3].nivelDps > 0)) {
+            buffPassivoCavaleiro = 1.05 + ((jogo.herois[3].nivelDps || 0) * 0.01);
+        }
             let tempoBuffado = tempoFora * (1 + ((jogo.reliquiasPantheon[1] || 0) * 0.005)); // Bênção de Hermes
             let buffAres = 1 + ((jogo.reliquiasPantheon[0] || 0) * 0.01);
             let buffPrimordial = 1 + ((jogo.upgradesAlmas[0] || 0) * 0.10);
@@ -858,7 +914,11 @@ window.addEventListener('DOMContentLoaded', () => {
             
             if(pontosOffline > 0) {
                 jogo.pontos += pontosOffline;
-                mostrarNotificacao(`Você ficou fora por ${tempoFora}s.\nSeu time farmou ${pontosOffline} pontos!`);
+                // Calcula uma estimativa de monstros mortos baseada no DPS
+                let estimativaMonstros = Math.floor(pontosOffline / 10);
+                
+                // Abre o relatório em tela cheia com as animações numéricas
+                window.mostrarRelatorioOffline(tempoFora, estimativaMonstros, pontosOffline);
             }
     }
 
@@ -928,10 +988,21 @@ window.addEventListener('DOMContentLoaded', () => {
         // Lógica de Buffs do Cavaleiro de Ferro
         let buffPassivoCavaleiro = 1.0;
         let buffAtivoCavaleiro = 1.0;
-        if (jogo.timeAtivo.includes(3) && jogo.herois[3]) {
-            buffPassivoCavaleiro = 1.15; // +15% de DPS passivo para todos
+        if (jogo.timeAtivo.includes(3) && jogo.herois[3] && (jogo.herois[3].desbloqueada || jogo.herois[3].nivelDps > 0)) {
+            buffPassivoCavaleiro = 1.05 + ((jogo.herois[3].nivelDps || 0) * 0.01);
             if (jogo.herois[3].skills && jogo.herois[3].skills[0] && jogo.herois[3].skills[0].ativa) {
                 buffAtivoCavaleiro = 1.5; // +50% de DPS ativo
+            }
+        }
+
+        // --- PASSIVA DO CAVALEIRO: Esmagamento de Escudo ---
+        if (jogo.timeAtivo.includes(3) && jogo.herois[3] && (jogo.herois[3].desbloqueada || jogo.herois[3].nivelDps > 0)) {
+            let cavaleiro = jogo.herois[3];
+            if (Math.random() < cavaleiro.chanceCritico) {
+                let multCrit = 2.0 + ((cavaleiro.nivelCritico || 0) * 0.1);
+                // O dano da escudada escala com o DPS dele + Dano Crítico
+                let danoEscudada = (cavaleiro.dps || 1) * 5 * multCrit * buffPassivoCavaleiro;
+                atacar(danoEscudada, true, 25, 'shieldBash');
             }
         }
 
@@ -1037,6 +1108,42 @@ window.resgatarContrato = function(index) {
         salvarJogo();
     }
 };
+
+window.fecharRelatorioOffline = function() {
+    document.getElementById("painelOffline").classList.add("escondido");
+    if(window.tocarSom) window.tocarSom('ataque');
+};
+
+window.mostrarRelatorioOffline = function(segundos, monstrosMortos, pontosGanhos) {
+    let horas = Math.floor(segundos / 3600);
+    let mins = Math.floor((segundos % 3600) / 60);
+    document.getElementById("offTempo").innerText = `${horas}h ${mins}m`;
+    
+    let elMonstros = document.getElementById("offMonstros");
+    let elOuro = document.getElementById("offOuro");
+    
+    // Animação de contagem girando rápido
+    animarContador(elMonstros, monstrosMortos);
+    animarContador(elOuro, pontosGanhos);
+    
+    document.getElementById("painelOffline").classList.remove("escondido");
+    
+    // Toca som mágico de vitória
+    setTimeout(() => { if(window.tocarSom) window.tocarSom('moeda'); }, 300);
+};
+
+function animarContador(elemento, alvo) {
+    let atual = 0;
+    let incremento = Math.ceil(alvo / 40); // Roda em 40 frames
+    let intervalo = setInterval(() => {
+        atual += incremento;
+        if (atual >= alvo) {
+            atual = alvo;
+            clearInterval(intervalo);
+        }
+        elemento.innerText = atual.toLocaleString('pt-BR');
+    }, 40);
+}
 
 window.toggleSidebar = function() {
     const sb = document.getElementById("sidebarAbas");

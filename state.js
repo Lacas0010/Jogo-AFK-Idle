@@ -117,18 +117,10 @@ export let jogo = {
             ]
         },
         {
-            nome: "🛡️ Cavaleiro de Ferro (Gacha)",
-            descricao: "O escudo vivo da equipe. Não ataca, mas concede +15% de DPS passivo global para o time inteiro enquanto estiver escalado.",
-            dps: 0,
-            nivelDps: 0,
-            custoDps: 400,
-            chanceCritico: 0.15,
-            nivelCritico: 0,
-            custoCritico: 500,
-            multCusto: 1.8,
-            fragmentos: 0,
-            estrelas: 1,
-            buffPassivoDpsTime: 0.15,
+            nome: "🛡️ Cavaleiro de Ferro",
+            descricao: "[Aura Tática]: Cada nível de DPS aumenta o dano de todo o time em +1%. [Esmagar]: Sua Chance de Crítico dita a probabilidade de dar uma Escudada no chefe a cada segundo.",
+            dps: 0, nivelDps: 0, custoDps: 15, multCusto: 1.15,
+            chanceCritico: 0.05, nivelCritico: 0, custoCritico: 100, multCustoCritico: 1.4, fragmentos: 0, estrelas: 1,
             skills: [
                 {
                     nome: "⚙️ Baluarte Vetorial",
@@ -339,10 +331,12 @@ export function executarAscensao() {
             let estavaDesbloqueado = index === 0 || heroi.desbloqueada || heroi.nivelDps > 0;
             
             heroi.nivelDps = index === 0 ? 0 : (estavaDesbloqueado ? 1 : 0);
-            heroi.custoDps = index === 0 ? 10 : (index === 1 ? 150 : (index === 2 ? 250 : (index === 3 ? 400 : 600)));
-            heroi.chanceCritico = index === 0 ? 0 : (index === 1 ? 0.10 : (index === 2 ? 0.05 : (index === 3 ? 0.15 : 0.25)));
+            heroi.custoDps = index === 0 ? 10 : (index === 1 ? 150 : (index === 2 ? 250 : (index === 3 ? 15 : 600)));
+            heroi.multCusto = index === 0 ? 1.5 : (index === 1 ? 1.7 : (index === 2 ? 1.6 : (index === 3 ? 1.15 : 1.9)));
+            heroi.chanceCritico = index === 0 ? 0 : (index === 1 ? 0.10 : (index === 2 ? 0.05 : (index === 3 ? 0.05 : 0.25)));
             heroi.nivelCritico = 0;
-            heroi.custoCritico = index === 0 ? 50 : (index === 1 ? 300 : (index === 2 ? 400 : (index === 3 ? 500 : 700)));
+            heroi.custoCritico = index === 0 ? 50 : (index === 1 ? 300 : (index === 2 ? 400 : (index === 3 ? 100 : 700)));
+            if (index === 3) heroi.multCustoCritico = 1.4;
             
             // Reseta o DPS para o nível Base, mantendo os multiplicadores por Estrela do Gacha
             let dpsBase = index === 0 ? 1 : (estavaDesbloqueado ? (index === 1 ? 2 : (index === 3 ? 0 : 1)) : 0);
