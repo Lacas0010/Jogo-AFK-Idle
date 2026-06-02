@@ -461,8 +461,8 @@ button {
 }
 .menu-inicial-conteudo {
     text-align: center;
-    background: rgba(0, 0, 0, 0.4); padding: 40px; border-radius: 15px;
-    backdrop-filter: blur(4px); border: 2px dashed rgba(241, 196, 15, 0.3);
+    padding: 40px;
+    /* Fundo, borda dashed e blur removidos para deixar as letras flutuando puras sobre o parallax */
 }
 .logo-jogo-grande {
     font-family: 'Cinzel', 'Palatino', serif;
@@ -480,4 +480,9 @@ button {
 @keyframes logoPulsar {
     from { transform: scale(1); text-shadow: 3px 3px 0px #000, 0 0 20px #d35400; }
     to { transform: scale(1.03); text-shadow: 3px 3px 0px #000, 0 0 40px #f39c12; }
+}
+
+/* BLINDAGEM ABSOLUTA: Quando a página estiver na tela de início, oculta o botão Menu sob qualquer circunstância */
+body.tela-inicio .btn-toggle-sidebar {
+    display: none !important;
 }

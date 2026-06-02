@@ -597,6 +597,7 @@ window.comprarUpgradeAlma = function(upgradeId) {
 window.iniciarJogo = function() {
     jogo.estado = 'jogando';
     document.getElementById("menuInicial").style.display = "none";
+    document.body.classList.remove("tela-inicio");
     
     // Revela a Interface
     const elSkills = document.getElementById("painelSkills");
@@ -1032,6 +1033,7 @@ window.addEventListener('DOMContentLoaded', () => {
         window.tempoForaCalculado = tempoFora;
 
         if (jogo.estado === 'menu') {
+            document.body.classList.add("tela-inicio");
             const painelSkills = document.getElementById("painelSkills");
             if (painelSkills) painelSkills.style.opacity = "0";
             const btnSidebar = document.getElementById("btnToggleSidebar");

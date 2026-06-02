@@ -21,10 +21,10 @@ Invoque novos aliados no Altar usando **Gemas**, com um sistema justo de *Pity* 
   * *Skill:* **🏹 Rajada de Glifos** (Dispara múltiplas flechas mágicas que causam dano instantâneo estrondoso).
 * **🔮 Mago de Glintstone:** Conjurador cujos ataques básicos perseguem os inimigos.
   * *Skill:* **🔮 Comet Azur** (Canaliza um feixe colossal contínuo de dano multi-hit que derrete o HP do inimigo. Utiliza um *Throttle* matemático otimizado para não gargalar a engine).
-* **🛡️ Cavaleiro de Ferro:** O suporte definitivo. Não ataca, mas oferece buffs massivos para a equipe.
-  * *Skill:* **⚙️ Baluarte Vetorial** (Ergue um escudo que amplifica temporariamente todo o DPS e dano de clique do time).
-* **🐍 Ladra de Presas:** Assassina ágil que acumula pilhas de veneno contínuo nos adversários.
-  * *Skill:* **☠️ Adagas de Glifos** (Realiza um Dash/Blink ultra-rápido, consome todo o lodo tóxico acumulado com um Corte Duplo em 'X' devastador e retorna com um Backdash inercial).
+* **🛡️ Cavaleiro de Ferro:** Suporte tático e defensivo. Seus níveis de DPS aumentam o dano global de toda a equipe permanentemente, e sua Chance de Crítico ativa poderosos *Esmagamentos de Escudo* (Shield Bash) contínuos no monstro.
+  * *Skill:* **⚙️ Baluarte Vetorial** (Ergue uma barreira dourada por 6s que dobra o dano de clique do jogador e concede +50% de DPS ativo para toda a equipe em campo).
+* ** Ladra de Presas:** Assassina ágil que acumula pilhas de veneno contínuo nos adversários.
+  * *Skill:* **🔮 Adagas de Glifos** (Realiza um Dash/Blink ultra-rápido, consome todo o lodo tóxico acumulado com um Corte Duplo em 'X' devastador e retorna com um Backdash inercial).
 
 ## ⚔️ Mecânicas Avançadas de Combate
 
@@ -36,6 +36,13 @@ Invoque novos aliados no Altar usando **Gemas**, com um sistema justo de *Pity* 
   * **Números de Dano:** Textos saltitantes e dinâmicos com cores diferentes baseadas no tipo de elemento ou se foi um acerto Crítico.
 
 ## ⚙️ Sistemas de Progressão e Meta-Jogo
+
+### 🔓 Desbloqueio Progressivo & Onboarding
+O jogo não sobrecarrega o jogador com menus complexos de imediato. Conforme você avança, novos sistemas são apresentados e acompanhados de **Tutorias Imersivos em Pergaminhos**:
+* **Nível 6 (Após o 1º Chefe):** Desbloqueia Altar de Gacha, Forja, Guilda e Marcos.
+* **2 Heróis Recrutados:** Libera a Gestão de Equipe (até 3 Heróis no campo).
+* **Nível 31:** Revela o Santuário de Almas.
+* **Após a 1ª Ascensão:** O Panteão dos Deuses e as Frestas Dimensionais são descobertos.
 
 ### 🏛️ Santuário & Ascensão Cósmica
 Ao atingir o Nível 30, reinicie sua jornada através da Ascensão para obter **Almas Poligonais**. Troque essas almas na Árvore de Upgrades do Santuário por melhorias permanentes:
@@ -61,7 +68,7 @@ Abra portais para enfrentar inimigos sob forte pressão de tempo. Você tem apen
 Ganhe recompensas progressivas em *Tiers* (Tier 1 a 5) ao alcançar metas históricas no jogo: Cliques Manuais, Monstros Derrotados, Nível Alcançado e Tiros no Altar do Gacha.
 
 ### ⚒️ Forja e Inventário
-Chefes derrotados derrubam materiais baseados no bioma atual (*Couro de Orc* na Floresta e *Escamas de Hidra* no Pântano). Reúna materiais para forjar Artefatos Globais que alteram as regras do jogo, como prolongar o tempo de suas habilidades ou reduzir os cooldowns.
+Chefes derrotados derrubam materiais baseados no bioma atual (*Couro de Orc* na Floresta e *Escamas de Hidra* no Pântano). Reúna materiais para forjar Artefatos Globais vitais: a **Manopla Feroz do Orc** (+2s na duração de todas as habilidades) e a **Glândula Tóxica da Hidra** (-2s no tempo de recarga máximo).
 
 ## 🎨 Arte e Renderização Dinâmica
 
