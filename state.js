@@ -215,6 +215,18 @@ export function carregarJogo() {
                                 if (baseSkill.multiplicadorDanoInstantaneo) {
                                     skill.multiplicadorDanoInstantaneo = skill.multiplicadorDanoInstantaneo || baseSkill.multiplicadorDanoInstantaneo;
                                 }
+                                if (baseSkill.multiplicadorDanoMultiHit) {
+                                    skill.multiplicadorDanoMultiHit = skill.multiplicadorDanoMultiHit || baseSkill.multiplicadorDanoMultiHit;
+                                }
+                                if (baseSkill.multiplicadorDano) {
+                                    skill.multiplicadorDano = skill.multiplicadorDano || baseSkill.multiplicadorDano;
+                                }
+                                if (baseSkill.multiplicadorDanoClique) {
+                                    skill.multiplicadorDanoClique = skill.multiplicadorDanoClique || baseSkill.multiplicadorDanoClique;
+                                }
+                                if (baseSkill.multiplicadorDpsAtivo) {
+                                    skill.multiplicadorDpsAtivo = skill.multiplicadorDpsAtivo || baseSkill.multiplicadorDpsAtivo;
+                                }
                             }
                         });
                     }

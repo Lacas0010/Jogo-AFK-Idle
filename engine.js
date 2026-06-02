@@ -89,7 +89,7 @@ export function renderizarBotoesUpgrades() {
                         </button>
                     </div>
                     ${heroi.skills ? heroi.skills.map((skill, sIdx) => {
-                        let descUpgrade = skill.multiplicadorDanoInstantaneo !== undefined ? "+5 Mult. Burst" : "+1 Mult. Dano";
+                        let descUpgrade = skill.multiplicadorDanoInstantaneo !== undefined ? "+5 Mult. Burst" : (skill.multiplicadorDpsAtivo !== undefined ? "+20% DPS Ativo" : "+1 Mult. Dano");
                         return `
                             <div class="skill-upgrade-block" style="margin-top: 10px; border-top: 1px dashed rgba(92,58,33,0.3); padding-top: 10px;">
                                 <h4 style="margin: 0 0 5px 0; font-size: 13px; color: #a04000;">Melhorar ${skill.nome}</h4>
@@ -515,6 +515,12 @@ window.comprarUpgradeSkill = function(heroiIndex, skillIndex) {
         if (skill.multiplicadorDanoInstantaneo !== undefined) {
             skill.multiplicadorDanoInstantaneo += 5;
         }
+        if (skill.multiplicadorDanoMultiHit !== undefined) {
+            skill.multiplicadorDanoMultiHit += 1;
+        }
+        if (skill.multiplicadorDpsAtivo !== undefined) {
+            skill.multiplicadorDpsAtivo += 0.2; // Aumenta 20% do buff a cada nível
+        }
         if (skill.nivel % 5 === 0) skill.duracaoMax += 1; // +1 Segundo a cada 5 níveis
         skill.custoUpgrade = Math.floor((skill.custoUpgrade || 100) * (skill.multCusto || 1.8));
         atualizarInterface();
@@ -656,7 +662,8 @@ window.ativarSkill = function(heroiIndex, skillIndex) {
             }
             let buffAtivoCavaleiro = (jogo.timeAtivo.includes(3) && jogo.herois[3].skills && jogo.herois[3].skills[0].ativa) ? 1.5 : 1.0;
             
-            let dpsTotalBuffado = heroi.dps * buffAres * buffPassivoCavaleiro * buffAtivoCavaleiro;
+            let dpsBaseParaSkill = Math.max(1, heroi.dps);
+            let dpsTotalBuffado = dpsBaseParaSkill * buffAres * buffPassivoCavaleiro * buffAtivoCavaleiro;
             let danoBurst = dpsTotalBuffado * skill.multiplicadorDanoInstantaneo;
             
             if (heroiIndex === 4) { // Ladra de Presas consome as pilhas
@@ -841,10 +848,10 @@ window.alternarAba = function(abaId) {
 
 export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'normal') {
     // Flag para evitar poluição visual do Raio Arcino
-    let suprimirTextos = (tipo === 'burstMago');
+    let suprimirTextos = false; // Removido para que o jogador POSSA VER o dano do Mago acontecendo!
 
     // Se a animação atual é o burst da elfa, não interrompe ela visualmente se houver um ataque ou clique normal!
-    if (!(animacao.ativa && animacao.tipo === 'burstElfa' && tipo === 'normal')) {
+    if (!(animacao.ativa && animacao.tipo === 'burstElfa' && tipo === 'normal') && tipo !== 'burstMago') {
         animacao.ativa = true;
         animacao.frameAtual = 0;
         animacao.critico = isCritico;
@@ -911,13 +918,16 @@ export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'no
         textoAtaque = "🛡️ ESMAGAR! ";
         ativarJuice(12, 3); // Tremor pesado
         if (window.tocarSom) window.tocarSom('impacto');
+    } else if (tipo === 'burstMago') {
+        corTexto = "0, 255, 255";
+        textoAtaque = "☄️ ";
     }
 
     let danoFinal = dano * multiplicadorElemental * (jogo.multiplicadorAscensao || 1);
 
-    if (!suprimirTextos) {
+    if (!suprimirTextos && danoFinal > 0) {
         textosFlutuantes.push({
-            texto: textoAtaque + `-${Math.floor(danoFinal)}`,
+            texto: textoAtaque + `-${Math.ceil(danoFinal)}`,
             x: 400 + (Math.random() * 80 - 40),
             y: 220 + (Math.random() * 40 - 20),
             alpha: 1, 
@@ -1087,7 +1097,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
         // Sistema de Veneno (Ladra de Presas)
         if (jogo.timeAtivo.includes(4) && jogo.herois[4] && jogo.herois[4].nivelDps > 0) {
-            let danoPoison = Math.floor(jogo.herois[4].dps * 0.5);
+            let danoPoison = Math.max(1, Math.floor(jogo.herois[4].dps * 0.5));
             if (danoPoison > 0) {
                 atacar(danoPoison, false, 10, "lodoToxico");
                 jogo.monstroLodoToxico = (jogo.monstroLodoToxico || 0) + 1;

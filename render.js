@@ -3,7 +3,7 @@ import { atacar } from './engine.js';
 
 export let textosFlutuantes = [];
 export let animacao = { ativa: false, frameAtual: 0, duracao: 15, critico: false, tipo: 'normal' };
-export let animacaoGacha = { ativa: false, tick: 0, raridade: 'azul', heroiIndex: null, msg: "" };
+export let animacaoGacha = { ativa: false, tick: 0, raridade: 'azul', heroiIndex: null, msg: "", isNovo: false };
 
 export let efeitosJuice = { shake: 0, hitStop: 0 };
 
@@ -19,6 +19,7 @@ let particulasExplosao = [];
 let particulasSangue = [];
 let estrelas = [];
 let tempoAnimacao = 0;
+let frameCount = 0;
 
 let cicloTempo = 0; // Cronômetro geral para o céu
 let noitesPassadas = 0; // Para calcular a fase da Lua
@@ -26,12 +27,13 @@ let foiNoite = false; // Flag para detectar quando a noite vira dia
 let nivelAnterior = null; // Rastreador de mortes
 let frameMorte = 0; // Temporizador para esconder o monstro
 
-export function dispararAnimacaoGacha(raridade, heroiIndex, msg) {
+export function dispararAnimacaoGacha(raridade, heroiIndex, msg, isNovo = false) {
     animacaoGacha.ativa = true;
     animacaoGacha.tick = 0;
     animacaoGacha.raridade = raridade;
     animacaoGacha.heroiIndex = heroiIndex;
     animacaoGacha.msg = msg;
+    animacaoGacha.isNovo = isNovo;
 }
 
 export function mostrarNotificacao(mensagem) {
@@ -100,6 +102,7 @@ export function desenhar() {
     }
 
     tempoAnimacao += 0.05;
+    frameCount++;
     const escalaBreathe = 1 + Math.sin(tempoAnimacao * 2) * 0.02;
     const flutuarMonstro = Math.sin(tempoAnimacao * 1.5) * 5;
 
@@ -1146,13 +1149,14 @@ export function desenhar() {
 
                 // --- OTIMIZAÇÃO: Throttle do Comet Azur ---
                 // O raio visual contínua liso a 60fps, mas o cálculo matemático pesa apenas 4x por segundo
-                if (tempoAnimacao % 15 === 0) { 
+                if (frameCount % 15 === 0) { 
                     let buffPassivo = jogo.timeAtivo.includes(3) ? 1.15 : 1.0;
                     let buffAtivo = (jogo.timeAtivo.includes(3) && jogo.herois[3].skills && jogo.herois[3].skills[0].ativa) ? 1.5 : 1.0;
                     let buffAres = 1 + ((jogo.reliquiasPantheon && jogo.reliquiasPantheon[0] ? jogo.reliquiasPantheon[0] : 0) * 0.01);
                     
                     // Condensa 15 micro-frames de dano em 1 hit concentrado (dividido por 4 porque ocorre 4x num segundo)
-                    let danoTick = (jogo.herois[2].dps * skillMago.multiplicadorDanoMultiHit * buffPassivo * buffAtivo * buffAres) / 4;
+                    let dpsBaseParaSkill = Math.max(1, jogo.herois[2].dps);
+                    let danoTick = (dpsBaseParaSkill * skillMago.multiplicadorDanoMultiHit * buffPassivo * buffAtivo * buffAres) / 4;
                     
                     atacar(danoTick, false, 0, 'burstMago'); // O zero desativa o peso das partículas de sangue
                 }
@@ -1427,7 +1431,31 @@ export function desenhar() {
             ctx.restore();
 
             if (animacaoGacha.heroiIndex !== null) {
+                // Desenha a Splash Art apenas uma vez na posição correta
                 desenharSplashArt(ctx, cx, cy - 40, animacaoGacha.heroiIndex, tick);
+                
+                // --- TAG DINÂMICA DE NOVO OU DUPLICATA ---
+                if (tick > 130) {
+                    ctx.save();
+                    let pop = Math.min(1, (tick - 130) / 20); // Animação de pop-up
+                    // MUDANÇA: Eixo Y alterado de (cy + 130) para (cy - 180) para ficar no topo da tela!
+                    ctx.translate(cx, cy - 180); 
+                    ctx.scale(pop, pop);
+                    ctx.textAlign = "center";
+                    
+                    if (animacaoGacha.isNovo) {
+                        ctx.font = "bold 50px 'Cinzel', serif";
+                        ctx.fillStyle = "#f1c40f";
+                        ctx.shadowColor = "#e67e22"; ctx.shadowBlur = 15;
+                        ctx.fillText("✨ NOVO!", 0, 0);
+                    } else {
+                        ctx.font = "bold 35px Arial";
+                        ctx.fillStyle = "#fff";
+                        ctx.shadowColor = "#8e44ad"; ctx.shadowBlur = 15;
+                        ctx.fillText("🧩 +10 Fragmentos", 0, 0);
+                    }
+                    ctx.restore();
+                }
             } else {
                 ctx.font = "80px Arial"; ctx.textAlign = "center";
                 // Exibe Quebra-cabeça para fragmentos (roxo) e Bolsa de Ouro para pontos (azul)
