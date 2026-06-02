@@ -598,13 +598,16 @@ window.iniciarJogo = function() {
     jogo.estado = 'jogando';
     document.getElementById("menuInicial").style.display = "none";
     
-    // Mostra as skills in-game se estiverem escondidas
+    // Revela a Interface
     const elSkills = document.getElementById("painelSkills");
     if (elSkills) elSkills.style.opacity = "1"; 
+    const btnSidebar = document.getElementById("btnToggleSidebar");
+    if (btnSidebar) btnSidebar.style.display = ""; 
     
-    // Verifica se já passou o tempo offline e aciona o relatório caso não seja save novo
-    if (window.tempoForaCalculado > 60 && jogo.cliquesTotais > 0) {
-        // Usa a lógica existente para disparar o relatório offline se precisar
+    // Abre o relatório offline pendente, se houver
+    if (window.dadosOfflinePendente) {
+        window.mostrarRelatorioOffline(window.dadosOfflinePendente.tempo, window.dadosOfflinePendente.monstros, window.dadosOfflinePendente.pontos);
+        window.dadosOfflinePendente = null;
     }
     
     if (window.tocarSom) window.tocarSom('ataque'); 
@@ -1031,31 +1034,32 @@ window.addEventListener('DOMContentLoaded', () => {
         if (jogo.estado === 'menu') {
             const painelSkills = document.getElementById("painelSkills");
             if (painelSkills) painelSkills.style.opacity = "0";
+            const btnSidebar = document.getElementById("btnToggleSidebar");
+            if (btnSidebar) btnSidebar.style.display = "none"; // Esconde o botão Menu
         } else {
             const menuInicial = document.getElementById("menuInicial");
             if (menuInicial) menuInicial.style.display = "none";
         }
 
         if (tempoFora > 0) { 
-        let dpsTotal = jogo.timeAtivo.reduce((acc, idx) => acc + jogo.herois[idx].dps, 0);
-        let buffPassivoCavaleiro = 1.0;
-        if (jogo.timeAtivo.includes(3) && jogo.herois[3] && (jogo.herois[3].desbloqueada || jogo.herois[3].nivelDps > 0)) {
-            buffPassivoCavaleiro = 1.05 + ((jogo.herois[3].nivelDps || 0) * 0.01);
-        }
-            let tempoBuffado = tempoFora * (1 + ((jogo.reliquiasPantheon[1] || 0) * 0.005)); // Bênção de Hermes
+            let dpsTotal = jogo.timeAtivo.reduce((acc, idx) => acc + jogo.herois[idx].dps, 0);
+            let buffPassivoCavaleiro = 1.0;
+            if (jogo.timeAtivo.includes(3) && jogo.herois[3] && (jogo.herois[3].desbloqueada || jogo.herois[3].nivelDps > 0)) {
+                buffPassivoCavaleiro = 1.05 + ((jogo.herois[3].nivelDps || 0) * 0.01);
+            }
+            let tempoBuffado = tempoFora * (1 + ((jogo.reliquiasPantheon[1] || 0) * 0.005));
             let buffAres = 1 + ((jogo.reliquiasPantheon[0] || 0) * 0.01);
             let buffPrimordial = 1 + ((jogo.upgradesAlmas[0] || 0) * 0.10);
             let pontosOffline = Math.floor(tempoBuffado * (dpsTotal * buffPassivoCavaleiro * buffAres * buffPrimordial));
             
             if(pontosOffline > 0) {
                 jogo.pontos += pontosOffline;
-                // Calcula uma estimativa de monstros mortos baseada no DPS
                 let estimativaMonstros = Math.floor(pontosOffline / 10);
                 
-                // Abre o relatório em tela cheia com as animações numéricas
-                window.mostrarRelatorioOffline(tempoFora, estimativaMonstros, pontosOffline);
+                // SALVA OS DADOS PARA ABRIR SÓ QUANDO DER O START!
+                window.dadosOfflinePendente = { tempo: tempoFora, monstros: estimativaMonstros, pontos: pontosOffline };
             }
-    }
+        }
 
     setInterval(() => {
         verificarMarcos();

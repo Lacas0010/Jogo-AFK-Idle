@@ -1811,21 +1811,22 @@ function desenharParallaxMenu(scale) {
     ctx.translate(-400, -225); 
 
     // --- CAMADA 1: Céu de Fim de Tarde (Golden Hour) ---
-    let grad = ctx.createLinearGradient(0, -100, 0, 300);
+    let grad = ctx.createLinearGradient(0, -500, 0, 300);
     grad.addColorStop(0, "#87CEFA"); // Azul claro lá no alto
     grad.addColorStop(0.5, "#FFB6C1"); // Rosa suave no meio
     grad.addColorStop(1, "#FFDAB9"); // Pêssego dourado no horizonte
     ctx.fillStyle = grad; 
-    ctx.fillRect(-400, -100, 1600, 600);
+    ctx.fillRect(-2500, -1500, 6000, 4000); // Expansão extrema para matar as bordas
 
     // Sol suave ao fundo
     ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
     ctx.beginPath(); ctx.arc(100, 50, 70, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(100, -20, 80, 0, Math.PI * 2); ctx.fill();
 
     // --- CAMADA 2: Colinas Distantes (Suaves e Arredondadas) ---
     ctx.save();
     ctx.fillStyle = "#A8C3B4"; // Verde-azulado com neblina atmosférica
-    for (let i = -200; i < 1200; i += 250) {
+    for (let i = -2000; i < 5000; i += 250) {
         let hillX = i - (pX * 0.2 % 250);
         ctx.beginPath(); ctx.arc(hillX + 125, 280, 180, Math.PI, 0); ctx.fill();
     }
@@ -1862,7 +1863,7 @@ function desenharParallaxMenu(scale) {
 
     // --- CAMADA 4: Vila Acolhedora (Casinhas Aglomeradas) ---
     ctx.save();
-    for (let i = -100; i < 1200; i += 140) {
+    for (let i = -2000; i < 5000; i += 140) {
         let casaX = i - (pX * 0.6 % 140);
         
         // Casa 1 (Maior)
@@ -1881,11 +1882,11 @@ function desenharParallaxMenu(scale) {
     ctx.restore();
 
     // --- CAMADA 5: Floresta "Fluffy" (Tufos de folhas sobrepostos) ---
-    ctx.fillStyle = "#4A7C59"; // Chão verde musgo
-    ctx.fillRect(-400, 230, 1600, 220); 
+    ctx.fillStyle = "#4A7C59"; 
+    ctx.fillRect(-2500, 230, 6000, 2000); 
     
     ctx.save();
-    for (let i = -100; i < 1200; i += 90) {
+    for (let i = -2000; i < 5000; i += 90) {
         let arvX = i - (pX * 1.2 % 90);
         
         // Efeito de volume criando vários círculos com tons diferentes de verde
