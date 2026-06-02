@@ -52,8 +52,8 @@ export function darTiroGacha(quantidade = 1) {
             let roll = Math.random();
             let isPity = jogo.tirosGacha >= 50;
 
-            // 👑 5% Chance ou Pity - Dourado Lendário
-            if (isPity || roll < 0.05) { 
+            // 👑 2% Chance ou Pity - Dourado Lendário (Herói ou 10 Fragmentos)
+            if (isPity || roll < 0.02) { 
                 jogo.tirosGacha = 0; // Reseta o Pity
                 let heroIndex = Math.floor(Math.random() * jogo.herois.length);
                 let heroi = jogo.herois[heroIndex];
@@ -65,28 +65,27 @@ export function darTiroGacha(quantidade = 1) {
                     if (!heroisDesbloqueadosPool.includes(heroIndex)) heroisDesbloqueadosPool.push(heroIndex);
                     isNovoThisRoll = true;
                 } else {
-                    totalGemasReembolso += adicionarFragmentos(heroIndex, 10); // Cópia repetida dá 10 Frags
+                    totalGemasReembolso += adicionarFragmentos(heroIndex, 10); 
                     fragmentos10Ganhos[heroi.nome] = (fragmentos10Ganhos[heroi.nome] || 0) + 1;
                 }
                 
-                // Prioriza exibir a Splash Art de personagens NOVOS se vierem múltiplos no x10
                 if (highestRarity !== 'dourado' || isNovoThisRoll) {
                     highestRarity = 'dourado';
                     bestHeroIndex = heroIndex;
                     bestIsNovo = isNovoThisRoll; 
                 }
                 
-            // 🌟 55% Chance (25% + 30% somados) - Fragmentos Roxos (Nerfados para 1 ou 2)
-            } else if (roll < 0.60) { 
+            // 🌟 38% Chance - Fragmentos Roxos (Sorteia 1 ou 2 fragmentos)
+            } else if (roll < 0.40) { 
                 let heroIndex = heroisDesbloqueadosPool[Math.floor(Math.random() * heroisDesbloqueadosPool.length)];
                 let heroi = jogo.herois[heroIndex];
-                let qtdDrop = Math.random() < 0.5 ? 2 : 1; // Sorteia 1 ou 2 fragmentos
+                let qtdDrop = Math.random() < 0.5 ? 2 : 1;
                 
                 totalGemasReembolso += adicionarFragmentos(heroIndex, qtdDrop);
                 fragmentosRoxosGanhos[heroi.nome] = (fragmentosRoxosGanhos[heroi.nome] || 0) + qtdDrop;
                 if (highestRarity === 'azul') highestRarity = 'roxo';
                 
-            // 💰 40% Chance - Pontos de Glintstone (Azul)
+            // 💰 60% Chance - Pontos de Glintstone (Azul)
             } else { 
                 let dpsTotal = jogo.herois.reduce((acc, h) => acc + h.dps, 0);
                 let ganho = (dpsTotal > 0 ? dpsTotal : 1) * 60;
