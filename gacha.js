@@ -36,6 +36,15 @@ export function darTiroGacha(quantidade = 1) {
         let highestRarity = 'azul'; 
         let bestHeroIndex = null;
 
+        // --- SOLUÇÃO: Filtra a pool de fragmentos para heróis que o jogador já possui ---
+        let heroisDesbloqueadosPool = [];
+        jogo.herois.forEach((h, idx) => {
+            if (idx === 0 || h.desbloqueada) {
+                heroisDesbloqueadosPool.push(idx);
+            }
+        });
+        if (heroisDesbloqueadosPool.length === 0) heroisDesbloqueadosPool.push(0);
+
         for (let i = 0; i < quantidade; i++) {
             jogo.tirosGacha++;
             if (jogo.totalTirosGacha === undefined) jogo.totalTirosGacha = 0;
@@ -49,6 +58,8 @@ export function darTiroGacha(quantidade = 1) {
                 if (heroi.estrelas === 0 || !heroi.desbloqueada) {
                     heroi.estrelas = 1; heroi.desbloqueada = true;
                     heroisDesbloqueados.push(heroi.nome);
+                    // Adiciona dinamicamente na pool caso venham fragmentos dele nos tiros restantes do mesmo x10
+                    if (!heroisDesbloqueadosPool.includes(heroIndex)) heroisDesbloqueadosPool.push(heroIndex);
                 } else {
                     totalGemasReembolso += adicionarFragmentos(heroIndex, 20);
                     fragmentos20Ganhos[heroi.nome] = (fragmentos20Ganhos[heroi.nome] || 0) + 1;
@@ -62,31 +73,34 @@ export function darTiroGacha(quantidade = 1) {
                 if (heroi.estrelas === 0 || !heroi.desbloqueada) {
                     heroi.estrelas = 1; heroi.desbloqueada = true;
                     heroisDesbloqueados.push(heroi.nome);
+                    if (!heroisDesbloqueadosPool.includes(heroIndex)) heroisDesbloqueadosPool.push(heroIndex);
                 } else {
                     totalGemasReembolso += adicionarFragmentos(heroIndex, 20);
                     fragmentos20Ganhos[heroi.nome] = (fragmentos20Ganhos[heroi.nome] || 0) + 1;
                 }
                 highestRarity = 'dourado';
                 bestHeroIndex = heroIndex;
-            } else if (roll < 0.30) { // 25% (0.05 a 0.30) Fragmentos (20 Frags) - Roxo
-                let heroIndex = Math.floor(Math.random() * jogo.herois.length);
+            } else if (roll < 0.30) { // 25% Fragmentos Épicos (20 Frags) - Roxo
+                // Sorteia o fragmento apenas dentre os heróis que o jogador possui
+                let heroIndex = heroisDesbloqueadosPool[Math.floor(Math.random() * heroisDesbloqueadosPool.length)];
                 let heroi = jogo.herois[heroIndex];
                 totalGemasReembolso += adicionarFragmentos(heroIndex, 20);
                 fragmentos20Ganhos[heroi.nome] = (fragmentos20Ganhos[heroi.nome] || 0) + 1;
                 if (highestRarity === 'azul') highestRarity = 'roxo';
-                if (bestHeroIndex === null) bestHeroIndex = heroIndex;
+                // 'bestHeroIndex' removido daqui para não disparar a Splash Art por engano
             } else if (roll < 0.70) { // Pontos - Azul
                 let dpsTotal = jogo.herois.reduce((acc, h) => acc + h.dps, 0);
                 let ganho = (dpsTotal > 0 ? dpsTotal : 1) * 60;
                 jogo.pontos += ganho;
                 totalPontosGacha += ganho;
-            } else { // 5 Fragmentos - Roxo
-                let heroIndex = Math.floor(Math.random() * jogo.herois.length);
+            } else { // 30% Chance - 5 Fragmentos - Roxo
+                // Sorteia o fragmento apenas dentre os heróis que o jogador possui
+                let heroIndex = heroisDesbloqueadosPool[Math.floor(Math.random() * heroisDesbloqueadosPool.length)];
                 let heroi = jogo.herois[heroIndex];
                 totalGemasReembolso += adicionarFragmentos(heroIndex, 5);
                 fragmentosGanhos[heroi.nome] = (fragmentosGanhos[heroi.nome] || 0) + 1;
                 if (highestRarity === 'azul') highestRarity = 'roxo';
-                if (bestHeroIndex === null) bestHeroIndex = heroIndex;
+                // 'bestHeroIndex' removido daqui para não disparar a Splash Art por engano
             }
         }
 
@@ -100,8 +114,9 @@ export function darTiroGacha(quantidade = 1) {
         salvarJogo();
         atualizarInterface();
         renderizarBotoesUpgrades();
+        
+        if (window.verificarDesbloqueios) window.verificarDesbloqueios();
 
-        // Esconde a Sidebar para a animação tomar a tela toda
         const sb = document.getElementById("sidebarAbas");
         if (sb) sb.classList.add("fechada");
 

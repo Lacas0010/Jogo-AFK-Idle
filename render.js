@@ -168,6 +168,14 @@ export function desenhar() {
     // Aplica as transformações da câmera
     ctx.translate(canvas.width / 2, (canvas.height / 2) + offsetY); 
 
+    // --- DESVIO CINEMATOGRÁFICO DO MENU INICIAL ---
+    if (jogo.estado === 'menu') {
+        desenharParallaxMenu(scale);
+        ctx.restore(); // <--- CORREÇÃO CRÍTICA AQUI: Limpa a câmara antes do próximo frame
+        requestAnimationFrame(desenhar);
+        return; // Impede a engine de renderizar a interface de combate
+    }
+
     // --- SCREEN SHAKE (Tremor de Câmera) ---
     if (efeitosJuice.shake > 0) {
         let dx = (Math.random() - 0.5) * efeitosJuice.shake;
@@ -1421,7 +1429,10 @@ export function desenhar() {
             if (animacaoGacha.heroiIndex !== null) {
                 desenharSplashArt(ctx, cx, cy - 40, animacaoGacha.heroiIndex, tick);
             } else {
-                ctx.font = "80px Arial"; ctx.textAlign = "center"; ctx.fillText("💰", cx, cy - 40);
+                ctx.font = "80px Arial"; ctx.textAlign = "center";
+                // Exibe Quebra-cabeça para fragmentos (roxo) e Bolsa de Ouro para pontos (azul)
+                let iconeGacha = animacaoGacha.raridade === 'roxo' ? "🧩" : "💰";
+                ctx.fillText(iconeGacha, cx, cy - 40);
             }
 
             // Textos de Resultado
@@ -1791,5 +1802,106 @@ function desenharSplashArt(ctx, cx, cy, heroiIndex, tick) {
         ctx.beginPath(); ctx.moveTo(25, 10); ctx.quadraticCurveTo(45, 0, 30, -30); ctx.quadraticCurveTo(20, -5, 18, 5); ctx.fill();
     }
 
+    ctx.restore();
+}
+
+function desenharParallaxMenu(scale) {
+    let pX = (Date.now() * 0.015); 
+    ctx.scale(scale, scale); 
+    ctx.translate(-400, -225); 
+
+    // --- CAMADA 1: Céu de Fim de Tarde (Golden Hour) ---
+    let grad = ctx.createLinearGradient(0, -100, 0, 300);
+    grad.addColorStop(0, "#87CEFA"); // Azul claro lá no alto
+    grad.addColorStop(0.5, "#FFB6C1"); // Rosa suave no meio
+    grad.addColorStop(1, "#FFDAB9"); // Pêssego dourado no horizonte
+    ctx.fillStyle = grad; 
+    ctx.fillRect(-400, -100, 1600, 600);
+
+    // Sol suave ao fundo
+    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+    ctx.beginPath(); ctx.arc(100, 50, 70, 0, Math.PI * 2); ctx.fill();
+
+    // --- CAMADA 2: Colinas Distantes (Suaves e Arredondadas) ---
+    ctx.save();
+    ctx.fillStyle = "#A8C3B4"; // Verde-azulado com neblina atmosférica
+    for (let i = -200; i < 1200; i += 250) {
+        let hillX = i - (pX * 0.2 % 250);
+        ctx.beginPath(); ctx.arc(hillX + 125, 280, 180, Math.PI, 0); ctx.fill();
+    }
+    ctx.restore();
+
+    // --- CAMADA 3: O Grande Castelo Branco e Telhados Vermelhos ---
+    ctx.save();
+    let casteloX = 300 - (pX * 0.3 % 800); 
+    
+    // Sombreamento base (Lado esquerdo mais escuro)
+    ctx.fillStyle = "#D7C4B1"; 
+    ctx.fillRect(casteloX, 70, 100, 150); // Forte Central Sombra
+    ctx.fillRect(casteloX - 40, 100, 45, 120); // Torre Esq Sombra
+    ctx.fillRect(casteloX + 95, 80, 45, 140); // Torre Dir Sombra
+
+    // Iluminação (Lado direito banhado de sol)
+    ctx.fillStyle = "#F5EAD4"; 
+    ctx.fillRect(casteloX + 40, 70, 60, 150); // Forte Central Luz
+    ctx.fillRect(casteloX - 15, 100, 20, 120); // Torre Esq Luz
+    ctx.fillRect(casteloX + 120, 80, 20, 140); // Torre Dir Luz
+
+    // Telhados Cônicos (Terracota)
+    ctx.fillStyle = "#C0392B";
+    ctx.beginPath(); ctx.moveTo(casteloX - 15, 70); ctx.lineTo(casteloX + 50, 0); ctx.lineTo(casteloX + 115, 70); ctx.fill(); // Teto Central
+    ctx.beginPath(); ctx.moveTo(casteloX - 50, 100); ctx.lineTo(casteloX - 17, 30); ctx.lineTo(casteloX + 15, 100); ctx.fill(); // Teto Esq
+    ctx.beginPath(); ctx.moveTo(casteloX + 85, 80); ctx.lineTo(casteloX + 117, 10); ctx.lineTo(casteloX + 150, 80); ctx.fill(); // Teto Dir
+
+    // Janelinhas charmosas de arco
+    ctx.fillStyle = "#2C3E50";
+    ctx.beginPath(); ctx.arc(casteloX + 50, 100, 12, Math.PI, 0); ctx.fillRect(casteloX + 38, 100, 24, 15); ctx.fill();
+    ctx.beginPath(); ctx.arc(casteloX - 17, 130, 8, Math.PI, 0); ctx.fillRect(casteloX - 25, 130, 16, 12); ctx.fill();
+    ctx.beginPath(); ctx.arc(casteloX + 117, 110, 8, Math.PI, 0); ctx.fillRect(casteloX + 109, 110, 16, 12); ctx.fill();
+    ctx.restore();
+
+    // --- CAMADA 4: Vila Acolhedora (Casinhas Aglomeradas) ---
+    ctx.save();
+    for (let i = -100; i < 1200; i += 140) {
+        let casaX = i - (pX * 0.6 % 140);
+        
+        // Casa 1 (Maior)
+        ctx.fillStyle = "#EBE1D5"; ctx.fillRect(casaX, 190, 50, 50); // Parede Luz
+        ctx.fillStyle = "#D7C4B1"; ctx.fillRect(casaX, 190, 20, 50); // Parede Sombra
+        ctx.fillStyle = "#D35400"; // Telhado
+        ctx.beginPath(); ctx.moveTo(casaX - 10, 190); ctx.lineTo(casaX + 25, 150); ctx.lineTo(casaX + 60, 190); ctx.fill();
+        ctx.fillStyle = "#8B4513"; ctx.fillRect(casaX + 25, 210, 12, 18); // Porta de Madeira
+        
+        // Casa 2 (Menor, sobreposta à direita)
+        ctx.fillStyle = "#F5EAD4"; ctx.fillRect(casaX + 40, 205, 40, 35);
+        ctx.fillStyle = "#C0392B"; 
+        ctx.beginPath(); ctx.moveTo(casaX + 30, 205); ctx.lineTo(casaX + 60, 175); ctx.lineTo(casaX + 90, 205); ctx.fill();
+        ctx.fillStyle = "#8B4513"; ctx.fillRect(casaX + 55, 220, 10, 12); // Janela
+    }
+    ctx.restore();
+
+    // --- CAMADA 5: Floresta "Fluffy" (Tufos de folhas sobrepostos) ---
+    ctx.fillStyle = "#4A7C59"; // Chão verde musgo
+    ctx.fillRect(-400, 230, 1600, 220); 
+    
+    ctx.save();
+    for (let i = -100; i < 1200; i += 90) {
+        let arvX = i - (pX * 1.2 % 90);
+        
+        // Efeito de volume criando vários círculos com tons diferentes de verde
+        ctx.fillStyle = "#3E6F4D"; // Sombra
+        ctx.beginPath(); ctx.arc(arvX + 20, 240, 35, 0, Math.PI*2); ctx.fill();
+        
+        ctx.fillStyle = "#558B63"; // Meio-tom
+        ctx.beginPath(); ctx.arc(arvX, 250, 40, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(arvX + 45, 255, 30, 0, Math.PI*2); ctx.fill();
+
+        ctx.fillStyle = "#6B9F77"; // Luz/Topo
+        ctx.beginPath(); ctx.arc(arvX - 10, 260, 25, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(arvX + 20, 245, 35, 0, Math.PI*2); ctx.fill();
+        
+        ctx.fillStyle = "#82B092"; // Folhas mais claras na ponta
+        ctx.beginPath(); ctx.arc(arvX + 35, 275, 20, 0, Math.PI*2); ctx.fill();
+    }
     ctx.restore();
 }

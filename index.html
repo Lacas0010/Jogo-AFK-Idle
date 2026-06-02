@@ -9,6 +9,18 @@
 <body>
 
     <div class="area-jogo">
+    <div id="menuInicial" class="menu-inicial-container">
+        <div class="menu-inicial-conteudo">
+            <h1 class="logo-jogo-grande">IDLE GAME</h1>
+            <p class="subtitulo-jogo">Uma Crônica Poligonal de Glintstone</p>
+            
+            <div class="menu-inicial-botoes">
+                <button class="btn-upgrade" style="font-size: 22px; padding: 15px 40px;" onclick="window.iniciarJogo()">⚔️ Iniciar Jornada</button>
+                <button class="btn-crit" style="font-size: 14px; padding: 10px 20px; background: linear-gradient(to bottom, #7f8c8d, #34495e);" onclick="document.getElementById('inputImportarSaveMenu').click()">📂 Carregar Grimório</button>
+                <input type="file" id="inputImportarSaveMenu" accept=".dat" style="display: none;" onchange="importarProgressoFisico(event)">
+            </div>
+        </div>
+    </div>
     <canvas id="jogoCanvas" width="800" height="450"></canvas>
     
     <div id="painelSkills">
@@ -28,15 +40,15 @@
 
     <div class="menu-abas">
         <button class="btn-aba active" onclick="alternarAba('abaUpgrades')">⚔️ Upgrades</button>
-        <button class="btn-aba" onclick="alternarAba('abaGacha')">🔮 Gacha</button>
+        <button id="btnAba_gacha" class="btn-aba aba-bloqueada" onclick="alternarAba('abaGacha')">🔮 Gacha</button>
         <button class="btn-aba" onclick="alternarAba('abaStatus')">📊 Status</button>
-        <button class="btn-aba" onclick="alternarAba('abaEquipe')">🛡️ Equipe</button>
-        <button class="btn-aba" onclick="alternarAba('abaSantuario')">✨ Santuário</button>
-        <button class="btn-aba" onclick="alternarAba('abaForja')">⚒️ Forja</button>
-        <button class="btn-aba" onclick="alternarAba('abaGuilda')">📜 Guilda</button>
-        <button class="btn-aba" onclick="alternarAba('abaMarcos')">🏆 Marcos</button>
-        <button class="btn-aba" onclick="alternarAba('abaPantheon')">🏛️ Panteão</button>
-        <button class="btn-aba" onclick="alternarAba('abaFrestas')">🌌 Frestas</button>
+        <button id="btnAba_equipe" class="btn-aba aba-bloqueada" onclick="alternarAba('abaEquipe')">🛡️ Equipe</button>
+        <button id="btnAba_santuario" class="btn-aba aba-bloqueada" onclick="alternarAba('abaSantuario')">✨ Santuário</button>
+        <button id="btnAba_forja" class="btn-aba aba-bloqueada" onclick="alternarAba('abaForja')">⚒️ Forja</button>
+        <button id="btnAba_guilda" class="btn-aba aba-bloqueada" onclick="alternarAba('abaGuilda')">📜 Guilda</button>
+        <button id="btnAba_marcos" class="btn-aba aba-bloqueada" onclick="alternarAba('abaMarcos')">🏆 Marcos</button>
+        <button id="btnAba_pantheon" class="btn-aba aba-bloqueada" onclick="alternarAba('abaPantheon')">🏛️ Panteão</button>
+        <button id="btnAba_frestas" class="btn-aba aba-bloqueada" onclick="alternarAba('abaFrestas')">🌌 Frestas</button>
         <button class="btn-aba" onclick="alternarAba('abaDebug')">🛠️ Debug</button>
     </div>
 

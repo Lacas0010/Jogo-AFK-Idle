@@ -1,4 +1,5 @@
 export let jogo = {
+    estado: 'menu', // Começa na tela de início
     pontos: 0,
     gemas: 0,
     tirosGacha: 0,
@@ -14,8 +15,11 @@ export let jogo = {
     inventario: { couroOrc: 0, escamasHidra: 0 },
     artefatos: { manoplaOrc: false, glandulaHidra: false },
     multiplicadorAscensao: 1,
+    desbloqueios: { equipe: false, gacha: false, forja: false, marcos: false, guilda: false, santuario: false, pantheon: false, frestas: false },
+    tutoriaisVistos: { abaUpgrades: false, abaEquipe: false, abaGacha: false, abaForja: false, abaSantuario: false, abaGuilda: false, abaMarcos: false, abaPantheon: false, abaFrestas: false },
     almasPoligonais: 0,
     upgradesAlmas: [0, 0, 0, 0, 0],
+    autoCastAtivo: true,
     guilda: {
         ultimaRenovacao: new Date().toDateString(),
         contratos: [
@@ -171,11 +175,18 @@ export function salvarJogo() {
 }
 
 export function carregarJogo() {
-    const salvo = localStorage.getItem("meuJogoAFK");
+    const salvo = localStorage.getItem("meuJogoAFK"); // Restaurando a chave correta
     if (!salvo) return 0;
     
     const dadosSalvos = JSON.parse(salvo);
     const tempoFora = dadosSalvos.ultimoAcesso ? Math.max(0, Math.floor((Date.now() - dadosSalvos.ultimoAcesso) / 1000)) : 0;
+    
+    // Mescla profunda para garantir que novos desbloqueios existam em saves velhos
+    if (dadosSalvos.desbloqueios) {
+        jogo.desbloqueios = { ...jogo.desbloqueios, ...dadosSalvos.desbloqueios };
+    }
+    
+    jogo.tutoriaisVistos = dadosSalvos.tutoriaisVistos || { abaUpgrades: false, abaEquipe: false, abaGacha: false, abaForja: false, abaSantuario: false, abaGuilda: false, abaMarcos: false, abaPantheon: false, abaFrestas: false };
     
     // Migração de heróis mantida como no original
     if (dadosSalvos.herois) {
@@ -184,15 +195,13 @@ export function carregarJogo() {
                 jogo.herois[i] = dadosSalvos.herois[i];
                 jogo.herois[i].multCusto = jogo.herois[i].multCusto || hBase.multCusto;
                 jogo.herois[i].fragmentos = jogo.herois[i].fragmentos || 0;
-                jogo.herois[i].estrelas = Math.min(jogo.herois[i].estrelas || 1, 5); // Limita as estrelas de saves antigos a 5
+                jogo.herois[i].estrelas = Math.min(jogo.herois[i].estrelas || 1, 5);
                 jogo.herois[i].descricao = hBase.descricao;
                 
                 if (hBase.skills) {
-                    // Se o save antigo tinha um array vazio, puxa os dados base completos
                     if (!jogo.herois[i].skills || jogo.herois[i].skills.length === 0) {
                         jogo.herois[i].skills = JSON.parse(JSON.stringify(hBase.skills));
                     } else {
-                        // Se já existiam skills, atualiza e preenche campos faltantes
                         hBase.skills.forEach((baseSkill, sIdx) => {
                             if (!jogo.herois[i].skills[sIdx]) {
                                 jogo.herois[i].skills[sIdx] = JSON.parse(JSON.stringify(baseSkill));
@@ -221,7 +230,7 @@ export function carregarJogo() {
     jogo.tirosGacha = Number(dadosSalvos.tirosGacha) || 0;
     jogo.totalTirosGacha = dadosSalvos.totalTirosGacha || dadosSalvos.tirosGacha || 0;
     jogo.nivelMaximo = dadosSalvos.nivelMaximo || dadosSalvos.nivel || 1;
-    jogo.pontos = dadosSalvos.pontos;
+    jogo.pontos = dadosSalvos.pontos || 0;
     jogo.cliquesTotais = dadosSalvos.cliquesTotais || 0;
     jogo.monstrosMortos = dadosSalvos.monstrosMortos || 0;
     jogo.marcos = dadosSalvos.marcos || { cliques: 0, mortes: 0, nivel: 0, gacha: 0 };
@@ -230,6 +239,7 @@ export function carregarJogo() {
     jogo.multiplicadorAscensao = dadosSalvos.multiplicadorAscensao || 1;
     jogo.almasPoligonais = dadosSalvos.almasPoligonais || 0;
     jogo.upgradesAlmas = dadosSalvos.upgradesAlmas || [0, 0, 0, 0, 0];
+    jogo.autoCastAtivo = dadosSalvos.autoCastAtivo !== undefined ? dadosSalvos.autoCastAtivo : true;
     jogo.timeAtivo = dadosSalvos.timeAtivo || [0];
     jogo.fragmentosUniversais = dadosSalvos.fragmentosUniversais || 0;
     jogo.reliquiasPantheon = dadosSalvos.reliquiasPantheon || [0, 0, 0];
@@ -248,7 +258,6 @@ export function carregarJogo() {
     if (jogo.guilda.ultimaRenovacao !== hoje) {
         jogo.guilda.ultimaRenovacao = hoje;
         
-        // Catálogo de missões possíveis
         const poolContratos = [
             { id: 'cliques', desc: 'Dedo Nervoso: 200 Cliques', atual: 0, meta: 200, resgatado: false, premioGemas: 30 },
             { id: 'mortes', desc: 'Caçador: Derrotar 20 Monstros', atual: 0, meta: 20, resgatado: false, premioGemas: 40 },
@@ -257,11 +266,10 @@ export function carregarJogo() {
             { id: 'skills', desc: 'Conjurador: Ativar 10 Skills', atual: 0, meta: 10, resgatado: false, premioGemas: 40 }
         ];
 
-        // Embaralha o array e corta os 2 primeiros
         jogo.guilda.contratos = poolContratos.sort(() => 0.5 - Math.random()).slice(0, 2);
     }
 
-    return tempoFora;
+    return tempoFora; // Retorna o tempo para o Relatório Offline funcionar!
 }
 
 export function resetarJogo() {
@@ -316,6 +324,8 @@ export function executarAscensao() {
         if (jogo.almasPoligonais === undefined) jogo.almasPoligonais = 0;
         jogo.almasPoligonais += (jogo.nivel - 30);
         
+        if (window.verificarDesbloqueios) window.verificarDesbloqueios();
+
         jogo.pontos = 0;
         jogo.nivel = 1;
         jogo.monstroHp = 10;

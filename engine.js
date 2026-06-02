@@ -110,15 +110,7 @@ function renderizarStatusHerois() {
     const painel = document.getElementById("statusHerois");
     if (!painel) return;
     
-    const podeAscender = jogo.nivel >= 30;
-    painel.innerHTML = `
-        <div style="margin-bottom: 20px;">
-            <h3>✨ Almas Poligonais: ${jogo.almasPoligonais}</h3>
-            <button id="btnAscensão" class="btn-upgrade" style="background: #9b59b6; margin-bottom: 15px;" onclick="ascender()" ${podeAscender ? "" : "disabled"}>
-                ${podeAscender ? "Realizar Ascensão Cósmica" : "Bloqueado (Chegue ao Nível 30)"}
-            </button>
-        </div>
-    `;
+    painel.innerHTML = "";
     
     jogo.herois.forEach((heroi, index) => {
         if (jogo.timeAtivo.includes(index) && (index === 0 || heroi.desbloqueada || heroi.nivelDps > 0)) {
@@ -213,7 +205,16 @@ export function renderizarLojaSantuario() {
         "Conjurador Automático: Ativa habilidades automaticamente"
     ];
 
-    let html = `<h3 style="color: #9b59b6; text-align: center; margin-bottom: 20px;">✨ Almas Poligonais Disponíveis: ${jogo.almasPoligonais || 0}</h3>`;
+    const podeAscender = jogo.nivel >= 30;
+
+    let html = `
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h3 style="color: #9b59b6; margin-bottom: 10px;">✨ Almas Poligonais Disponíveis: ${jogo.almasPoligonais || 0}</h3>
+            <button id="btnAscensão" class="btn-upgrade" style="background: #9b59b6; max-width: 300px; width: 100%; margin: 0 auto;" onclick="ascender()" ${podeAscender ? "" : "disabled"}>
+                ${podeAscender ? "Realizar Ascensão Cósmica" : "Bloqueado (Chegue ao Nível 30)"}
+            </button>
+        </div>
+    `;
     html += `<div class="painel-upgrades">`;
 
     for (let i = 0; i < 5; i++) {
@@ -221,16 +222,24 @@ export function renderizarLojaSantuario() {
         let custo = i === 4 ? 5 : custosAlmasBase[i] * Math.pow(2, nivel); // Custo dobra a cada nível comprado, exceto auto-cast
         let maxNivel = i === 4 && nivel >= 1;
         let podeComprar = (jogo.almasPoligonais || 0) >= custo && !maxNivel;
-
-        let textBotao = maxNivel 
-            ? "🤖 ATIVADO (MÁX)" 
-            : `Melhorar (Nvl ${nivel})<br><small>Custo: ✨ ${custo}</small>`;
+        let podeInteragir = podeComprar || (i === 4 && maxNivel);
+        
+        let textBotao;
+        let corBotao;
+        if (i === 4 && maxNivel) {
+            let ligado = jogo.autoCastAtivo !== false;
+            textBotao = ligado ? "🤖 LIGADO (Desligar)" : "🤖 DESLIGADO (Ligar)";
+            corBotao = ligado ? "#2ecc71" : "#e74c3c";
+        } else {
+            textBotao = `Melhorar (Nvl ${nivel})<br><small>Custo: ✨ ${custo}</small>`;
+            corBotao = podeComprar ? '#9b59b6' : '#7f8c8d';
+        }
 
         html += `
             <div class="heroi-card" style="display: flex; flex-direction: column; justify-content: space-between; gap: 8px; border-color: #9b59b6;">
                 <h4 style="margin: 0; color: #f1c40f; font-size: 14px;">${descricoes[i].split(':')[0]}</h4>
                 <p style="margin: 0; font-size: 12px; color: #5c3a21; font-style: italic;">${descricoes[i].split(':')[1]}</p>
-                <button class="btn-upgrade" style="background: ${podeComprar ? '#9b59b6' : '#7f8c8d'}; width: 100%; margin-top: auto;" onclick="comprarUpgradeAlma(${i})" ${!podeComprar ? 'disabled' : ''}>
+                <button class="btn-upgrade" style="background: ${corBotao}; width: 100%; margin-top: auto;" onclick="comprarUpgradeAlma(${i})" ${!podeInteragir ? 'disabled' : ''}>
                     ${textBotao}
                 </button>
             </div>
@@ -455,6 +464,19 @@ export function atualizarInterface() {
     if (elCouro) elCouro.innerText = jogo.inventario.couroOrc || 0;
     const elEscama = document.getElementById("qtdEscama");
     if (elEscama) elEscama.innerText = jogo.inventario.escamasHidra || 0;
+
+    // Sincronizar visibilidade das abas
+    Object.keys(jogo.desbloqueios).forEach(id => {
+        let btn = document.getElementById("btnAba_" + id);
+        if (btn) {
+            if (jogo.desbloqueios[id]) {
+                btn.classList.remove("aba-bloqueada");
+                btn.style.display = "block";
+            } else {
+                btn.style.display = "none";
+            }
+        }
+    });
 }
 
 // Expondo métodos na window pois módulos criam um escopo fechado e quebram os 'onclick' do HTML
@@ -502,14 +524,90 @@ window.comprarUpgradeSkill = function(heroiIndex, skillIndex) {
 
 window.comprarUpgradeAlma = function(upgradeId) {
     let nivelAtual = jogo.upgradesAlmas[upgradeId] || 0;
+    
+    if (upgradeId === 4 && nivelAtual >= 1) {
+        jogo.autoCastAtivo = jogo.autoCastAtivo === false ? true : false;
+        atualizarInterface();
+        salvarJogo();
+        return;
+    }
+    
     let custo = upgradeId === 4 ? 5 : custosAlmasBase[upgradeId] * Math.pow(2, nivelAtual);
     
     if ((jogo.almasPoligonais || 0) >= custo && (upgradeId !== 4 || nivelAtual < 1)) {
         jogo.almasPoligonais -= custo;
         jogo.upgradesAlmas[upgradeId] = nivelAtual + 1;
+        if (upgradeId === 4) jogo.autoCastAtivo = true;
         atualizarInterface();
         salvarJogo();
     }
+};
+
+    // Função helper para o tutorial
+    window.mostrarTutorial = function(id, titulo, msg) {
+        // Reutilizamos a lógica do Pergaminho que já criamos anteriormente
+        let el = document.getElementById("painelOffline");
+        if(el) {
+            el.innerHTML = `<div class="pergaminho"><h2>${titulo}</h2><p>${msg}</p>
+            <button class="btn-upgrade" onclick="window.fecharRelatorioOffline()">Entendido</button></div>`;
+            el.classList.remove("escondido");
+        }
+    };
+
+    window.verificarDesbloqueios = function() {
+        // Trava de segurança para Saves Antigos
+        if (!jogo.desbloqueios) jogo.desbloqueios = { equipe: false, santuario: false, pantheon: false, frestas: false };
+        let mudou = false;
+
+        // 0. Desbloquear Básicos (Ao derrotar o 1º Chefe e chegar ao Nível 6)
+        if (!jogo.desbloqueios.gacha && jogo.nivel > 5) {
+            jogo.desbloqueios.gacha = true;
+            jogo.desbloqueios.forja = true;
+            jogo.desbloqueios.marcos = true;
+            jogo.desbloqueios.guilda = true;
+            window.mostrarTutorial("gacha", "🌟 O Mundo se Expande", "O primeiro chefe caiu! O Altar de Gacha, a Forja de itens, a Guilda e os Marcos estão agora abertos para você explorar.");
+            mudou = true;
+        }
+
+        // 1. Desbloquear Equipe (Ao ter 2 heróis)
+        if (!jogo.desbloqueios.equipe && jogo.herois.filter((h, index) => index === 0 || h.desbloqueada).length >= 2) {
+            jogo.desbloqueios.equipe = true;
+            window.mostrarTutorial("equipe", "🛡️ Equipe", "Agora você pode alternar entre seus heróis para usar habilidades diferentes!");
+            mudou = true;
+        }
+
+        // 2. Desbloquear Santuário (Nível 31)
+        if (!jogo.desbloqueios.santuario && jogo.nivel >= 31) {
+            jogo.desbloqueios.santuario = true;
+            window.mostrarTutorial("santuario", "✨ Santuário", "O Santuário foi revelado! Aqui você canaliza Almas Poligonais para buffs globais.");
+            mudou = true;
+        }
+
+        // 3. Desbloquear Panteão e Frestas (Primeira Ascensão)
+        if (!jogo.desbloqueios.pantheon && jogo.multiplicadorAscensao > 1) {
+            jogo.desbloqueios.pantheon = true;
+            jogo.desbloqueios.frestas = true;
+            window.mostrarTutorial("pantheon", "🏛️ Panteão", "Os deuses notaram sua ascensão! O Panteão e as Frestas estão abertos.");
+            mudou = true;
+        }
+
+        if (mudou) atualizarInterface();
+    };
+
+window.iniciarJogo = function() {
+    jogo.estado = 'jogando';
+    document.getElementById("menuInicial").style.display = "none";
+    
+    // Mostra as skills in-game se estiverem escondidas
+    const elSkills = document.getElementById("painelSkills");
+    if (elSkills) elSkills.style.opacity = "1"; 
+    
+    // Verifica se já passou o tempo offline e aciona o relatório caso não seja save novo
+    if (window.tempoForaCalculado > 60 && jogo.cliquesTotais > 0) {
+        // Usa a lógica existente para disparar o relatório offline se precisar
+    }
+    
+    if (window.tocarSom) window.tocarSom('ataque'); 
 };
 
 window.darTiroGacha = darTiroGacha;
@@ -709,6 +807,32 @@ window.alternarAba = function(abaId) {
     if (abaId === 'abaFrestas') {
         if (window.renderizarFrestas) window.renderizarFrestas();
     }
+
+    // --- SISTEMA DE REVELAÇÃO DE TUTORIAL ---
+    if (jogo.tutoriaisVistos && !jogo.tutoriaisVistos[abaId]) {
+        // Registra que o jogador já viu este resumo
+        jogo.tutoriaisVistos[abaId] = true;
+        salvarJogo();
+
+        // Dicionário de Textos de Onboarding do Reino
+        const resumosTutoriais = {
+            abaUpgrades: { t: "⚔️ Central de Upgrades", d: "Aqui você investe moedas de ouro para aumentar permanentemente o DPS dos seus heróis e o seu multiplicador de Dano por Clique manual." },
+            abaEquipe:   { t: "🛡️ Gestão de Equipe", d: "Monte sua linha de frente de combate! Você pode escalar até 3 heróis simultâneos no campo para lutarem juntos e combinarem suas auras." },
+            abaGacha:    { t: "🔮 Altar de Invocação", d: "Gaste suas Gemas para invocar novos campeões místicos. Tirar cópias repetidas concede fragmentos para elevar as Estrelas e Despertar o poder máximo deles!" },
+            abaForja:    { t: "⚒️ Forja de Artefatos", d: "Refine os materiais brutos deixados pelos monstros caídos e chefes. Forjar artefatos garante bônus multiplicadores universais de Atributos." },
+            abaSantuario:{ t: "✨ Santuário de Almas", d: "Canalize as Almas Poligonais ganhas de Chefes Importantes. Desbloqueie buffs massivos e ative o 'Auto-Cast' automático das suas habilidades de combate." },
+            abaGuilda:   { t: "📜 Guilda dos Aventureiros", d: "Assine Contratos Diários do Reino para coletar Gemas extras de recompensa rápida ou envie heróis da reserva em Expedições de exploração offline." },
+            abaMarcos:   { t: "🏆 Salão de Marcos", d: "Uma galeria de glórias passadas. Colete generosas quantias de Gemas grátis sempre que atingir recordes de cliques, abates, níveis ou tiros!" },
+            abaPantheon: { t: "🏛️ Panteão das Relíquias", d: "Os Deuses observam sua Ascensão. Entregue os Fragmentos Universais coletados nas Frestas para erguer as Bênçãos Eternas de Ares, Hermes e Midas." },
+            abaFrestas:  { t: "🌌 Frestas Dimensionais", d: "Uma fenda no espaço-tempo. Você terá apenas 30 segundos e Cooldowns 2x mais rápidos para abater um chefe de HP exponencial e extrair moedas míticas!" }
+        };
+
+        const tutorial = resumosTutoriais[abaId];
+        if (tutorial && window.mostrarTutorial) {
+            // Utiliza o layout de pergaminho estilizado que já criamos
+            window.mostrarTutorial(abaId, tutorial.t, tutorial.d);
+        }
+    }
 };
 
 export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'normal') {
@@ -849,6 +973,7 @@ export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'no
         jogo.monstroHpMax = calcularHpMaximo(jogo.nivel);
         jogo.monstroHp = jogo.monstroHpMax;
         if (jogo.nivel > (jogo.nivelMaximo || 1)) jogo.nivelMaximo = jogo.nivel;
+            if (window.verificarDesbloqueios) window.verificarDesbloqueios();
     }
     atualizarInterface();
 }
@@ -901,6 +1026,16 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Processamento de Tempo Offline (foi movido para cá na migração)
         const tempoFora = carregarJogo() || 0;
+        window.tempoForaCalculado = tempoFora;
+
+        if (jogo.estado === 'menu') {
+            const painelSkills = document.getElementById("painelSkills");
+            if (painelSkills) painelSkills.style.opacity = "0";
+        } else {
+            const menuInicial = document.getElementById("menuInicial");
+            if (menuInicial) menuInicial.style.display = "none";
+        }
+
         if (tempoFora > 0) { 
         let dpsTotal = jogo.timeAtivo.reduce((acc, idx) => acc + jogo.herois[idx].dps, 0);
         let buffPassivoCavaleiro = 1.0;
@@ -954,7 +1089,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
 
         // Upgrade 4: Conjurador Automático (Auto-Cast)
-        if ((jogo.upgradesAlmas[4] || 0) >= 1) {
+        if ((jogo.upgradesAlmas[4] || 0) >= 1 && jogo.autoCastAtivo !== false) {
             jogo.timeAtivo.forEach(idx => {
                 let heroi = jogo.herois[idx];
                 if (heroi.skills && heroi.skills.length > 0) {
