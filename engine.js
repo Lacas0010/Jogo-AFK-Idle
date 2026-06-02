@@ -4,12 +4,78 @@ import { desenhar, textosFlutuantes, animacao, mostrarNotificacao, desenharPortr
 
 // --- CHIP DE SOM 8-BIT (SINTETIZADOR) ---
 let audioCtx;
+let bgmTimer; // Guarda o loop da música atual
+
 function initAudio() {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // Inicia a música correspondente à tela assim que o áudio for liberado
+        window.tocarBGM(jogo.estado === 'menu' ? 'menu' : 'batalha');
+    }
 }
 // Navegadores exigem interação do usuário para liberar o áudio
 window.addEventListener('mousedown', initAudio, { once: true });
 window.addEventListener('keydown', initAudio, { once: true });
+
+// --- SEQUENCIADOR MUSICAL (MAESTRO) ---
+window.tocarBGM = function(tema) {
+    if (!audioCtx) return;
+    if (bgmTimer) clearTimeout(bgmTimer); // Interrompe a música anterior
+
+    // Trilha 1: Bardo na Taverna (Calma, Acordes Arpejados)
+    const notasMenu = [
+        [261.6, 400], [392.0, 400], [329.6, 400], [261.6, 800], // Dó Maior
+        [220.0, 400], [329.6, 400], [261.6, 400], [220.0, 800], // Lá Menor
+        [174.6, 400], [261.6, 400], [220.0, 400], [174.6, 800], // Fá Maior
+        [196.0, 400], [293.6, 400], [246.9, 400], [196.0, 800]  // Sol Maior
+    ];
+
+    // Trilha 2: Combate Iminente (Urgente, Staccato, Escala Menor)
+    const notasBatalha = [
+        [329.6, 150], [329.6, 150], [392.0, 150], [440.0, 150], // Mi, Mi, Sol, Lá
+        [329.6, 150], [329.6, 150], [293.6, 150], [246.9, 150], // Mi, Mi, Ré, Si
+        [329.6, 150], [329.6, 150], [392.0, 150], [440.0, 150], // Mi, Mi, Sol, Lá
+        [493.8, 200], [440.0, 200], [392.0, 200], [293.6, 200]  // Si, Lá, Sol, Ré
+    ];
+
+    let melodia = tema === 'menu' ? notasMenu : notasBatalha;
+    let tipoOnda = tema === 'menu' ? 'triangle' : 'square'; // Triangle soa como cordas/alaúde. Square é ríspido.
+    let volMax = tema === 'menu' ? 0.08 : 0.04; 
+    let index = 0;
+
+    function tocarProximaNota() {
+        // Trava de segurança: para a música se a tela mudou subitamente
+        if (tema === 'menu' && jogo.estado !== 'menu') return;
+        if (tema === 'batalha' && jogo.estado !== 'jogando') return;
+
+        let [freq, dur] = melodia[index];
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+
+        osc.type = tipoOnda;
+        osc.frequency.value = freq;
+        osc.connect(gain); gain.connect(audioCtx.destination);
+
+        let agora = audioCtx.currentTime;
+        
+        // Envelope Acústico: Como a nota nasce e morre
+        gain.gain.setValueAtTime(0, agora);
+        gain.gain.linearRampToValueAtTime(volMax, agora + 0.05); // Attack da palhetada
+        
+        if (tema === 'menu') {
+            gain.gain.exponentialRampToValueAtTime(0.001, agora + (dur / 1000) - 0.05); // Deixa o som das cordas morrerem lentamente (Sustain)
+        } else {
+            gain.gain.exponentialRampToValueAtTime(0.001, agora + 0.1); // Corta o som agressivamente (Staccato de batalha)
+        }
+
+        osc.start(agora); osc.stop(agora + (dur / 1000));
+
+        index = (index + 1) % melodia.length; // Loop infinito
+        bgmTimer = setTimeout(tocarProximaNota, dur); // Agenda a próxima nota exatamente no tempo do BPM
+    }
+
+    tocarProximaNota();
+};
 
 window.tocarSom = function(tipo) {
     if (!audioCtx) return;
@@ -617,6 +683,7 @@ window.iniciarJogo = function() {
         window.dadosOfflinePendente = null;
     }
     
+    window.tocarBGM('batalha'); // Troca a trilha sonora de forma perfeitamente síncrona
     if (window.tocarSom) window.tocarSom('ataque'); 
 };
 
