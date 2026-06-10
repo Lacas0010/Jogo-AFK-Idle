@@ -1,95 +1,88 @@
 # Vibe Game: Incremental AFK & Gacha RPG ⚔️
 
-Um jogo incremental (clicker/idle) épico e expansivo construído inteiramente em JavaScript modular utilizando a API HTML5 Canvas para renderização visual avançada. O jogo combina combate ativo, gerenciamento de equipe, invocações via Gacha e múltiplos sistemas de progressão de longo prazo.
+Um jogo incremental (clicker/idle) épico e expansivo construído inteiramente em JavaScript modular utilizando a API HTML5 Canvas para renderização visual avançada. O jogo combina combate ativo, gerenciamento de equipe tático, invocações via Gacha e múltiplos sistemas de progressão de longo prazo.
 
 ## 🌟 Funcionalidades Principais
 
-* **Combate Misto:** Progrida clicando ativamente para causar dano massivo ou escale heróis para dizimar os inimigos passivamente com DPS.
-* **Gerenciamento de Equipe Tático:** Escale até **3 Heróis simultâneos** no campo de batalha. Combine sinergias de habilidades ativas, buffs passivos e danos elementais.
-* **Ciclo Dia/Noite e Biomas:** Cenários gerados processualmente que alternam entre **Floresta** e **Pântano**, com transição dinâmica de iluminação (Manhã, Tarde, Noite, Madrugada) e fases da Lua.
-* **Inimigos Únicos e Chefes:** Enfrente hordas de monstros e Chefes colossais a cada 5 níveis, como Orcs Furiosos, Goblins, Slimes Gigantes e a temível Hidra de 3 Cabeças com animações procedurais.
-* **Responsividade Mobile:** A interface e a câmera da engine (Canvas) se adaptam dinamicamente a telas verticais (smartphones), reposicionando heróis, HUD e painéis através de CSS Grid e Matemática de offsets para a melhor experiência em qualquer dispositivo.
-* **Áudio Procedural 8-bit:** Sintetizador sonoro construído do zero usando a Web Audio API, gerando ondas sonoras matemáticas sem necessidade de arquivos `.mp3`.
+* **Combate Misto e Quebra de Escudos:** Progrida clicando ativamente para causar dano massivo ou escale heróis para dizimar inimigos passivamente. Destrua barreiras táticas de chefes para ativar atordoamentos devastadores.
+* **Gerenciamento de Equipe:** Escale até **3 Heróis simultâneos** no campo de batalha. Combine sinergias de habilidades ativas, buffs passivos e danos elementais.
+* **Progressão Automatizada de Biomas:** O mundo evolui graficamente conforme a sua faixa de nível, transitando desde florestas pacíficas até cumes vulcânicos e cavernas abissais.
+* **Responsividade Mobile:** A interface e a câmera da engine (Canvas) se adaptam dinamicamente a telas verticais (smartphones), reposicionando heróis, HUD e painéis através de CSS Grid e Matemática de offsets.
+* **Áudio Procedural 8-bit Maestro:** Sintetizador sonoro e sequenciador construído do zero usando a Web Audio API, gerando músicas matemáticas e efeitos sem necessidade de arquivos `.mp3`.
 
 ## 🎲 Heróis e Classes (Sistema Gacha)
 
-Invoque novos aliados no Altar usando **Gemas**, com um sistema justo de *Pity* (herói garantido a cada 50 tiros). Obter cópias repetidas concede Fragmentos para evoluir os heróis até **5 Estrelas (Despertar Máximo)**, desbloqueando auras visuais exclusivas e dobrando o poder base.
+Invoque novos aliados no Altar usando **Gemas**, com um sistema justo de *Pity* (herói garantido a cada 50 tiros) e balanceamento padrão da indústria:
+* **🏆 2% de Chance:** Drop Dourado Lendário (Herói Inédito ou 10 Fragmentos).
+* **🟣 38% de Chance:** Drop Roxo (1 ou 2 Fragmentos aleatórios – drop rate nerfado de forma justa para cadenciar o ritmo do grind).
+* **🔵 60% de Chance:** Drop Azul (Pontos de Glintstone massivos baseados no seu DPS atual).
+
+*Feedback Visual Inteligente:* Personagens recém-desbloqueados disparam uma animação cinematográfica em tela cheia coroada com a etiqueta **"✨ NOVO!"**. Tirar cópias repetidas exibe dinamicamente a tag **"🧩 +10 Fragmentos"**, permitindo evoluir heróis até **5 Estrelas (Despertar Máximo)**, dobrando o poder base e liberando auras visuais.
 
 * **⚔️ Guerreiro Principal:** O líder do grupo. Seu dano provém inteiramente dos seus cliques.
   * *Skill:* **🔥 Lâmina Incandescente** (Multiplica o dano de clique, incendeia a espada e aplica *Degradação Poligonal* em Chefes).
 * **🏹 Elfa Arqueira:** Atiradora focada em dano passivo à distância com alto poder de *burst*.
   * *Skill:* **🏹 Rajada de Glifos** (Dispara múltiplas flechas mágicas que causam dano instantâneo estrondoso).
 * **🔮 Mago de Glintstone:** Conjurador cujos ataques básicos perseguem os inimigos.
-  * *Skill:* **🔮 Comet Azur** (Canaliza um feixe colossal contínuo de dano multi-hit que derrete o HP do inimigo. Utiliza um *Throttle* matemático otimizado para não gargalar a engine).
-* **🛡️ Cavaleiro de Ferro:** Suporte tático e defensivo. Seus níveis de DPS aumentam o dano global de toda a equipe permanentemente, e sua Chance de Crítico ativa poderosos *Esmagamentos de Escudo* (Shield Bash) contínuos no monstro.
+  * *Skill:* **🔮 Comet Azur** (Canaliza um feixe colossal contínuo de dano multi-hit que derrete o HP do inimigo).
+* **🛡️ Cavaleiro de Ferro:** Suporte tático e defensivo. Aumenta o dano global da equipe permanentemente e possui o bônus tático exclusivo de **+50% de Dano focado na Quebra de Escudo**.
   * *Skill:* **⚙️ Baluarte Vetorial** (Ergue uma barreira dourada por 6s que dobra o dano de clique do jogador e concede +50% de DPS ativo para toda a equipe em campo).
 * ** Ladra de Presas:** Assassina ágil que acumula pilhas de veneno contínuo nos adversários.
-  * *Skill:* **🔮 Adagas de Glifos** (Realiza um Dash/Blink ultra-rápido, consome todo o lodo tóxico acumulado com um Corte Duplo em 'X' devastador e retorna com um Backdash inercial).
+  * *Skill:* **🔮 Adagas de Glifos** (Consome todo o lodo tóxico com um corte duplo massivo em formato de 'X').
 
 ## ⚔️ Mecânicas Avançadas de Combate
 
-* **Sinergias Elementais:** 
-  * *Degradação Poligonal:* Usar a espada de fogo contra Chefes triplica o dano.
-  * *Derretimento de Pixels:* Atingir um Chefe em chamas com a Rajada de Glifos da Elfa dobra o dano da habilidade.
+* **Sistema de Shield Break (Quebra de Escudo Tática):** 
+  * A cada 5 níveis, Chefes colossais surgem envelopados por uma barreira de força equivalente a **40% do seu HP Máximo**.
+  * O escudo mitiga agressivamente **80% de todo o dano direto** recebido.
+  * Ao zerar a durabilidade da barreira, atinge-se o **Stun Break (Atordoamento)**: A tela do jogo sofre um *Screen Shake* violento, o letreiro indicativo **"💥 QUEBRADO! 💥"** pisca insistentemente na tela, e o chefe fica neutralizado por 5 segundos (300 frames). Durante este colapso, o monstro sofre um brutal **multiplicador de 3x em todos os danos recebidos**.
+* **Sinergias Elementais:** *Degradação Poligonal* (fogo vs boss) e *Derretimento de Pixels* (magia vs fogo).
 * **Game Feel (Juice):**
   * **Hit Stop & Screen Shake:** Ataques críticos e habilidades supremas congelam a tela por milissegundos e geram tremores de câmera para passar a sensação de peso e impacto.
   * **Números de Dano:** Textos saltitantes e dinâmicos com cores diferentes baseadas no tipo de elemento ou se foi um acerto Crítico.
 
 ## ⚙️ Sistemas de Progressão e Meta-Jogo
 
-### 🔓 Desbloqueio Progressivo & Onboarding
-O jogo não sobrecarrega o jogador com menus complexos de imediato. Conforme você avança, novos sistemas são apresentados e acompanhados de **Tutorias Imersivos em Pergaminhos**:
-* **Nível 6 (Após o 1º Chefe):** Desbloqueia Altar de Gacha, Forja, Guilda e Marcos.
-* **2 Heróis Recrutados:** Libera a Gestão de Equipe (até 3 Heróis no campo).
-* **Nível 31:** Revela o Santuário de Almas.
-* **Após a 1ª Ascensão:** O Panteão dos Deuses e as Frestas Dimensionais são descobertos.
+### ⚒️ Loop de Forja & Upgrades de Artefatos Contínuos
+Os materiais recolhidos ao aniquilar os Chefes do Reino (`Couro de Orc`, `Escamas de Hidra`, `Dente de Dragão`) agora alimentam um ciclo escalável contínuo de progressão. Em vez de compras únicas, o jogador adquire e **dá Upgrades de nível infinitos** nos Artefatos Forjados, escalando progressivamente seus multiplicadores de dano crítico e bônus táticos sem limites.
 
 ### 🏛️ Santuário & Ascensão Cósmica
 Ao atingir o Nível 30, reinicie sua jornada através da Ascensão para obter **Almas Poligonais**. Troque essas almas na Árvore de Upgrades do Santuário por melhorias permanentes:
 * Aumento de Dano de Clique e Chance de Crítico Global.
 * Bônus de Gemas ao derrotar Chefes.
-* Aceleração na recarga de habilidades (Cooldown).
 * **Conjurador Automático:** Uma melhoria suprema que ativa as habilidades da sua equipe automaticamente assim que estiverem prontas.
 
-### 🏺 Panteão dos Deuses
-Uma progressão secundária utilizando **Fragmentos Universais**. Melhore relíquias divinas infinitamente:
-* **Bênção de Ares:** Multiplicador global de DPS.
-* **Bênção de Hermes:** Acelera o ganho de recursos enquanto você estiver offline.
-* **Bênção de Midas:** Aumenta a chance de dobrar os pontos recebidos ao derrotar monstros.
-
-### 🌌 Frestas Dimensionais (Desafio de Tempo)
-Abra portais para enfrentar inimigos sob forte pressão de tempo. Você tem apenas **30 segundos** por andar, e o HP dos monstros aumenta exponencialmente (`50% a mais por nível`). Em compensação, suas habilidades recarregam **2x mais rápido**. Atingir andares altos recompensa você com grandes quantidades de Fragmentos Universais.
+### 🏺 Panteão dos Deuses e Frestas Dimensionais
+Abra portais desafiadores com apenas **30 segundos** e inimigos de vida exponencial (`+50% por andar`), mas com tempo de recarga das habilidades acelerado **(2x mais rápido)**. O objetivo é vencer as frestas para arrebatar *Fragmentos Universais* visando fortalecer infinitamente relíquias de Deuses (Ares, Hermes e Midas) para aceleramento de farms *offline* e DPS massivos.
 
 ### 📜 Guilda dos Aventureiros
-* **Contratos Diários:** Um "Pool" rotativo sorteia 2 missões variadas todos os dias (dar X cliques, matar X chefes, dar X críticos, usar X skills) para receber infusões regulares de Gemas.
-* **Expedições Temporárias:** Tem heróis sobrando? Envie um herói inativo em uma missão de exploração que leva **1 hora de tempo real**. A recompensa em Glintstone escala diretamente com o DPS atual daquele herói, além de trazer Gemas garantidas.
+* **Contratos Diários:** Missões geradas processualmente em pools de abates variados diários rendendo montanhas de Gemas puras.
+* **Expedições Temporárias:** Envie seu herói inativo que sobrou no Gacha em missões afk puras de 1 hora, colhendo renda massiva de gemas baseada exclusivamente no DPS bruto daquele agente inativo.
 
-### 🏆 Sistema de Marcos (Conquistas)
-Ganhe recompensas progressivas em *Tiers* (Tier 1 a 5) ao alcançar metas históricas no jogo: Cliques Manuais, Monstros Derrotados, Nível Alcançado e Tiros no Altar do Gacha.
-
-### ⚒️ Forja e Inventário
-Chefes derrotados derrubam materiais baseados no bioma atual (*Couro de Orc* na Floresta e *Escamas de Hidra* no Pântano). Reúna materiais para forjar Artefatos Globais vitais: a **Manopla Feroz do Orc** (+2s na duração de todas as habilidades) e a **Glândula Tóxica da Hidra** (-2s no tempo de recarga máximo).
-
-## 🎨 Arte e Renderização Dinâmica
+## 🎨 Arte, Renderização Dinâmica e Rotação de Biomas
 
 Todo o jogo é desenhado em tempo real utilizando Matemática e Canvas 2D, sem uso de imagens ou *spritesheets* externos!
-* Retratos (Portraits) desenhados via código para cada aba e painel.
-* **Animação Gacha e Splash Arts:** Ao invocar um herói, uma animação cinematográfica em tela cheia é disparada exibindo *Splash Arts* massivas desenhadas proceduralmente usando Camadas, Curvas de Bézier e Sombreamento (ShadowBlur).
-* Sistema de Partículas avançado: Fogo, Faíscas, Sangue com gravidade, Cubos rotativos e Explosões arcanas.
-* Animações ricas e Vivas: Árvores balançando ao vento em loops sinoidais, grama dinâmica, névoa pantanosa translúcida e o movimento independente e fluído (Curvas de Bézier) das 3 cabeças da Hidra.
-* **Otimizações de Engine:** Controle inteligente de poluição visual. Cálculos matemáticos caros (como o dano multi-hit do Mago) rodam com "Throttle" (4 vezes por segundo), mantendo os efeitos visuais a 60 FPS lisos sem fritar o CPU do dispositivo.
 
-## 🎵 Sistema de Som 8-Bit
-Uma arquitetura sonoplástica construída puramente através do chip de áudio do Navegador (`AudioContext`). O código sintetiza osciladores de onda:
-* **Square Wave:** Impactos pesados e explosões.
-* **Sawtooth Wave:** Laser arcano e efeitos Sci-Fi.
-* **Triangle Wave:** Sons de corte e espada curtos.
-* **Sine Wave:** Efeito "Plim" harmonioso de moedas e UI.
+### 🌍 Sistema de Biomas Automatizados
+A Engine alterna o cenário visual e ambiente biológico automaticamente se baseando nas faixas de fase e andares do jogador:
+* **🌲 Níveis 1 a 15: Campos de Glintstone** - Floresta iluminada com céu azul e tons verde-esmeralda vibrantes possuindo um estética visual *cozy* com paletas fofas estilo *Tiny Glade*.
+* **☠️ Níveis 16 a 30: Pântano Tóxico** - Bioma impiedoso apresentando o céu púrpura/magenta encoberto, poças de solo em formato lodo espesso e um denso efeito de névoa translúcida que cobre o horizonte por inteiro.
+* **🦇 Níveis 31 a 45: Caverna de Glintstone** - Exploração focada num vasto ambiente de escuridão com rochas, teto cravado de estalactites profundas, estalagmites emergindo e uma iluminação com Fake *GI (Global Illumination)* dinâmica gerada por tochas tremulantes das paredes.
+* **🌋 Níveis 46 ao 60+: O Cume do Reino** - O ápice dos perigos apresentando céus com iluminação dramática num rubro carmesim opressor evidenciando as silhuetas afiadas de um castelo distante acompanhado por brasas de cinzas levadas ao sabor dos ventos ardentes da montanha.
+
+### 🎨 FX & Otimização
+Acompanhado de *Splash Arts* majestosas em camadas e Animações Cinematográficas das invocações do Altar baseadas em Sombreamentos (ShadowBlur), cada cálculo de multi-hit oneroso é inteligentemente regrado num padrão *Throttle* rodando exatamente 4 quadros matemáticos por segundo para deixar o layout e UI liso aos 60 FPS nos Celulares.
+
+## 🎵 Arquitetura de Som Procedural (Maestro Sequenciador)
+A estrutura baseada pelo `AudioContext` nativa de HTML5 recebeu o grandioso **Maestro/Sequenciador BGM**, gerando progressões e atmosferas mono sem bibliotecas (excluindo `.mp3` e dependências físicas):
+
+* **Trilha do Menu ("O Bardo na Taverna"):** Uma bela composição e progressão dedilhada firmada em **Lá Menor**. Traz uma experiência baseada na onda `triangle` de forma a mimetizar fisicamente o conforto e maciez do bater de cordas de um alaúde medieval acompanhado por um *decay* acolhedor longo e atmosférico.
+* **Trilha de Batalha ("Combate Iminente"):** Clima em batida tensa e violenta formulada no Sequenciador através do alto BPM, manipulando as agressivas arestas da onda `square` em formatações de ritmo *staccato*, sendo cortada com exatidão milimétrica nas pausas pontuais de silêncio para simular puro sentimento de urgência.
 
 ## 💾 Gerenciamento de Save
 
 * **Salvamento Automático:** Seu progresso é salvo no `localStorage` do navegador instantaneamente a cada ação importante.
-* **Progresso Offline:** Fechou o jogo? Seus heróis continuam lutando! Ao retornar, o jogo calcula o tempo fora considerando todos os bônus passivos (incluindo da árvore do Santuário e Hermes) e exibe um **Relatório Animado em Tela Cheia** com os monstros derrotados e ouro gerado.
+* **Progresso Offline:** Fechou o jogo? Seus heróis continuam lutando! Retorne e receba um Relatório Animado computando os acréscimos por Hermes em segundos afk.
 * **Exportar/Importar Fisicamente:** Exporte seu save para um arquivo `.dat` e baixe para o seu computador, permitindo backups seguros ou a migração do seu progresso para outro navegador ou dispositivo.
 
 ## 🚀 Como Executar
@@ -105,5 +98,5 @@ Como o projeto utiliza a arquitetura de Módulos do ES6 (`import`/`export`), ele
 
 * **JavaScript Vanilla (ES6+)** - Lógica, Física, Motor de Combate.
 * **HTML5 Canvas API Context 2D** - Renderização gráfica e animações procedurais.
-* **Web Audio API** - Síntese sonora.
+* **Web Audio API** - Síntese sonora algorítmica.
 * **CSS3** - Interface de Usuário (HUD), Layout Flexbox/Grid e Responsividade.
