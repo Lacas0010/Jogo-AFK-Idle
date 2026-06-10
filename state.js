@@ -12,8 +12,8 @@ export let jogo = {
     cliquesTotais: 0,
     monstrosMortos: 0,
     marcos: { cliques: 0, mortes: 0, nivel: 0, gacha: 0 },
-    inventario: { couroOrc: 0, escamasHidra: 0 },
-    artefatos: { manoplaOrc: false, glandulaHidra: false },
+    inventario: { couroOrc: 0, escamasHidra: 0, denteDragao: 0 },
+    artefatos: { manoplaOrc: false, glandulaHidra: false, cristalDragao: false },
     multiplicadorAscensao: 1,
     desbloqueios: { equipe: false, gacha: false, forja: false, marcos: false, guilda: false, santuario: false, pantheon: false, frestas: false },
     tutoriaisVistos: { abaUpgrades: false, abaEquipe: false, abaGacha: false, abaForja: false, abaSantuario: false, abaGuilda: false, abaMarcos: false, abaPantheon: false, abaFrestas: false },
@@ -246,8 +246,11 @@ export function carregarJogo() {
     jogo.cliquesTotais = dadosSalvos.cliquesTotais || 0;
     jogo.monstrosMortos = dadosSalvos.monstrosMortos || 0;
     jogo.marcos = dadosSalvos.marcos || { cliques: 0, mortes: 0, nivel: 0, gacha: 0 };
-    jogo.inventario = dadosSalvos.inventario || { couroOrc: 0, escamasHidra: 0 };
-    jogo.artefatos = dadosSalvos.artefatos || { manoplaOrc: false, glandulaHidra: false };
+    jogo.inventario = dadosSalvos.inventario || { couroOrc: 0, escamasHidra: 0, denteDragao: 0 };
+    if (dadosSalvos.inventario && jogo.inventario.denteDragao === undefined) jogo.inventario.denteDragao = 0;
+    
+    jogo.artefatos = dadosSalvos.artefatos || { manoplaOrc: false, glandulaHidra: false, cristalDragao: false };
+    if (dadosSalvos.artefatos && jogo.artefatos.cristalDragao === undefined) jogo.artefatos.cristalDragao = false;
     jogo.multiplicadorAscensao = dadosSalvos.multiplicadorAscensao || 1;
     jogo.almasPoligonais = dadosSalvos.almasPoligonais || 0;
     jogo.upgradesAlmas = dadosSalvos.upgradesAlmas || [0, 0, 0, 0, 0];
