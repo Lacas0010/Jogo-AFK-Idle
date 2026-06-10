@@ -77,7 +77,7 @@ export let jogo = {
             skills: [
                 {
                     nome: "🏹 Rajada de Glifos",
-                    descricao: "Dispara 4 flechas mágicas de Glintstone simultâneas causando 25x de dano de burst. Se o Boss estiver queimando, causa DERRETIMENTO DE PIXELS (2x dano extra).",
+                    descricao: "Dispara 4 flechas mágicas de Éter simultâneas causando 25x de dano de burst. Se o Boss estiver queimando, causa DERRETIMENTO DE PIXELS (2x dano extra).",
                     multiplicadorDanoInstantaneo: 25, // Dá 25x o dano base dela de uma vez só!
                     cooldownMax: 15, // 15 segundos de recarga
                     cooldownAtual: 0,
@@ -92,7 +92,7 @@ export let jogo = {
             ]
         },
         {
-            nome: "🔮 Mago de Glintstone (Gacha)",
+            nome: "🔮 Conjurador de Éter (Gacha)",
             descricao: "Conjurador místico. Seus ataques básicos são esferas de energia que perseguem os alvos.",
             dps: 0,
             nivelDps: 0,
@@ -105,8 +105,8 @@ export let jogo = {
             estrelas: 1,
             skills: [
                 {
-                    nome: "🔮 Comet Azur",
-                    descricao: "Canaliza um feixe colossal de energia néon por 3s. Causa dano contínuo multi-hit frame a frame enquanto ativo.",
+                        nome: "🔮 Torrente Prismática",
+                        descricao: "Canaliza um feixe colossal de energia pura por 3s. Causa dano contínuo multi-hit frame a frame enquanto ativo.",
                     multiplicadorDanoMultiHit: 3,
                     cooldownMax: 15,
                     cooldownAtual: 0,
@@ -375,7 +375,7 @@ export function executarAscensao() {
                         skill.custoUpgrade = 200;
                         skill.multiplicadorDanoInstantaneo = 25;
                         skill.duracaoMax = 1;
-                    } else if (skill.nome === "🔮 Comet Azur") {
+                    } else if (skill.nome === "🔮 Torrente Prismática") {
                         skill.custoUpgrade = 250;
                         skill.multiplicadorDanoMultiHit = 3;
                         skill.duracaoMax = 3;
