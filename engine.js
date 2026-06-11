@@ -1252,12 +1252,12 @@ window.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Sistema de Veneno (Ladra de Presas)
-        if (jogo.timeAtivo.includes(4) && jogo.herois[4] && jogo.herois[4].nivelDps > 0) {
-            let danoPoison = Math.max(1, Math.floor(jogo.herois[4].dps * 0.5));
-            if (danoPoison > 0) {
-                atacar(danoPoison, false, 10, "lodoToxico");
-                jogo.monstroLodoToxico = (jogo.monstroLodoToxico || 0) + 1;
+        // Sistema de Veneno (Ladra de Presas) - Efeito Contínuo (DoT)
+        if (jogo.timeAtivo.includes(4) && (jogo.monstroLodoToxico || 0) > 0) {
+            // O dano do veneno é um efeito contínuo (DoT) de 50% do DPS da Ladra, enquanto houver acúmulos.
+            let danoDoT = Math.max(1, Math.floor(jogo.herois[4].dps * 0.5));
+            if (danoDoT > 0) {
+                atacar(danoDoT, false, 10, "lodoToxico");
             }
         }
 
@@ -1337,7 +1337,13 @@ window.addEventListener('DOMContentLoaded', () => {
                 let buffAres = 1 + ((jogo.reliquiasPantheon[0] || 0) * 0.01);
                 danoHeroi *= buffPassivoCavaleiro * buffAtivoCavaleiro * buffAres;
                 
-                let tipo = index === 1 ? 'dpsPassivoElfa' : (index === 2 ? 'passivoMago' : (index === 3 ? 'passivoCavaleiro' : 'normal'));
+                let tipo = 'normal';
+                if (index === 1) tipo = 'dpsPassivoElfa';
+                else if (index === 2) tipo = 'passivoMago';
+                else if (index === 3) tipo = 'passivoCavaleiro';
+                else if (index === 4) { // Ladra de Presas aplica veneno com seu ataque básico
+                    jogo.monstroLodoToxico = (jogo.monstroLodoToxico || 0) + 1;
+                }
                 if (danoHeroi > 0) atacar(danoHeroi, isCrit, 15, tipo); // Ignora 0 DPS natural do Cavaleiro de Ferro
             }
         });
