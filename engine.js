@@ -120,7 +120,7 @@ window.tocarSom = function(tipo) {
     }
 };
 
-const custosAlmasBase = [1, 2, 1, 2, 5];
+const custosAlmasBase = [1, 2, 1, 2, 5, 2];
 
 const configMarcos = {
     cliques: { titulo: "Dedo Nervoso", desc: "Cliques Manuais", limites: [100, 500, 1000, 5000, 10000], premioBase: 50, valorAtual: () => jogo.cliquesTotais },
@@ -285,7 +285,8 @@ export function renderizarLojaSantuario() {
         "Visão Letal: +2% Chance de Crítico Global",
         "Riqueza Abissal: +1 Gema bônus nos Chefes",
         "Fluxo Temporal: Acelera recarga de habilidades",
-        "Conjurador Automático: Ativa habilidades automaticamente"
+        "Conjurador Automático: Ativa habilidades automaticamente",
+        "Avareza Poligonal: +10% Pontos de Monstros"
     ];
 
     const podeAscender = jogo.nivel >= 30;
@@ -300,7 +301,7 @@ export function renderizarLojaSantuario() {
     `;
     html += `<div class="painel-upgrades">`;
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 6; i++) {
         let nivel = jogo.upgradesAlmas[i] || 0;
         let custo = i === 4 ? 5 : custosAlmasBase[i] * Math.pow(2, nivel); // Custo dobra a cada nível comprado, exceto auto-cast
         let maxNivel = i === 4 && nivel >= 1;
@@ -344,49 +345,56 @@ export function renderizarForja() {
                 <span style="color: #8e44ad;">🧪 Escama de Hidra: <strong id="qtdEscamaForja">${jogo.inventario.escamasHidra || 0}</strong></span>
                 <span style="color: #c0392b;">🔥 Dente de Dragão: <strong id="qtdDenteForja">${jogo.inventario.denteDragao || 0}</strong></span>
             </div>
+            <p style="color: #f1c40f; font-size: 13px; margin: 10px 0 0 0;">Pontos Atuais: <strong>${Math.floor(jogo.pontos).toLocaleString('pt-BR')}</strong></p>
         </div>
     `;
 
-    const temManopla = jogo.artefatos.manoplaOrc;
-    const podeForjarManopla = jogo.inventario.couroOrc >= 3 && !temManopla;
-    let textoBtnManopla = temManopla ? "Equipado" : "Forjar (3x Couro de Orc)";
-    let corBtnManopla = temManopla ? "#7f8c8d" : (podeForjarManopla ? "#d35400" : "#7f8c8d");
+    let nvlManopla = jogo.artefatos.manoplaOrc || 0;
+    let custoItemManopla = 3 + (nvlManopla * 2);
+    let custoPontosManopla = 1000 * Math.pow(5, nvlManopla);
+    let podeForjarManopla = jogo.inventario.couroOrc >= custoItemManopla && jogo.pontos >= custoPontosManopla;
+    let textoBtnManopla = nvlManopla === 0 ? `Forjar (📦 ${custoItemManopla} | 💰 ${custoPontosManopla.toLocaleString('pt-BR')})` : `Melhorar Nvl ${nvlManopla} -> ${nvlManopla + 1} (📦 ${custoItemManopla} | 💰 ${custoPontosManopla.toLocaleString('pt-BR')})`;
+    let corBtnManopla = podeForjarManopla ? "#d35400" : "#7f8c8d";
 
     html += `
         <div class="heroi-card" style="display: flex; flex-direction: column; justify-content: space-between; gap: 8px;">
-            <h4 style="margin: 0; color: #f1c40f; font-size: 15px;">🧤 Manopla Feroz do Orc</h4>
-            <p style="margin: 0; font-size: 13px; color: #5c3a21; font-style: italic;">Efeito: +2s na duração de todas as habilidades.</p>
-            <button class="btn-upgrade" style="background: ${corBtnManopla}; width: 100%; margin-top: auto;" onclick="forjarArtefato('manoplaOrc')" ${temManopla || !podeForjarManopla ? 'disabled' : ''}>
+            <h4 style="margin: 0; color: #f1c40f; font-size: 15px;">🧤 Manopla Feroz do Orc (Nvl ${nvlManopla})</h4>
+            <p style="margin: 0; font-size: 13px; color: #5c3a21; font-style: italic;">Efeito Atual: +${nvlManopla * 2}s na duração das habilidades.<br>Próximo Nível: +${(nvlManopla + 1) * 2}s</p>
+            <button class="btn-upgrade" style="background: ${corBtnManopla}; width: 100%; margin-top: auto;" onclick="forjarArtefato('manoplaOrc')" ${!podeForjarManopla ? 'disabled' : ''}>
                 ${textoBtnManopla}
             </button>
         </div>
     `;
 
-    const temGlandula = jogo.artefatos.glandulaHidra;
-    const podeForjarGlandula = jogo.inventario.escamasHidra >= 3 && !temGlandula;
-    let textoBtnGlandula = temGlandula ? "Equipado" : "Forjar (3x Escama de Hidra)";
-    let corBtnGlandula = temGlandula ? "#7f8c8d" : (podeForjarGlandula ? "#8e44ad" : "#7f8c8d");
+    let nvlGlandula = jogo.artefatos.glandulaHidra || 0;
+    let custoItemGlandula = 3 + (nvlGlandula * 2);
+    let custoPontosGlandula = 1000 * Math.pow(5, nvlGlandula);
+    let podeForjarGlandula = jogo.inventario.escamasHidra >= custoItemGlandula && jogo.pontos >= custoPontosGlandula;
+    let textoBtnGlandula = nvlGlandula === 0 ? `Forjar (🧪 ${custoItemGlandula} | 💰 ${custoPontosGlandula.toLocaleString('pt-BR')})` : `Melhorar Nvl ${nvlGlandula} -> ${nvlGlandula + 1} (🧪 ${custoItemGlandula} | 💰 ${custoPontosGlandula.toLocaleString('pt-BR')})`;
+    let corBtnGlandula = podeForjarGlandula ? "#8e44ad" : "#7f8c8d";
 
     html += `
         <div class="heroi-card" style="display: flex; flex-direction: column; justify-content: space-between; gap: 8px;">
-            <h4 style="margin: 0; color: #f1c40f; font-size: 15px;">🧪 Glândula Tóxica da Hidra</h4>
-            <p style="margin: 0; font-size: 13px; color: #5c3a21; font-style: italic;">Efeito: -2s de Cooldown Máximo nas habilidades.</p>
-            <button class="btn-upgrade" style="background: ${corBtnGlandula}; width: 100%; margin-top: auto;" onclick="forjarArtefato('glandulaHidra')" ${temGlandula || !podeForjarGlandula ? 'disabled' : ''}>
+            <h4 style="margin: 0; color: #f1c40f; font-size: 15px;">🧪 Glândula Tóxica da Hidra (Nvl ${nvlGlandula})</h4>
+            <p style="margin: 0; font-size: 13px; color: #5c3a21; font-style: italic;">Efeito Atual: -${nvlGlandula * 2}s de Cooldown nas habilidades.<br>Próximo Nível: -${(nvlGlandula + 1) * 2}s</p>
+            <button class="btn-upgrade" style="background: ${corBtnGlandula}; width: 100%; margin-top: auto;" onclick="forjarArtefato('glandulaHidra')" ${!podeForjarGlandula ? 'disabled' : ''}>
                 ${textoBtnGlandula}
             </button>
         </div>
     `;
 
-    const temCristal = jogo.artefatos.cristalDragao;
-    const podeForjarCristal = jogo.inventario.denteDragao >= 3 && !temCristal;
-    let textoBtnCristal = temCristal ? "Equipado" : "Forjar (3x Dente de Dragão)";
-    let corBtnCristal = temCristal ? "#7f8c8d" : (podeForjarCristal ? "#c0392b" : "#7f8c8d");
+    let nvlCristal = jogo.artefatos.cristalDragao || 0;
+    let custoItemCristal = 3 + (nvlCristal * 2);
+    let custoPontosCristal = 1000 * Math.pow(5, nvlCristal);
+    let podeForjarCristal = jogo.inventario.denteDragao >= custoItemCristal && jogo.pontos >= custoPontosCristal;
+    let textoBtnCristal = nvlCristal === 0 ? `Forjar (🔥 ${custoItemCristal} | 💰 ${custoPontosCristal.toLocaleString('pt-BR')})` : `Melhorar Nvl ${nvlCristal} -> ${nvlCristal + 1} (🔥 ${custoItemCristal} | 💰 ${custoPontosCristal.toLocaleString('pt-BR')})`;
+    let corBtnCristal = podeForjarCristal ? "#c0392b" : "#7f8c8d";
 
     html += `
         <div class="heroi-card" style="display: flex; flex-direction: column; justify-content: space-between; gap: 8px;">
-            <h4 style="margin: 0; color: #f1c40f; font-size: 15px;">💎 Cristal Ígneo do Dragão</h4>
-            <p style="margin: 0; font-size: 13px; color: #5c3a21; font-style: italic;">Efeito: Aumenta o Multiplicador Base de Acertos Críticos de 3x para 4x.</p>
-            <button class="btn-upgrade" style="background: ${corBtnCristal}; width: 100%; margin-top: auto;" onclick="forjarArtefato('cristalDragao')" ${temCristal || !podeForjarCristal ? 'disabled' : ''}>
+            <h4 style="margin: 0; color: #f1c40f; font-size: 15px;">💎 Cristal Ígneo do Dragão (Nvl ${nvlCristal})</h4>
+            <p style="margin: 0; font-size: 13px; color: #5c3a21; font-style: italic;">Efeito Atual: Multiplicador Crítico Base ${3 + nvlCristal}x.<br>Próximo Nível: ${4 + nvlCristal}x</p>
+            <button class="btn-upgrade" style="background: ${corBtnCristal}; width: 100%; margin-top: auto;" onclick="forjarArtefato('cristalDragao')" ${!podeForjarCristal ? 'disabled' : ''}>
                 ${textoBtnCristal}
             </button>
         </div>
@@ -767,7 +775,7 @@ window.ativarSkill = function(heroiIndex, skillIndex) {
     let heroi = jogo.herois[heroiIndex];
     let skill = heroi.skills[skillIndex];
     if (skill && skill.cooldownAtual <= 0 && !skill.ativa) {
-        let cooldownBuff = jogo.artefatos.glandulaHidra ? 2 : 0;
+        let cooldownBuff = (jogo.artefatos.glandulaHidra || 0) * 2;
         skill.cooldownAtual = Math.max(1, skill.cooldownMax - cooldownBuff);
         window.progredirContrato("skills");
         
@@ -790,13 +798,13 @@ window.ativarSkill = function(heroiIndex, skillIndex) {
             }
 
             let isCrit = Math.random() < heroi.chanceCritico;
-            let multCritico = jogo.artefatos.cristalDragao ? 4 : 3;
+            let multCritico = 3 + (jogo.artefatos.cristalDragao || 0);
             if (isCrit) danoBurst *= multCritico;
             let tipoBurst = heroiIndex === 1 ? 'burstElfa' : (heroiIndex === 4 ? 'burstLadra' : 'normal');
             atacar(danoBurst, isCrit, 45, tipoBurst);
         } else {
             skill.ativa = true;
-            let durationBuff = jogo.artefatos.manoplaOrc ? 2 : 0;
+            let durationBuff = (jogo.artefatos.manoplaOrc || 0) * 2;
             skill.duracaoAtual = skill.duracaoMax + durationBuff;
         }
         
@@ -805,24 +813,42 @@ window.ativarSkill = function(heroiIndex, skillIndex) {
 };
 
 window.forjarArtefato = function(idArtefato) {
-    if (idArtefato === 'manoplaOrc' && jogo.inventario.couroOrc >= 3 && !jogo.artefatos.manoplaOrc) {
-        jogo.inventario.couroOrc -= 3;
-        jogo.artefatos.manoplaOrc = true;
-        atualizarInterface();
-        if (window.renderizarForja) window.renderizarForja();
-        salvarJogo();
-    } else if (idArtefato === 'glandulaHidra' && jogo.inventario.escamasHidra >= 3 && !jogo.artefatos.glandulaHidra) {
-        jogo.inventario.escamasHidra -= 3;
-        jogo.artefatos.glandulaHidra = true;
-        atualizarInterface();
-        if (window.renderizarForja) window.renderizarForja();
-        salvarJogo();
-    } else if (idArtefato === 'cristalDragao' && jogo.inventario.denteDragao >= 3 && !jogo.artefatos.cristalDragao) {
-        jogo.inventario.denteDragao -= 3;
-        jogo.artefatos.cristalDragao = true;
-        atualizarInterface();
-        if (window.renderizarForja) window.renderizarForja();
-        salvarJogo();
+    if (idArtefato === 'manoplaOrc') {
+        let nvl = jogo.artefatos.manoplaOrc || 0;
+        let custoItem = 3 + (nvl * 2);
+        let custoPontos = 1000 * Math.pow(5, nvl);
+        if (jogo.inventario.couroOrc >= custoItem && jogo.pontos >= custoPontos) {
+            jogo.inventario.couroOrc -= custoItem;
+            jogo.pontos -= custoPontos;
+            jogo.artefatos.manoplaOrc = nvl + 1;
+            atualizarInterface();
+            if (window.renderizarForja) window.renderizarForja();
+            salvarJogo();
+        }
+    } else if (idArtefato === 'glandulaHidra') {
+        let nvl = jogo.artefatos.glandulaHidra || 0;
+        let custoItem = 3 + (nvl * 2);
+        let custoPontos = 1000 * Math.pow(5, nvl);
+        if (jogo.inventario.escamasHidra >= custoItem && jogo.pontos >= custoPontos) {
+            jogo.inventario.escamasHidra -= custoItem;
+            jogo.pontos -= custoPontos;
+            jogo.artefatos.glandulaHidra = nvl + 1;
+            atualizarInterface();
+            if (window.renderizarForja) window.renderizarForja();
+            salvarJogo();
+        }
+    } else if (idArtefato === 'cristalDragao') {
+        let nvl = jogo.artefatos.cristalDragao || 0;
+        let custoItem = 3 + (nvl * 2);
+        let custoPontos = 1000 * Math.pow(5, nvl);
+        if (jogo.inventario.denteDragao >= custoItem && jogo.pontos >= custoPontos) {
+            jogo.inventario.denteDragao -= custoItem;
+            jogo.pontos -= custoPontos;
+            jogo.artefatos.cristalDragao = nvl + 1;
+            atualizarInterface();
+            if (window.renderizarForja) window.renderizarForja();
+            salvarJogo();
+        }
     }
 };
 
@@ -1073,7 +1099,8 @@ export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'no
             jogo.monstroHpMax = Math.floor(calcularHpMaximo(jogo.nivel) * Math.pow(1.5, jogo.frestaDesafio.andarAtual));
             jogo.monstroHp = jogo.monstroHpMax;
             
-            let recompensaFresta = calcularRecompensa(jogo.nivel) * jogo.frestaDesafio.andarAtual;
+            let multDinheiro = 1 + ((jogo.upgradesAlmas[5] || 0) * 0.10);
+            let recompensaFresta = Math.floor(calcularRecompensa(jogo.nivel) * jogo.frestaDesafio.andarAtual * multDinheiro);
             if (Math.random() < ((jogo.reliquiasPantheon[2] || 0) * 0.01)) recompensaFresta *= 2; // Bênção de Midas
             jogo.pontos += recompensaFresta;
             textosFlutuantes.push({ texto: `+${recompensaFresta} pts`, x: 400 + (Math.random() * 60 - 30), y: 80, alpha: 1, duracao: 60, cor: "241, 196, 15" });
@@ -1083,7 +1110,8 @@ export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'no
         }
 
         const recompensa = calcularRecompensa(jogo.nivel);
-        let ganhoPontos = recompensa;
+        let multDinheiro = 1 + ((jogo.upgradesAlmas[5] || 0) * 0.10);
+        let ganhoPontos = Math.floor(recompensa * multDinheiro);
         if (Math.random() < ((jogo.reliquiasPantheon[2] || 0) * 0.01)) ganhoPontos *= 2; // Bênção de Midas
         jogo.pontos += ganhoPontos;
         
@@ -1108,7 +1136,7 @@ export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'no
                 textosFlutuantes.push({ texto: "+1 Couro de Orc", x: 400 + (Math.random() * 60 - 30), y: 40, alpha: 1, duracao: 100, cor: "139, 69, 19", tamanho: "bold 16px sans-serif" });
             }
         }
-        textosFlutuantes.push({ texto: `+${recompensa} pts`, x: 400 + (Math.random() * 60 - 30), y: 80, alpha: 1, duracao: 60, cor: "241, 196, 15" });
+        textosFlutuantes.push({ texto: `+${ganhoPontos} pts`, x: 400 + (Math.random() * 60 - 30), y: 80, alpha: 1, duracao: 60, cor: "241, 196, 15" });
 
         jogo.nivel++;
         jogo.monstroHpMax = calcularHpMaximo(jogo.nivel);
@@ -1155,7 +1183,7 @@ window.addEventListener('DOMContentLoaded', () => {
             // Buff 1: Visão Letal (+2% crit global)
             let chanceCritFinal = heroi.chanceCritico + ((jogo.upgradesAlmas[1] || 0) * 0.02);
             let isCrit = Math.random() < chanceCritFinal;
-            let multCritico = jogo.artefatos.cristalDragao ? 4 : 3;
+            let multCritico = 3 + (jogo.artefatos.cristalDragao || 0);
             if (isCrit) dano *= multCritico;
             
             let buffAres = 1 + ((jogo.reliquiasPantheon[0] || 0) * 0.01);
@@ -1190,7 +1218,8 @@ window.addEventListener('DOMContentLoaded', () => {
             let tempoBuffado = tempoFora * (1 + ((jogo.reliquiasPantheon[1] || 0) * 0.005));
             let buffAres = 1 + ((jogo.reliquiasPantheon[0] || 0) * 0.01);
             let buffPrimordial = 1 + ((jogo.upgradesAlmas[0] || 0) * 0.10);
-            let pontosOffline = Math.floor(tempoBuffado * (dpsTotal * buffPassivoCavaleiro * buffAres * buffPrimordial));
+            let buffAvareza = 1 + ((jogo.upgradesAlmas[5] || 0) * 0.10);
+            let pontosOffline = Math.floor(tempoBuffado * (dpsTotal * buffPassivoCavaleiro * buffAres * buffPrimordial) * buffAvareza);
             
             if(pontosOffline > 0) {
                 jogo.pontos += pontosOffline;
@@ -1278,7 +1307,7 @@ window.addEventListener('DOMContentLoaded', () => {
         if (jogo.timeAtivo.includes(3) && jogo.herois[3] && (jogo.herois[3].desbloqueada || jogo.herois[3].nivelDps > 0)) {
             let cavaleiro = jogo.herois[3];
             if (Math.random() < cavaleiro.chanceCritico) {
-                let baseCrit = jogo.artefatos.cristalDragao ? 3.0 : 2.0;
+                let baseCrit = 2.0 + (jogo.artefatos.cristalDragao || 0);
                 let multCrit = baseCrit + ((cavaleiro.nivelCritico || 0) * 0.1);
                 // O dano da escudada escala com o DPS dele + Dano Crítico
                 let danoEscudada = (cavaleiro.dps || 1) * 5 * multCrit * buffPassivoCavaleiro;
@@ -1297,7 +1326,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 // Buff 1: Visão Letal (+2% crit global)
                 let chanceCritFinal = heroi.chanceCritico + ((jogo.upgradesAlmas[1] || 0) * 0.02);
                 let isCrit = Math.random() < chanceCritFinal;
-                let multCritico = jogo.artefatos.cristalDragao ? 4 : 3;
+                let multCritico = 3 + (jogo.artefatos.cristalDragao || 0);
                 let danoHeroi = isCrit ? heroi.dps * multCritico : heroi.dps;
                 
                 if (heroi.skills && heroi.skills[0] && heroi.skills[0].ativa && heroi.skills[0].multiplicadorDano) {

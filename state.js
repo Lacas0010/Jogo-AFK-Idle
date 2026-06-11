@@ -13,12 +13,12 @@ export let jogo = {
     monstrosMortos: 0,
     marcos: { cliques: 0, mortes: 0, nivel: 0, gacha: 0 },
     inventario: { couroOrc: 0, escamasHidra: 0, denteDragao: 0 },
-    artefatos: { manoplaOrc: false, glandulaHidra: false, cristalDragao: false },
+    artefatos: { manoplaOrc: 0, glandulaHidra: 0, cristalDragao: 0 },
     multiplicadorAscensao: 1,
     desbloqueios: { equipe: false, gacha: false, forja: false, marcos: false, guilda: false, santuario: false, pantheon: false, frestas: false },
     tutoriaisVistos: { abaUpgrades: false, abaEquipe: false, abaGacha: false, abaForja: false, abaSantuario: false, abaGuilda: false, abaMarcos: false, abaPantheon: false, abaFrestas: false },
     almasPoligonais: 0,
-    upgradesAlmas: [0, 0, 0, 0, 0],
+    upgradesAlmas: [0, 0, 0, 0, 0, 0],
     autoCastAtivo: true,
     guilda: {
         ultimaRenovacao: new Date().toDateString(),
@@ -120,7 +120,7 @@ export let jogo = {
                 }
             ]
         },
-        {
+        {   
             nome: "🛡️ Cavaleiro de Ferro",
             descricao: "[Aura Tática]: Cada nível de DPS aumenta o dano de todo o time em +1%. [Esmagar]: Sua Chance de Crítico dita a probabilidade de dar uma Escudada no chefe a cada segundo.",
             dps: 0, nivelDps: 0, custoDps: 15, multCusto: 1.15,
@@ -249,11 +249,16 @@ export function carregarJogo() {
     jogo.inventario = dadosSalvos.inventario || { couroOrc: 0, escamasHidra: 0, denteDragao: 0 };
     if (dadosSalvos.inventario && jogo.inventario.denteDragao === undefined) jogo.inventario.denteDragao = 0;
     
-    jogo.artefatos = dadosSalvos.artefatos || { manoplaOrc: false, glandulaHidra: false, cristalDragao: false };
-    if (dadosSalvos.artefatos && jogo.artefatos.cristalDragao === undefined) jogo.artefatos.cristalDragao = false;
+    jogo.artefatos = dadosSalvos.artefatos || { manoplaOrc: 0, glandulaHidra: 0, cristalDragao: 0 };
+    if (jogo.artefatos.manoplaOrc === false) jogo.artefatos.manoplaOrc = 0;
+    if (jogo.artefatos.manoplaOrc === true) jogo.artefatos.manoplaOrc = 1;
+    if (jogo.artefatos.glandulaHidra === false) jogo.artefatos.glandulaHidra = 0;
+    if (jogo.artefatos.glandulaHidra === true) jogo.artefatos.glandulaHidra = 1;
+    if (jogo.artefatos.cristalDragao === false || jogo.artefatos.cristalDragao === undefined) jogo.artefatos.cristalDragao = 0;
+    if (jogo.artefatos.cristalDragao === true) jogo.artefatos.cristalDragao = 1;
     jogo.multiplicadorAscensao = dadosSalvos.multiplicadorAscensao || 1;
     jogo.almasPoligonais = dadosSalvos.almasPoligonais || 0;
-    jogo.upgradesAlmas = dadosSalvos.upgradesAlmas || [0, 0, 0, 0, 0];
+    jogo.upgradesAlmas = dadosSalvos.upgradesAlmas || [0, 0, 0, 0, 0, 0];
     jogo.autoCastAtivo = dadosSalvos.autoCastAtivo !== undefined ? dadosSalvos.autoCastAtivo : true;
     jogo.timeAtivo = dadosSalvos.timeAtivo || [0];
     jogo.fragmentosUniversais = dadosSalvos.fragmentosUniversais || 0;
