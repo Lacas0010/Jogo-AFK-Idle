@@ -18,8 +18,9 @@ export let jogo = {
     desbloqueios: { equipe: false, gacha: false, forja: false, marcos: false, guilda: false, santuario: false, pantheon: false, frestas: false },
     tutoriaisVistos: { abaUpgrades: false, abaEquipe: false, abaGacha: false, abaForja: false, abaSantuario: false, abaGuilda: false, abaMarcos: false, abaPantheon: false, abaFrestas: false },
     almasPoligonais: 0,
-    upgradesAlmas: [0, 0, 0, 0, 0, 0],
+    upgradesAlmas: [0, 0, 0, 0, 0, 0, 0],
     autoCastAtivo: true,
+    autoClickerAtivo: true,
     guilda: {
         ultimaRenovacao: new Date().toDateString(),
         contratos: [
@@ -31,7 +32,7 @@ export let jogo = {
     timeAtivo: [0],
     fragmentosUniversais: 0,
     reliquiasPantheon: [0, 0, 0],
-    frestaDesafio: { andarAtual: 1, tempoRestante: 30, ativa: false, hpOriginalMonstro: 0 },
+    frestaDesafio: { andarAtual: 1, tempoRestante: 30, ativa: false, hpOriginalMonstro: 0, tipoInimigo: 0 },
     herois: [
         {
             nome: "Herói Principal",
@@ -258,12 +259,13 @@ export function carregarJogo() {
     if (jogo.artefatos.cristalDragao === true) jogo.artefatos.cristalDragao = 1;
     jogo.multiplicadorAscensao = dadosSalvos.multiplicadorAscensao || 1;
     jogo.almasPoligonais = dadosSalvos.almasPoligonais || 0;
-    jogo.upgradesAlmas = dadosSalvos.upgradesAlmas || [0, 0, 0, 0, 0, 0];
+    jogo.upgradesAlmas = dadosSalvos.upgradesAlmas || [0, 0, 0, 0, 0, 0, 0];
     jogo.autoCastAtivo = dadosSalvos.autoCastAtivo !== undefined ? dadosSalvos.autoCastAtivo : true;
+    jogo.autoClickerAtivo = dadosSalvos.autoClickerAtivo !== undefined ? dadosSalvos.autoClickerAtivo : true;
     jogo.timeAtivo = dadosSalvos.timeAtivo || [0];
     jogo.fragmentosUniversais = dadosSalvos.fragmentosUniversais || 0;
     jogo.reliquiasPantheon = dadosSalvos.reliquiasPantheon || [0, 0, 0];
-    jogo.frestaDesafio = dadosSalvos.frestaDesafio || { andarAtual: 1, tempoRestante: 30, ativa: false, hpOriginalMonstro: 0 };
+    jogo.frestaDesafio = dadosSalvos.frestaDesafio || { andarAtual: 1, tempoRestante: 30, ativa: false, hpOriginalMonstro: 0, tipoInimigo: 0 };
 
     jogo.guilda = dadosSalvos.guilda || {
         ultimaRenovacao: new Date().toDateString(),

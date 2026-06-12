@@ -78,13 +78,25 @@ export function desenhar() {
     }
 
     // SISTEMA DE MORTE E FEEDBACK VISUAL
-    if (nivelAnterior === null) nivelAnterior = jogo.nivel;
+    let nivelIndicador = (jogo.frestaDesafio && jogo.frestaDesafio.ativa) ? "rift_" + jogo.frestaDesafio.andarAtual : "campanha_" + jogo.nivel;
+    if (nivelAnterior === null) nivelAnterior = nivelIndicador;
 
-    if (nivelAnterior !== jogo.nivel) {
+    if (nivelAnterior !== nivelIndicador) {
         frameMorte = 15; // Esconde o monstro por 15 frames (~0.25s) para dar a sensação de morte
-        const isPantanoAtual = Math.floor((nivelAnterior - 1) / 15) % 3 === 1;
-        const isCavernaAtual = Math.floor((nivelAnterior - 1) / 15) % 3 === 2;
-        const isBossAtual = nivelAnterior % 5 === 0;
+        
+        let inRiftDeath = jogo.frestaDesafio && jogo.frestaDesafio.ativa;
+        let isPantanoAtual = Math.floor((jogo.nivel - 1) / 15) % 3 === 1;
+        let isCavernaAtual = Math.floor((jogo.nivel - 1) / 15) % 3 === 2;
+        let isBossAtual = jogo.nivel % 5 === 0;
+
+        if (inRiftDeath) {
+            let andarMorto = jogo.frestaDesafio.andarAtual - 1;
+            isBossAtual = andarMorto > 0 && andarMorto % 5 === 0;
+            let tipo = jogo.frestaDesafio.tipoInimigo || 0;
+            isPantanoAtual = tipo === 1;
+            isCavernaAtual = tipo === 2;
+        }
+
         let corMorte = isPantanoAtual ? (isBossAtual ? "#1e8449" : "rgba(142, 68, 173, 0.8)") : 
                        isCavernaAtual ? (isBossAtual ? "#900C3F" : "#a04000") : 
                        (isBossAtual ? "#196f3d" : "#27ae60");
@@ -101,7 +113,7 @@ export function desenhar() {
                 gravidade: 0.4
             });
         }
-        nivelAnterior = jogo.nivel;
+        nivelAnterior = nivelIndicador;
     }
 
     tempoAnimacao += 0.05;
@@ -129,7 +141,7 @@ export function desenhar() {
     const marcoAtaque = animacao.duracao / 3; // Dinâmico (5 p/ ataque normal, 15 p/ a Elfa)
 
     const skillFogo = jogo.herois[0].skills?.find(s => s.nome === "🔥 Lâmina Incandescente");
-    const skillMago = jogo.herois[2]?.skills?.find(s => s.nome === "🔮 Comet Azur");
+    const skillMago = jogo.herois[2]?.skills?.find(s => s.nome === "🔮 Torrente Prismática");
     const skillCavaleiro = jogo.herois[3]?.skills?.find(s => s.nome === "⚙️ Baluarte Vetorial");
 
     // Gera as partículas de labaredas se a habilidade estiver ativa
@@ -201,8 +213,63 @@ export function desenhar() {
 
     const isPantano = Math.floor((jogo.nivel - 1) / 15) % 3 === 1;
     const isCaverna = Math.floor((jogo.nivel - 1) / 15) % 3 === 2;
+    const inRift = jogo.frestaDesafio && jogo.frestaDesafio.ativa;
 
-    if (isCaverna) {
+    if (inRift) {
+        // Fundo místico do Portal / Fresta Dimensional
+        let riftGrad = ctx.createLinearGradient(0, -200, 0, 450);
+        riftGrad.addColorStop(0, "#0b001a");
+        riftGrad.addColorStop(0.5, "#2a004d");
+        riftGrad.addColorStop(1, "#0a001a");
+        ctx.fillStyle = riftGrad;
+        ctx.fillRect(-2500, -2500, 5800, 5800);
+
+        // Estrelas místicas flutuantes
+        ctx.fillStyle = "#ffffff";
+        for (let i = 0; i < 100; i++) {
+            let px = (i * 137 + tempoAnimacao * 10 * (i % 2 === 0 ? 1 : -1)) % 2000 - 600;
+            if (px < -600) px += 2000;
+            let py = (i * 93 + Math.sin(tempoAnimacao * 0.5 + i) * 30) % 500 - 50;
+            let size = 0.5 + (i % 2.5);
+            let alpha = 0.3 + Math.sin(tempoAnimacao * 3 + i) * 0.7;
+            ctx.globalAlpha = Math.max(0, alpha);
+            ctx.beginPath(); ctx.arc(px, py, size, 0, Math.PI*2); ctx.fill();
+        }
+        ctx.globalAlpha = 1.0;
+
+        // Chão de energia mística (Malha dimensional)
+        ctx.strokeStyle = "rgba(138, 43, 226, 0.4)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for(let i = -1500; i <= 2500; i += 120) {
+            ctx.moveTo(i, 180);
+            ctx.lineTo(i + (i - 400) * 3, 800);
+        }
+        let startY = 180;
+        for(let j = 0; j < 15; j++) {
+            ctx.moveTo(-2500, startY);
+            ctx.lineTo(2500, startY);
+            startY += 10 + j * 5;
+        }
+        ctx.stroke();
+
+        // Portal Gigante ao fundo
+        ctx.save();
+        ctx.translate(400, 60);
+        ctx.rotate(tempoAnimacao * 0.2);
+        let holeGrad = ctx.createRadialGradient(0, 0, 20, 0, 0, 180);
+        holeGrad.addColorStop(0, "#000000");
+        holeGrad.addColorStop(0.1, "#000000");
+        holeGrad.addColorStop(0.5, "rgba(138, 43, 226, 0.8)");
+        holeGrad.addColorStop(1, "rgba(138, 43, 226, 0)");
+        ctx.fillStyle = holeGrad;
+        ctx.beginPath(); ctx.arc(0, 0, 180, 0, Math.PI*2); ctx.fill();
+        
+        ctx.strokeStyle = "rgba(0, 255, 255, 0.5)";
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.ellipse(0, 0, 120 + Math.sin(tempoAnimacao*2)*10, 120 + Math.cos(tempoAnimacao*2)*10, 0, 0, Math.PI*2); ctx.stroke();
+        ctx.restore();
+    } else if (isCaverna) {
         let fogoFlicker = Math.sin(tempoAnimacao * 8) * 0.1 + Math.cos(tempoAnimacao * 13) * 0.05;
 
         // Fundo infinito da caverna com profundidade (Gradiente Radial)
@@ -686,7 +753,18 @@ export function desenhar() {
         }
     }
 
-    const isBoss = jogo.nivel % 5 === 0;
+    let drawIsBoss = jogo.nivel % 5 === 0;
+    let drawCavernaEnemy = isCaverna;
+    let drawPantanoEnemy = isPantano;
+    let drawForestEnemy = !isCaverna && !isPantano;
+
+    if (inRift) {
+        drawIsBoss = jogo.frestaDesafio.andarAtual % 5 === 0;
+        let tipo = jogo.frestaDesafio.tipoInimigo || 0;
+        drawForestEnemy = tipo === 0;
+        drawPantanoEnemy = tipo === 1;
+        drawCavernaEnemy = tipo === 2;
+    }
     
     ctx.save();
     if (animacao.ativa && animacao.frameAtual < marcoAtaque) { // Tremer a tela apenas no impacto inicial
@@ -698,8 +776,8 @@ export function desenhar() {
     if (frameMorte > 0) {
         frameMorte--;
     } else {
-        if (isCaverna) {
-            if (isBoss) {
+        if (drawCavernaEnemy) {
+            if (drawIsBoss) {
                 // Dragão Vermelho
                 const t = tempoAnimacao;
 
@@ -815,8 +893,8 @@ export function desenhar() {
                 ctx.fillStyle = "#e67e22";
                 ctx.beginPath(); ctx.moveTo(395, 130); ctx.lineTo(385, 115); ctx.lineTo(405, 125); ctx.fill();
             }
-        } else if (!isPantano) {
-            if (isBoss) {
+        } else if (drawForestEnemy) {
+            if (drawIsBoss) {
             // Machado Gigante (Arma do Chefe)
             ctx.fillStyle = "#5c3a21"; // Cabo
             ctx.fillRect(470, 70, 15, 120);
@@ -946,7 +1024,7 @@ export function desenhar() {
             ctx.beginPath(); ctx.moveTo(410, 148); ctx.lineTo(406, 142); ctx.lineTo(406, 150); ctx.fill();
         }
     } else {
-        if (isBoss) {
+        if (drawIsBoss) {
             // Hidra de 3 Cabeças Detalhada
             const t = tempoAnimacao;
 
@@ -1154,9 +1232,9 @@ export function desenhar() {
 
     // GERADOR DE SANGUE GEOMÉTRICO (No impacto do ataque geral)
     if (animacao.ativa && animacao.frameAtual === 1) {
-        let corSangue = isPantano ? (isBoss ? "#7cfc00" : "#8e44ad") : 
-                        isCaverna ? (isBoss ? "#FF5733" : "#d35400") : 
-                        (isBoss ? "#8e44ad" : "#2ecc71");
+        let corSangue = drawPantanoEnemy ? (drawIsBoss ? "#7cfc00" : "#8e44ad") : 
+                        drawCavernaEnemy ? (drawIsBoss ? "#FF5733" : "#d35400") : 
+                        (drawIsBoss ? "#8e44ad" : "#2ecc71");
         for (let i = 0; i < 10; i++) {
             particulasSangue.push({
                 x: 400 + (Math.random() - 0.5) * 40,
@@ -1683,9 +1761,9 @@ export function desenhar() {
     });
 
     ctx.font = "bold 14px sans-serif";
-    let textoNivel = isBoss ? `Nível ${jogo.nivel} (CHEFE)` : `Nível ${jogo.nivel}`;
+    let textoNivel = drawIsBoss ? `Nível ${jogo.nivel} (CHEFE)` : `Nível ${jogo.nivel}`;
     if (jogo.frestaDesafio && jogo.frestaDesafio.ativa) {
-        textoNivel = `🌌 FRESTA DIMENSIONAL: Andar ${jogo.frestaDesafio.andarAtual}`;
+        textoNivel = `🌌 FRESTA DIMENSIONAL: Andar ${jogo.frestaDesafio.andarAtual}` + (drawIsBoss ? " (CHEFE)" : "");
     }
     ctx.lineWidth = 3; ctx.strokeStyle = "#000";
     ctx.strokeText(textoNivel, 400 - (ctx.measureText(textoNivel).width / 2), 25);
@@ -1693,7 +1771,7 @@ export function desenhar() {
     ctx.fillText(textoNivel, 400 - (ctx.measureText(textoNivel).width / 2), 25);
 
     ctx.fillStyle = "#333"; ctx.fillRect(250, 40, 300, 12);
-    ctx.fillStyle = isBoss ? "#8e44ad" : "#e74c3c"; 
+    ctx.fillStyle = drawIsBoss ? "#8e44ad" : "#e74c3c"; 
     const hpPercent = Math.max(0, jogo.monstroHp / jogo.monstroHpMax);
     ctx.fillRect(250, 40, 300 * hpPercent, 12);
 

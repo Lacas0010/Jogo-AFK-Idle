@@ -120,7 +120,7 @@ window.tocarSom = function(tipo) {
     }
 };
 
-const custosAlmasBase = [1, 2, 1, 2, 5, 2];
+const custosAlmasBase = [1, 2, 1, 2, 5, 2, 1024];
 
 const configMarcos = {
     cliques: { titulo: "Dedo Nervoso", desc: "Cliques Manuais", limites: [100, 500, 1000, 5000, 10000], premioBase: 50, valorAtual: () => jogo.cliquesTotais },
@@ -286,7 +286,8 @@ export function renderizarLojaSantuario() {
         "Riqueza Abissal: +1 Gema bônus nos Chefes",
         "Fluxo Temporal: Acelera recarga de habilidades",
         "Conjurador Automático: Ativa habilidades automaticamente",
-        "Avareza Poligonal: +10% Pontos de Monstros"
+        "Avareza Poligonal: +10% Pontos de Monstros",
+        "Dedo Fantasma: Auto-Clicker (5/seg)"
     ];
 
     const podeAscender = jogo.nivel >= 30;
@@ -294,6 +295,7 @@ export function renderizarLojaSantuario() {
     let html = `
         <div style="text-align: center; margin-bottom: 20px;">
             <h3 style="color: #9b59b6; margin-bottom: 10px;">✨ Almas Poligonais Disponíveis: ${jogo.almasPoligonais || 0}</h3>
+            <h4 style="color: #f1c40f; margin-top: 0; margin-bottom: 15px;">🌌 Multiplicador de Ascensão Atual: ${jogo.multiplicadorAscensao || 1}x</h4>
             <button id="btnAscensão" class="btn-upgrade" style="background: #9b59b6; max-width: 300px; width: 100%; margin: 0 auto;" onclick="ascender()" ${podeAscender ? "" : "disabled"}>
                 ${podeAscender ? "Realizar Ascensão Cósmica" : "Bloqueado (Chegue ao Nível 30)"}
             </button>
@@ -301,17 +303,17 @@ export function renderizarLojaSantuario() {
     `;
     html += `<div class="painel-upgrades">`;
 
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 7; i++) {
         let nivel = jogo.upgradesAlmas[i] || 0;
-        let custo = i === 4 ? 5 : custosAlmasBase[i] * Math.pow(2, nivel); // Custo dobra a cada nível comprado, exceto auto-cast
-        let maxNivel = i === 4 && nivel >= 1;
+        let custo = (i === 4 || i === 6) ? custosAlmasBase[i] : custosAlmasBase[i] * Math.pow(2, nivel); // Custo dobra a cada nível comprado, exceto auto-cast e clicker
+        let maxNivel = (i === 4 || i === 6) && nivel >= 1;
         let podeComprar = (jogo.almasPoligonais || 0) >= custo && !maxNivel;
-        let podeInteragir = podeComprar || (i === 4 && maxNivel);
+        let podeInteragir = podeComprar || ((i === 4 || i === 6) && maxNivel);
         
         let textBotao;
         let corBotao;
-        if (i === 4 && maxNivel) {
-            let ligado = jogo.autoCastAtivo !== false;
+        if ((i === 4 || i === 6) && maxNivel) {
+            let ligado = i === 4 ? (jogo.autoCastAtivo !== false) : (jogo.autoClickerAtivo !== false);
             textBotao = ligado ? "🤖 LIGADO (Desligar)" : "🤖 DESLIGADO (Ligar)";
             corBotao = ligado ? "#2ecc71" : "#e74c3c";
         } else {
@@ -661,13 +663,20 @@ window.comprarUpgradeAlma = function(upgradeId) {
         salvarJogo();
         return;
     }
+    if (upgradeId === 6 && nivelAtual >= 1) {
+        jogo.autoClickerAtivo = jogo.autoClickerAtivo === false ? true : false;
+        atualizarInterface();
+        salvarJogo();
+        return;
+    }
     
-    let custo = upgradeId === 4 ? 5 : custosAlmasBase[upgradeId] * Math.pow(2, nivelAtual);
+    let custo = (upgradeId === 4 || upgradeId === 6) ? custosAlmasBase[upgradeId] : custosAlmasBase[upgradeId] * Math.pow(2, nivelAtual);
     
-    if ((jogo.almasPoligonais || 0) >= custo && (upgradeId !== 4 || nivelAtual < 1)) {
+    if ((jogo.almasPoligonais || 0) >= custo && (upgradeId !== 4 && upgradeId !== 6 || nivelAtual < 1)) {
         jogo.almasPoligonais -= custo;
         jogo.upgradesAlmas[upgradeId] = nivelAtual + 1;
         if (upgradeId === 4) jogo.autoCastAtivo = true;
+        if (upgradeId === 6) jogo.autoClickerAtivo = true;
         atualizarInterface();
         salvarJogo();
     }
@@ -1095,12 +1104,20 @@ export function atacar(dano, isCritico = false, duracaoAnimacao = 15, tipo = 'no
         if (jogo.frestaDesafio && jogo.frestaDesafio.ativa) {
             jogo.frestaDesafio.andarAtual++;
             jogo.frestaDesafio.tempoRestante = 30; // Reseta o tempo
-            // O HP sofre um aumento exponencial de 50% por andar
-            jogo.monstroHpMax = Math.floor(calcularHpMaximo(jogo.nivel) * Math.pow(1.5, jogo.frestaDesafio.andarAtual));
+            jogo.frestaDesafio.tipoInimigo = Math.floor(Math.random() * 3); // Novo inimigo aleatório
+            
+            // Fixando a dificuldade da Fresta (Endgame) independente da campanha
+            const NIVEL_BASE_FRESTA = 41; 
+            let hpBaseAtual = calcularHpMaximo(NIVEL_BASE_FRESTA);
+            
+            let multiplicador = Math.pow(1.5, jogo.frestaDesafio.andarAtual);
+            if (jogo.frestaDesafio.andarAtual % 5 === 0) multiplicador *= 3; // Chefe da Fresta!
+            
+            jogo.monstroHpMax = Math.floor(hpBaseAtual * multiplicador);
             jogo.monstroHp = jogo.monstroHpMax;
             
             let multDinheiro = 1 + ((jogo.upgradesAlmas[5] || 0) * 0.10);
-            let recompensaFresta = Math.floor(calcularRecompensa(jogo.nivel) * jogo.frestaDesafio.andarAtual * multDinheiro);
+            let recompensaFresta = Math.floor(calcularRecompensa(NIVEL_BASE_FRESTA) * jogo.frestaDesafio.andarAtual * multDinheiro);
             if (Math.random() < ((jogo.reliquiasPantheon[2] || 0) * 0.01)) recompensaFresta *= 2; // Bênção de Midas
             jogo.pontos += recompensaFresta;
             textosFlutuantes.push({ texto: `+${recompensaFresta} pts`, x: 400 + (Math.random() * 60 - 30), y: 80, alpha: 1, duracao: 60, cor: "241, 196, 15" });
@@ -1163,34 +1180,40 @@ window.addEventListener('DOMContentLoaded', () => {
     window.addEventListener("resize", regularResolucaoCanvas);
 
     const canvas = document.getElementById("jogoCanvas");
-    if (canvas) {
-        canvas.addEventListener("mousedown", () => {
+    window.executarCliqueManual = function(isPlayer = true) {
+        if (isPlayer) {
             jogo.cliquesTotais++;
             window.progredirContrato("cliques");
+        }
 
-            let dpsTotal = jogo.herois.reduce((acc, h) => acc + h.dps, 0);
-            let heroi = jogo.herois[0];
-            let dano = heroi.dps + Math.floor(dpsTotal * 0.10);
-            
-            // Buff 0: Poder Primordial (+10% dano de clique)
-            dano *= (1 + ((jogo.upgradesAlmas[0] || 0) * 0.10));
+        let dpsTotal = jogo.herois.reduce((acc, h) => acc + h.dps, 0);
+        let heroi = jogo.herois[0];
+        let dano = heroi.dps + Math.floor(dpsTotal * 0.10);
+        
+        // Buff 0: Poder Primordial (+10% dano de clique)
+        dano *= (1 + ((jogo.upgradesAlmas[0] || 0) * 0.10));
 
-            let skillFogo = heroi.skills && heroi.skills[0];
-            if (skillFogo && skillFogo.ativa) {
-                dano *= skillFogo.multiplicadorDano;
-            }
+        let skillFogo = heroi.skills && heroi.skills[0];
+        if (skillFogo && skillFogo.ativa) {
+            dano *= skillFogo.multiplicadorDano;
+        }
 
-            // Buff 1: Visão Letal (+2% crit global)
-            let chanceCritFinal = heroi.chanceCritico + ((jogo.upgradesAlmas[1] || 0) * 0.02);
-            let isCrit = Math.random() < chanceCritFinal;
-            let multCritico = 3 + (jogo.artefatos.cristalDragao || 0);
-            if (isCrit) dano *= multCritico;
-            
-            let buffAres = 1 + ((jogo.reliquiasPantheon[0] || 0) * 0.01);
-            let buffCavaleiroClique = (jogo.timeAtivo.includes(3) && jogo.herois[3].skills && jogo.herois[3].skills[0].ativa) ? 2.0 : 1.0;
-            dano *= buffAres * buffCavaleiroClique;
+        // Buff 1: Visão Letal (+2% crit global)
+        let chanceCritFinal = heroi.chanceCritico + ((jogo.upgradesAlmas[1] || 0) * 0.02);
+        let isCrit = Math.random() < chanceCritFinal;
+        let multCritico = 3 + (jogo.artefatos.cristalDragao || 0);
+        if (isCrit) dano *= multCritico;
+        
+        let buffAres = 1 + ((jogo.reliquiasPantheon[0] || 0) * 0.01);
+        let buffCavaleiroClique = (jogo.timeAtivo.includes(3) && jogo.herois[3].skills && jogo.herois[3].skills[0].ativa) ? 2.0 : 1.0;
+        dano *= buffAres * buffCavaleiroClique;
 
-            atacar(dano, isCrit);
+        atacar(dano, isCrit);
+    };
+
+    if (canvas) {
+        canvas.addEventListener("mousedown", () => {
+            window.executarCliqueManual(true);
         });
     }
 
@@ -1272,6 +1295,15 @@ window.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             });
+        }
+
+        // Upgrade 6: Dedo Fantasma (Auto-Clicker)
+        if ((jogo.upgradesAlmas[6] || 0) >= 1 && jogo.autoClickerAtivo !== false) {
+            window.executarCliqueManual(false); // 1º Clique (0ms)
+            setTimeout(() => { if (jogo.estado === 'jogando') window.executarCliqueManual(false); }, 200); // 2º Clique
+            setTimeout(() => { if (jogo.estado === 'jogando') window.executarCliqueManual(false); }, 400); // 3º Clique
+            setTimeout(() => { if (jogo.estado === 'jogando') window.executarCliqueManual(false); }, 600); // 4º Clique
+            setTimeout(() => { if (jogo.estado === 'jogando') window.executarCliqueManual(false); }, 800); // 5º Clique
         }
 
         // Loop para gerenciar as Habilidades Ativas e Cooldowns
@@ -1485,9 +1517,13 @@ window.iniciarDesafioFresta = function() {
         jogo.frestaDesafio.ativa = true;
         jogo.frestaDesafio.andarAtual = 1;
         jogo.frestaDesafio.tempoRestante = 30;
+        jogo.frestaDesafio.tipoInimigo = Math.floor(Math.random() * 3);
         
-        // Inicia o desafio dobrando o HP atual do nível base
-        jogo.monstroHpMax = calcularHpMaximo(jogo.nivel) * 2;
+        // Fixando a dificuldade da Fresta (Endgame) independente da campanha
+        const NIVEL_BASE_FRESTA = 41; 
+        let hpBaseAtual = calcularHpMaximo(NIVEL_BASE_FRESTA);
+        
+        jogo.monstroHpMax = Math.floor(hpBaseAtual * 2);
         jogo.monstroHp = jogo.monstroHpMax;
         
         salvarJogo();
