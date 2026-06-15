@@ -106,8 +106,8 @@ export let jogo = {
             estrelas: 1,
             skills: [
                 {
-                        nome: "🔮 Torrente Prismática",
-                        descricao: "Canaliza um feixe colossal de energia pura por 3s. Causa dano contínuo multi-hit frame a frame enquanto ativo.",
+                    nome: "🔮 Torrente Prismática",
+                    descricao: "Canaliza um feixe colossal de energia pura por 3s. Causa dano contínuo multi-hit frame a frame enquanto ativo.",
                     multiplicadorDanoMultiHit: 3,
                     cooldownMax: 15,
                     cooldownAtual: 0,
@@ -314,6 +314,16 @@ export function exportarProgressoFisico() {
 }
 
 export function importarProgressoFisico(event) {
+    // Se a função for ativada por um clique de botão comum (sem o arquivo anexado)
+    if (!event || !event.target || !event.target.files) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.dat,.json,application/json';
+        input.onchange = (e) => importarProgressoFisico(e);
+        input.click(); // Abre a janela para escolher o arquivo
+        return;
+    }
+
     const arquivo = event.target.files[0];
     if (!arquivo) return;
 

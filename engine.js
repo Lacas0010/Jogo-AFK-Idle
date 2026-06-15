@@ -759,6 +759,7 @@ window.resetarJogo = resetarJogo;
 window.ascender = executarAscensao;
 window.exportarSaveFisico = exportarProgressoFisico;
 window.importarSaveFisico = importarProgressoFisico;
+window.carregarJogo = carregarJogo;
 window.renderizarForja = renderizarForja;
 window.renderizarGuilda = renderizarGuilda;
 
