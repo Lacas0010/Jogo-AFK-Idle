@@ -55,6 +55,38 @@ h1 {
     border-radius: 0;
 }
 
+/* Controles de Áudio Flutuantes */
+.controles-audio-topo {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    display: flex;
+    gap: 8px;
+    z-index: 50;
+    pointer-events: auto;
+}
+
+.btn-audio {
+    background: rgba(20, 20, 20, 0.75);
+    color: #f1c40f;
+    border: 1px solid #8e7a53;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
+    backdrop-filter: blur(5px);
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+}
+
+.btn-audio:hover {
+    background: rgba(45, 45, 45, 0.95);
+    border-color: #f1c40f;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.8);
+}
+
 /* Ajustes da HUD (Agora na Sidebar) */
 .hud {
     font-size: 20px;
@@ -485,4 +517,274 @@ button {
 /* BLINDAGEM ABSOLUTA: Quando a página estiver na tela de início, oculta o botão Menu sob qualquer circunstância */
 body.tela-inicio .btn-toggle-sidebar {
     display: none !important;
+}
+
+/* --- ESTILOS DO SISTEMA DE EQUIPAMENTOS (FASE 3) --- */
+.equip-slots-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.equip-slot {
+    background: rgba(18, 12, 7, 0.85);
+    border: 2px solid #5c3a21;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    position: relative;
+    transition: all 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.equip-slot.vazio {
+    border: 2px dashed rgba(241, 196, 15, 0.3);
+    background: rgba(0, 0, 0, 0.3);
+    min-height: 120px;
+    justify-content: center;
+    align-items: center;
+}
+
+.equip-slot:hover {
+    transform: translateY(-2px);
+}
+
+.raridade-comum {
+    border-color: #95a5a6 !important;
+    box-shadow: 0 0 8px rgba(149, 165, 166, 0.3);
+}
+
+.raridade-raro {
+    border-color: #3498db !important;
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.45);
+}
+
+.raridade-epico {
+    border-color: #9b59b6 !important;
+    box-shadow: 0 0 12px rgba(155, 89, 182, 0.55);
+}
+
+.raridade-lendario {
+    border-color: #f1c40f !important;
+    box-shadow: 0 0 16px rgba(241, 196, 15, 0.65);
+    background: linear-gradient(135deg, rgba(30, 20, 10, 0.95), rgba(45, 30, 10, 0.95));
+}
+
+.tag-raridade {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+}
+
+.tag-raridade.comum { background: #7f8c8d; color: #fff; }
+.tag-raridade.raro { background: #2980b9; color: #fff; }
+.tag-raridade.epico { background: #8e44ad; color: #fff; }
+.tag-raridade.lendario { background: #d4af37; color: #111; }
+
+.equip-item-card {
+    background: rgba(25, 18, 12, 0.9);
+    border: 1.5px solid #5c3a21;
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 8px;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    transition: transform 0.2s ease;
+}
+
+.equip-item-card:hover {
+    transform: translateX(3px);
+}
+
+.equip-afixo {
+    font-size: 11px;
+    color: #2ecc71;
+    margin: 2px 0;
+}
+
+.equip-passiva-lendaria {
+    font-size: 11px;
+    color: #f1c40f;
+    font-style: italic;
+    margin-top: 4px;
+}
+
+/* --- ESTILOS DE TALENTOS & ESPECIALIZAÇÕES (FASE 4) --- */
+.talentos-container {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px dashed rgba(241, 196, 15, 0.35);
+    border-radius: 6px;
+    padding: 8px;
+    margin-top: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.talentos-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #d4af37;
+    margin-bottom: 6px;
+}
+
+.talentos-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.btn-talento {
+    background: rgba(20, 15, 10, 0.85);
+    border: 1.5px solid #5c3a21;
+    border-radius: 6px;
+    padding: 6px;
+    color: #ecf0f1;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.btn-talento:hover:not(:disabled) {
+    border-color: #f1c40f;
+    transform: translateY(-1px);
+    background: rgba(40, 25, 15, 0.95);
+}
+
+.btn-talento.ativo {
+    border-color: #2ecc71 !important;
+    background: linear-gradient(135deg, rgba(46, 204, 113, 0.2), rgba(20, 40, 20, 0.8)) !important;
+    box-shadow: 0 0 10px rgba(46, 204, 113, 0.4);
+}
+
+.talento-nome {
+    font-size: 11px;
+    font-weight: bold;
+    color: #f1c40f;
+    margin-bottom: 2px;
+}
+
+.talento-desc {
+    font-size: 10px;
+    color: #bdc3c7;
+    line-height: 1.25;
+}
+
+/* --- ESTILOS DO MINIGAME DA TAVERNA (DADOS DOS ANÕES) --- */
+.taverna-card {
+    background: rgba(30, 20, 12, 0.92);
+    border: 2px solid #8e7a53;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    text-align: center;
+}
+
+.mesa-dados-feltro {
+    background: radial-gradient(circle, #1e5a28 0%, #0e3314 100%);
+    border: 4px solid #5c3a21;
+    border-radius: 12px;
+    padding: 18px 12px;
+    margin: 15px 0;
+    box-shadow: inset 0 0 15px rgba(0,0,0,0.8), 0 4px 10px rgba(0,0,0,0.4);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.dado-lado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.dado-grupo {
+    display: flex;
+    gap: 8px;
+}
+
+.dado-cubo {
+    width: 44px;
+    height: 44px;
+    background: #fdfefe;
+    border: 2px solid #bdc3c7;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 22px;
+    font-weight: bold;
+    color: #2c3e50;
+    box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.6), inset -2px -2px 4px rgba(0,0,0,0.15);
+    transition: transform 0.1s ease;
+}
+
+.dado-cubo.anao {
+    background: #d35400;
+    border-color: #873600;
+    color: #fff;
+}
+
+.dado-animando {
+    animation: rolarDado 0.15s infinite alternate;
+}
+
+@keyframes rolarDado {
+    0% { transform: rotate(-10deg) scale(0.95); }
+    100% { transform: rotate(10deg) scale(1.05); }
+}
+
+.resultado-dados-badge {
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 13px;
+    margin: 10px 0;
+    display: inline-block;
+}
+
+.resultado-vitoria {
+    background: #27ae60;
+    color: #fff;
+    box-shadow: 0 0 12px rgba(39, 174, 96, 0.6);
+}
+
+.resultado-jackpot {
+    background: linear-gradient(135deg, #f1c40f, #e67e22);
+    color: #111;
+    font-size: 15px;
+    box-shadow: 0 0 18px rgba(241, 196, 15, 0.8);
+    animation: pulseGlow 1s infinite alternate;
+}
+
+.resultado-derrota {
+    background: #c0392b;
+    color: #fff;
+}
+
+.botoes-aposta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+    margin-top: 10px;
 }

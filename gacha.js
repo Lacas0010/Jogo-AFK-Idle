@@ -1,6 +1,6 @@
-import { jogo, salvarJogo } from './state.js';
-import { textosFlutuantes, mostrarNotificacao, dispararAnimacaoGacha } from './render.js';
-import { atualizarInterface, renderizarBotoesUpgrades } from './engine.js';
+import { jogo, salvarJogo } from './state.js?v=4.2';
+import { textosFlutuantes, mostrarNotificacao, dispararAnimacaoGacha } from './render.js?v=4.2';
+import { atualizarInterface, renderizarBotoesUpgrades } from './engine.js?v=4.2';
 
 export function adicionarFragmentos(heroiIndex, quantidade) {
     let heroi = jogo.herois[heroiIndex];

@@ -1,5 +1,5 @@
-import { jogo } from './state.js';
-import { atacar } from './engine.js';
+import { jogo, formatarNumero } from './state.js?v=4.2';
+import { atacar } from './engine.js?v=4.2';
 
 export let textosFlutuantes = [];
 export let animacao = { ativa: false, frameAtual: 0, duracao: 15, critico: false, tipo: 'normal' };
@@ -15,8 +15,9 @@ export function ativarJuice(shakeIntensidade, hitStopFrames) {
 let canvas;
 let ctx;
 let particulasFogo = [];
-let particulasExplosao = [];
-let particulasSangue = [];
+export let particulasExplosao = [];
+export let particulasSangue = [];
+export let particulasClima = [];
 let estrelas = [];
 let tempoAnimacao = 0;
 let frameCount = 0;
@@ -57,6 +58,15 @@ export function mostrarNotificacao(mensagem) {
 }
 
 export function desenhar() {
+    try {
+        _desenharFrame();
+    } catch (err) {
+        console.error("Erro recuperado no frame do Canvas:", err);
+        requestAnimationFrame(desenhar);
+    }
+}
+
+function _desenharFrame() {
     if (!canvas) {
         canvas = document.getElementById("jogoCanvas");
         if (canvas) {
@@ -84,22 +94,23 @@ export function desenhar() {
     if (nivelAnterior !== nivelIndicador) {
         frameMorte = 15; // Esconde o monstro por 15 frames (~0.25s) para dar a sensação de morte
         
-        let inRiftDeath = jogo.frestaDesafio && jogo.frestaDesafio.ativa;
-        let isPantanoAtual = Math.floor((jogo.nivel - 1) / 15) % 3 === 1;
-        let isCavernaAtual = Math.floor((jogo.nivel - 1) / 15) % 3 === 2;
+        let inRiftDeath = typeof nivelAnterior === 'string' && nivelAnterior.startsWith("rift_");
+        let biomeAtualMorte = Math.floor((jogo.nivel - 1) / 15) % 5;
         let isBossAtual = jogo.nivel % 5 === 0;
 
-        if (inRiftDeath) {
-            let andarMorto = jogo.frestaDesafio.andarAtual - 1;
+        if (inRiftDeath && jogo.frestaDesafio) {
+            let andarMorto = Math.max(1, (jogo.frestaDesafio.andarAtual || 1) - 1);
             isBossAtual = andarMorto > 0 && andarMorto % 5 === 0;
-            let tipo = jogo.frestaDesafio.tipoInimigo || 0;
-            isPantanoAtual = tipo === 1;
-            isCavernaAtual = tipo === 2;
+            let tipo = (jogo.frestaDesafio.tipoInimigo || 0) % 5;
+            biomeAtualMorte = tipo;
         }
 
-        let corMorte = isPantanoAtual ? (isBossAtual ? "#1e8449" : "rgba(142, 68, 173, 0.8)") : 
-                       isCavernaAtual ? (isBossAtual ? "#900C3F" : "#a04000") : 
-                       (isBossAtual ? "#196f3d" : "#27ae60");
+        let corMorte = "#27ae60";
+        if (biomeAtualMorte === 1) corMorte = isBossAtual ? "#1e8449" : "rgba(142, 68, 173, 0.8)";
+        else if (biomeAtualMorte === 2) corMorte = isBossAtual ? "#900C3F" : "#e67e22";
+        else if (biomeAtualMorte === 3) corMorte = isBossAtual ? "#f1c40f" : "#00cec9";
+        else if (biomeAtualMorte === 4) corMorte = isBossAtual ? "#6c5ce7" : "#0984e3";
+        else corMorte = isBossAtual ? "#196f3d" : "#27ae60";
         
         for (let i = 0; i < 40; i++) { // Explosão enorme de sangue/lodo
             particulasSangue.push({
@@ -211,8 +222,11 @@ export function desenhar() {
         if (animacao.frameAtual >= animacao.duracao) animacao.ativa = false;
     }
 
-    const isPantano = Math.floor((jogo.nivel - 1) / 15) % 3 === 1;
-    const isCaverna = Math.floor((jogo.nivel - 1) / 15) % 3 === 2;
+    const biomeAtual = Math.floor((jogo.nivel - 1) / 15) % 5;
+    const isPantano = biomeAtual === 1;
+    const isCaverna = biomeAtual === 2;
+    const isCelestial = biomeAtual === 3;
+    const isAbismo = biomeAtual === 4;
     const inRift = jogo.frestaDesafio && jogo.frestaDesafio.ativa;
 
     if (inRift) {
@@ -427,6 +441,80 @@ export function desenhar() {
             ctx.fillStyle = gradBrilho;
             ctx.beginPath(); ctx.arc(t[0], t[1], 220 + fogoFlicker*30, 0, Math.PI*2); ctx.fill();
         });
+    } else if (isCelestial) {
+        // --- BIOMA 3: CIDADELA CELESTIAL NAS ALTURAS ---
+        let t = tempoAnimacao;
+
+        // Céu celestial em degradê do crepúsculo dourado
+        let cieloGrad = ctx.createLinearGradient(0, -200, 0, 450);
+        cieloGrad.addColorStop(0, "#1a1c3d");
+        cieloGrad.addColorStop(0.35, "#2d244a");
+        cieloGrad.addColorStop(0.65, "#7a4258");
+        cieloGrad.addColorStop(0.85, "#e58e52");
+        cieloGrad.addColorStop(1, "#f9d56e");
+        ctx.fillStyle = cieloGrad;
+        ctx.fillRect(-2500, -2500, 5800, 5800);
+
+        // Grande Sol / Halo Divino ao fundo
+        let haloGrad = ctx.createRadialGradient(400, 110, 20, 400, 110, 200);
+        haloGrad.addColorStop(0, "rgba(255, 255, 255, 0.95)");
+        haloGrad.addColorStop(0.2, "rgba(253, 227, 167, 0.7)");
+        haloGrad.addColorStop(0.5, "rgba(241, 196, 15, 0.3)");
+        haloGrad.addColorStop(1, "rgba(241, 196, 15, 0)");
+        ctx.fillStyle = haloGrad;
+        ctx.beginPath(); ctx.arc(400, 110, 200, 0, Math.PI * 2); ctx.fill();
+
+        // Raios solares divinos girando
+        ctx.save();
+        ctx.translate(400, 110);
+        ctx.rotate(t * 0.05);
+        ctx.fillStyle = "rgba(255, 235, 59, 0.06)";
+        for (let r = 0; r < 12; r++) {
+            ctx.rotate(Math.PI / 6);
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-25, 600); ctx.lineTo(25, 600); ctx.fill();
+        }
+        ctx.restore();
+
+        // Pilares Flutuantes de Mármore Divino nas laterais
+        const pilares = [[80, 140], [170, 100], [630, 95], [720, 135]];
+        pilares.forEach((p, idx) => {
+            let px = p[0];
+            let py = p[1] + Math.sin(t * 1.2 + idx) * 8;
+            ctx.fillStyle = "#f5f6fa";
+            ctx.fillRect(px - 14, py - 60, 28, 120);
+            ctx.fillStyle = "#dcdde1";
+            ctx.fillRect(px - 14, py - 60, 6, 120);
+            ctx.fillStyle = "#f1c40f";
+            ctx.fillRect(px - 18, py - 66, 36, 8);
+            ctx.fillRect(px - 16, py + 58, 32, 8);
+            let runeGlow = 0.5 + Math.sin(t * 3 + idx) * 0.4;
+            ctx.fillStyle = `rgba(0, 230, 255, ${runeGlow})`;
+            ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2); ctx.fill();
+        });
+
+        // Mar de Nuvens Douradas na base
+        let cloudGrad = ctx.createLinearGradient(0, 240, 0, 450);
+        cloudGrad.addColorStop(0, "rgba(255, 236, 179, 0.85)");
+        cloudGrad.addColorStop(0.5, "rgba(255, 248, 225, 0.95)");
+        cloudGrad.addColorStop(1, "#fdfbf7");
+        ctx.fillStyle = cloudGrad;
+        ctx.fillRect(-2500, 260, 5800, 300);
+
+        for (let i = -100; i < 900; i += 70) {
+            let cloudX = i + Math.sin(t * 0.5 + i) * 15;
+            let cloudY = 250 + Math.sin(i * 3) * 12;
+            ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+            ctx.beginPath(); ctx.arc(cloudX, cloudY, 45, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(cloudX + 25, cloudY - 12, 35, 0, Math.PI * 2); ctx.fill();
+        }
+
+        // Fagulhas e penas douradas flutuando na brisa celestial
+        for (let i = 0; i < 22; i++) {
+            let fx = (i * 97 + t * 25) % 900 - 50;
+            let fy = 40 + (i * 37 + Math.sin(t * 1.5 + i) * 20) % 220;
+            ctx.fillStyle = `rgba(255, 215, 0, ${0.4 + Math.sin(t * 3 + i) * 0.4})`;
+            ctx.beginPath(); ctx.ellipse(fx, fy, 4, 1.5, Math.sin(t + i), 0, Math.PI * 2); ctx.fill();
+        }
     } else {
         // COR DO CÉU DINÂMICA (Linear Gradient)
         let isNoite = false;
@@ -754,16 +842,20 @@ export function desenhar() {
     }
 
     let drawIsBoss = jogo.nivel % 5 === 0;
-    let drawCavernaEnemy = isCaverna;
+    let drawForestEnemy = biomeAtual === 0;
     let drawPantanoEnemy = isPantano;
-    let drawForestEnemy = !isCaverna && !isPantano;
+    let drawCavernaEnemy = isCaverna;
+    let drawCelestialEnemy = isCelestial;
+    let drawAbismoEnemy = isAbismo;
 
     if (inRift) {
         drawIsBoss = jogo.frestaDesafio.andarAtual % 5 === 0;
-        let tipo = jogo.frestaDesafio.tipoInimigo || 0;
+        let tipo = (jogo.frestaDesafio.tipoInimigo || 0) % 5;
         drawForestEnemy = tipo === 0;
         drawPantanoEnemy = tipo === 1;
         drawCavernaEnemy = tipo === 2;
+        drawCelestialEnemy = tipo === 3;
+        drawAbismoEnemy = tipo === 4;
     }
     
     ctx.save();
@@ -776,7 +868,126 @@ export function desenhar() {
     if (frameMorte > 0) {
         frameMorte--;
     } else {
-        if (drawCavernaEnemy) {
+        if (drawCelestialEnemy) {
+            let t = tempoAnimacao;
+            if (drawIsBoss) {
+                // Chefe: Arconte da Aurora
+                ctx.save();
+                ctx.translate(400, 150);
+
+                let sunGrad = ctx.createRadialGradient(0, -25, 10, 0, -25, 75);
+                sunGrad.addColorStop(0, "rgba(255, 255, 255, 0.95)");
+                sunGrad.addColorStop(0.4, "rgba(241, 196, 15, 0.7)");
+                sunGrad.addColorStop(1, "rgba(241, 196, 15, 0)");
+                ctx.fillStyle = sunGrad;
+                ctx.beginPath(); ctx.arc(0, -25, 75, 0, Math.PI * 2); ctx.fill();
+
+                ctx.strokeStyle = "rgba(241, 196, 15, 0.75)";
+                ctx.lineWidth = 3;
+                for (let r = 0; r < 8; r++) {
+                    let ang = (t * 0.8) + (r * Math.PI / 4);
+                    ctx.beginPath();
+                    ctx.moveTo(Math.cos(ang) * 45, -25 + Math.sin(ang) * 45);
+                    ctx.lineTo(Math.cos(ang) * 70, -25 + Math.sin(ang) * 70);
+                    ctx.stroke();
+                }
+
+                let flapSuperior = Math.sin(t * 3) * 15;
+                let flapInferior = Math.cos(t * 3) * 12;
+
+                ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+                ctx.strokeStyle = "#d4af37";
+                ctx.lineWidth = 2;
+
+                ctx.beginPath(); ctx.ellipse(-65, -30 + flapSuperior, 55, 22, -Math.PI / 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.ellipse(65, -30 + flapSuperior, 55, 22, Math.PI / 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.ellipse(-50, 20 + flapInferior, 45, 18, -Math.PI / 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.ellipse(50, 20 + flapInferior, 45, 18, Math.PI / 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+                ctx.fillStyle = "#6c5ce7";
+                ctx.beginPath(); ctx.moveTo(-22, 10); ctx.lineTo(-35, 75); ctx.lineTo(35, 75); ctx.lineTo(22, 10); ctx.fill();
+
+                ctx.fillStyle = "#dfe6e9";
+                ctx.fillRect(-22, -5, 44, 45);
+                ctx.fillStyle = "#f1c40f";
+                ctx.strokeRect(-22, -5, 44, 45);
+
+                ctx.fillStyle = "#f1c40f";
+                ctx.beginPath(); ctx.arc(0, 15, 9, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = "#fff";
+                ctx.beginPath(); ctx.arc(0, 15, 4, 0, Math.PI * 2); ctx.fill();
+
+                ctx.fillStyle = "#f5f6fa";
+                ctx.beginPath(); ctx.arc(0, -25, 20, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = "#00cec9";
+                ctx.beginPath(); ctx.ellipse(0, -25, 14, 4, 0, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = "#f1c40f";
+                ctx.beginPath(); ctx.moveTo(-16, -30); ctx.lineTo(-28, -50); ctx.lineTo(-12, -35); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(16, -30); ctx.lineTo(28, -50); ctx.lineTo(12, -35); ctx.fill();
+
+                ctx.strokeStyle = "#fff";
+                ctx.lineWidth = 4;
+                ctx.beginPath(); ctx.moveTo(35, -55); ctx.lineTo(35, 80); ctx.stroke();
+                ctx.fillStyle = "#f1c40f";
+                ctx.beginPath(); ctx.moveTo(35, -70); ctx.lineTo(28, -52); ctx.lineTo(42, -52); ctx.closePath(); ctx.fill();
+
+                ctx.restore();
+            } else {
+                // Inimigo Comum: Serafim Poligonal
+                ctx.save();
+                ctx.translate(400, 180);
+
+                ctx.strokeStyle = "rgba(241, 196, 15, 0.8)";
+                ctx.lineWidth = 2.5;
+                ctx.save();
+                ctx.rotate(t * 1.5);
+                ctx.beginPath(); ctx.ellipse(0, 0, 48, 18, 0, 0, Math.PI * 2); ctx.stroke();
+                ctx.restore();
+
+                ctx.save();
+                ctx.rotate(-t * 1.2);
+                ctx.strokeStyle = "rgba(0, 230, 255, 0.8)";
+                ctx.beginPath(); ctx.ellipse(0, 0, 42, 14, Math.PI / 4, 0, Math.PI * 2); ctx.stroke();
+                ctx.restore();
+
+                let wingFlap = Math.sin(t * 8) * 18;
+                ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+                ctx.strokeStyle = "#f1c40f";
+                ctx.lineWidth = 1.5;
+
+                ctx.beginPath();
+                ctx.ellipse(-38, -5, 32, Math.max(8, Math.abs(wingFlap)), -Math.PI / 6, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                ctx.beginPath();
+                ctx.ellipse(38, -5, 32, Math.max(8, Math.abs(wingFlap)), Math.PI / 6, 0, Math.PI * 2);
+                ctx.fill(); ctx.stroke();
+
+                let coreGrad = ctx.createRadialGradient(0, 0, 2, 0, 0, 24);
+                coreGrad.addColorStop(0, "#ffffff");
+                coreGrad.addColorStop(0.5, "#81ecec");
+                coreGrad.addColorStop(1, "#0984e3");
+                ctx.fillStyle = coreGrad;
+                ctx.beginPath();
+                ctx.moveTo(0, -26);
+                ctx.lineTo(20, 0);
+                ctx.lineTo(0, 26);
+                ctx.lineTo(-20, 0);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.fillStyle = "#f1c40f";
+                ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = "#2d3436";
+                ctx.beginPath(); ctx.arc(0, 0, 2.5, 0, Math.PI * 2); ctx.fill();
+
+                ctx.strokeStyle = "#f1c40f";
+                ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.ellipse(0, -36, 22, 6, 0, 0, Math.PI * 2); ctx.stroke();
+
+                ctx.restore();
+            }
+        } else if (drawCavernaEnemy) {
             if (drawIsBoss) {
                 // Dragão Vermelho
                 const t = tempoAnimacao;
@@ -1249,6 +1460,61 @@ export function desenhar() {
         }
     }
 
+    // CLIMA DINÂMICO
+    if (jogo.clima === 'chuva' || jogo.clima === 'tempestade') {
+        if (Math.random() < (jogo.clima === 'tempestade' ? 0.8 : 0.4)) {
+            particulasClima.push({
+                x: Math.random() * 800,
+                y: -10,
+                vx: -2 + Math.random(),
+                vy: 10 + Math.random() * 5,
+                cor: jogo.clima === 'tempestade' ? 'rgba(200, 200, 255, 0.6)' : 'rgba(150, 150, 200, 0.4)',
+                tipo: 'chuva'
+            });
+        }
+        if (jogo.clima === 'tempestade' && Math.random() < 0.02) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillRect(0, 0, 800, 450);
+        }
+    } else if (jogo.clima === 'neve') {
+        if (Math.random() < 0.2) {
+            particulasClima.push({
+                x: Math.random() * 800,
+                y: -10,
+                vx: -1 + Math.random() * 2,
+                vy: 1 + Math.random() * 2,
+                tamanho: 2 + Math.random() * 3,
+                cor: 'rgba(255, 255, 255, 0.8)',
+                oscilacao: Math.random() * Math.PI * 2,
+                tipo: 'neve'
+            });
+        }
+    }
+
+    ctx.save();
+    for (let i = particulasClima.length - 1; i >= 0; i--) {
+        let p = particulasClima[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.tipo === 'neve') {
+            p.x += Math.sin(p.oscilacao) * 0.5;
+            p.oscilacao += 0.05;
+            ctx.fillStyle = p.cor;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.tamanho, 0, Math.PI * 2);
+            ctx.fill();
+        } else {
+            ctx.strokeStyle = p.cor;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p.x - p.vx * 1.5, p.y - p.vy * 1.5);
+            ctx.stroke();
+        }
+        if (p.y > 450 || p.x < 0 || p.x > 800) particulasClima.splice(i, 1);
+    }
+    ctx.restore();
+
     ctx.save();
     for (let i = particulasExplosao.length - 1; i >= 0; i--) {
         let p = particulasExplosao[i];
@@ -1394,6 +1660,31 @@ export function desenhar() {
                 ctx.fillRect(baseX - 10, 360 + offsetYHeroi - Math.sin(tempoAnimacao * 2) * 15, 15, 15);
                 ctx.fillRect(baseX + 35, 350 + offsetYHeroi - Math.cos(tempoAnimacao * 2.5) * 15, 12, 12);
                 ctx.fillRect(baseX + 15, 370 + offsetYHeroi - Math.sin(tempoAnimacao * 3.5) * 10, 18, 18);
+            } else if (heroiIndex === 5) {
+                // Clérigo: Mandala e anéis solares sagrados orbitando a cabeça
+                ctx.save();
+                ctx.strokeStyle = `rgba(241, 196, 15, ${0.4 + Math.sin(tempoAnimacao * 4) * 0.3})`;
+                ctx.lineWidth = 2.5;
+                ctx.beginPath(); ctx.arc(baseX + 25, 260 + offsetYHeroi, 28, 0, Math.PI * 2); ctx.stroke();
+                for (let r = 0; r < 4; r++) {
+                    let ang = tempoAnimacao * 1.5 + (r * Math.PI / 2);
+                    let rx1 = baseX + 25 + Math.cos(ang) * 20;
+                    let ry1 = 260 + offsetYHeroi + Math.sin(ang) * 20;
+                    let rx2 = baseX + 25 + Math.cos(ang) * 35;
+                    let ry2 = 260 + offsetYHeroi + Math.sin(ang) * 35;
+                    ctx.beginPath(); ctx.moveTo(rx1, ry1); ctx.lineTo(rx2, ry2); ctx.stroke();
+                }
+                ctx.restore();
+            } else if (heroiIndex === 6) {
+                // Bárbaro: Chamas de sangue e brasas furiosas subindo das ombreiras
+                ctx.save();
+                ctx.fillStyle = `rgba(231, 76, 60, ${0.4 + Math.sin(tempoAnimacao * 6) * 0.3})`;
+                for (let b = 0; b < 3; b++) {
+                    let emberY = 320 + offsetYHeroi - ((tempoAnimacao * 50 + b * 20) % 60);
+                    let emberX = baseX + 10 + b * 15 + Math.sin(tempoAnimacao * 8 + b) * 8;
+                    ctx.beginPath(); ctx.arc(emberX, emberY, 4 - (b % 2), 0, Math.PI * 2); ctx.fill();
+                }
+                ctx.restore();
             }
             ctx.restore();
         }
@@ -1756,24 +2047,208 @@ export function desenhar() {
                 ctx.restore();
             }
         }
+        else if (heroiIndex === 5) {
+            // --- ✨ CLÉRIGO DA LUZ ---
+            // Túnica Sagrada Branca e Dourada
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(baseX, 300 + offsetYHeroi, 50, 75 * escalaBreathe);
+
+            // Estola / Faixa Dourada Central
+            ctx.fillStyle = "#f1c40f";
+            ctx.fillRect(baseX + 18, 300 + offsetYHeroi, 14, 75 * escalaBreathe);
+
+            // Detalhes da barra da túnica em ouro
+            ctx.fillStyle = "#d4af37";
+            ctx.fillRect(baseX, 365 + offsetYHeroi, 50, 10 * escalaBreathe);
+
+            // Ombreiras de Seda Alva
+            ctx.fillStyle = "#ecf0f1";
+            ctx.beginPath(); ctx.arc(baseX + 5, 305 + offsetYHeroi, 10, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(baseX + 45, 305 + offsetYHeroi, 10, 0, Math.PI * 2); ctx.fill();
+
+            // Rosto e Capuz / Cabelo Prateado
+            ctx.fillStyle = "#ffcc99";
+            ctx.beginPath(); ctx.arc(baseX + 25, 280 + offsetYHeroi, 20, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = "#ecf0f1";
+            ctx.beginPath(); ctx.arc(baseX + 25, 276 + offsetYHeroi, 21, Math.PI, 0); ctx.fill();
+
+            // Auréola Solar Dourada Flutuando sobre a cabeça
+            ctx.save();
+            ctx.strokeStyle = "#f1c40f";
+            ctx.lineWidth = 3;
+            ctx.shadowColor = "#f39c12";
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.ellipse(baseX + 25, 252 + offsetYHeroi + Math.sin(tempoAnimacao * 3) * 3, 22, 6, 0, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+
+            // Cetro Solar Sagrado na Mão Direita
+            ctx.save();
+            ctx.fillStyle = "#d4af37";
+            ctx.fillRect(baseX + 45, 270 + offsetYHeroi, 6, 105);
+            ctx.fillStyle = "#ffffff";
+            ctx.shadowColor = "#f1c40f";
+            ctx.shadowBlur = 15;
+            ctx.beginPath();
+            ctx.arc(baseX + 48, 264 + offsetYHeroi, 9, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "#f1c40f";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(baseX + 48, 264 + offsetYHeroi, 16, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+
+            // Animação de Feixe Celestial (Ataque ou Skill)
+            const skillClerigoAtiva = jogo.herois[5]?.skills?.[0]?.ativa;
+            if (skillClerigoAtiva || (animacao.ativa && animacao.tipo === 'passivoClerigo')) {
+                ctx.save();
+                ctx.globalCompositeOperation = "lighter";
+                let progLuz = animacao.ativa ? (animacao.frameAtual / animacao.duracao) : 1;
+                let larguraPilar = skillClerigoAtiva ? 55 : 28;
+                let gradSol = ctx.createLinearGradient(400 - larguraPilar, 0, 400 + larguraPilar, 0);
+                gradSol.addColorStop(0, "rgba(241, 196, 15, 0)");
+                gradSol.addColorStop(0.5, `rgba(255, 255, 255, ${0.75 * progLuz})`);
+                gradSol.addColorStop(1, "rgba(241, 196, 15, 0)");
+                ctx.fillStyle = gradSol;
+                ctx.fillRect(400 - larguraPilar, 0, larguraPilar * 2, 350);
+                
+                ctx.strokeStyle = `rgba(241, 196, 15, ${0.85 * progLuz})`;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.ellipse(400, 230, 45, 15, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+        else if (heroiIndex === 6) {
+            // --- 🪓 BÁRBARO FURIOSO ---
+            // Torso Musculoso Bronzeado
+            ctx.fillStyle = "#c68642";
+            ctx.fillRect(baseX - 5, 295 + offsetYHeroi, 65, 55 * escalaBreathe);
+
+            // Tatuagens de Guerra Vermelhas
+            ctx.strokeStyle = "#c0392b";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(baseX + 5, 305 + offsetYHeroi);
+            ctx.lineTo(baseX + 25, 325 + offsetYHeroi);
+            ctx.lineTo(baseX + 15, 345 + offsetYHeroi);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(baseX + 45, 305 + offsetYHeroi);
+            ctx.lineTo(baseX + 30, 325 + offsetYHeroi);
+            ctx.stroke();
+
+            // Kilt de Pele de Fera
+            ctx.fillStyle = "#5c3a21";
+            ctx.fillRect(baseX - 8, 340 + offsetYHeroi, 70, 35 * escalaBreathe);
+            ctx.fillStyle = "#d35400";
+            ctx.fillRect(baseX - 6, 365 + offsetYHeroi, 66, 10 * escalaBreathe);
+
+            // Botas de Couro
+            ctx.fillStyle = "#2c1d11";
+            ctx.fillRect(baseX - 2, 368 + offsetYHeroi, 25, 12 * escalaBreathe);
+            ctx.fillRect(baseX + 32, 368 + offsetYHeroi, 25, 12 * escalaBreathe);
+
+            // Cabeça e Mohawk Vermelho Selvagem
+            ctx.fillStyle = "#c68642";
+            ctx.beginPath(); ctx.arc(baseX + 26, 275 + offsetYHeroi, 20, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = "#b03a2e";
+            ctx.beginPath();
+            ctx.moveTo(baseX + 16, 265 + offsetYHeroi);
+            ctx.lineTo(baseX + 26, 235 + offsetYHeroi);
+            ctx.lineTo(baseX + 36, 265 + offsetYHeroi);
+            ctx.fill();
+
+            // Machados Duplos
+            ctx.save();
+            ctx.translate(baseX - 18, 310 + offsetYHeroi);
+            ctx.fillStyle = "#7f8c8d";
+            ctx.fillRect(0, -25, 5, 55);
+            ctx.fillStyle = "#bdc3c7";
+            ctx.beginPath();
+            ctx.moveTo(3, -20);
+            ctx.lineTo(-18, -32);
+            ctx.lineTo(-14, -8);
+            ctx.fill();
+            ctx.restore();
+
+            ctx.save();
+            ctx.translate(baseX + 65, 310 + offsetYHeroi);
+            ctx.fillStyle = "#7f8c8d";
+            ctx.fillRect(0, -25, 5, 55);
+            ctx.fillStyle = "#bdc3c7";
+            ctx.beginPath();
+            ctx.moveTo(2, -20);
+            ctx.lineTo(22, -32);
+            ctx.lineTo(18, -8);
+            ctx.fill();
+            ctx.restore();
+
+            // Animação de Fúria / Talho Duplo
+            const skillBarbaroAtiva = jogo.herois[6]?.skills?.[0]?.ativa;
+            if (skillBarbaroAtiva || (animacao.ativa && animacao.tipo === 'passivoBarbaro')) {
+                ctx.save();
+                ctx.strokeStyle = "#e74c3c";
+                ctx.shadowColor = "#c0392b";
+                ctx.shadowBlur = 15;
+                ctx.lineWidth = 6;
+                ctx.lineCap = "round";
+                let fProg = animacao.ativa ? (animacao.frameAtual * 8) : (Math.sin(tempoAnimacao * 10) * 15);
+                ctx.beginPath();
+                ctx.moveTo(360 - fProg, 110 - fProg);
+                ctx.lineTo(440 + fProg, 170 + fProg);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(440 + fProg, 110 - fProg);
+                ctx.lineTo(360 - fProg, 170 + fProg);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
         
         ctx.restore();
     });
 
-    ctx.font = "bold 14px sans-serif";
-    let textoNivel = drawIsBoss ? `Nível ${jogo.nivel} (CHEFE)` : `Nível ${jogo.nivel}`;
+    ctx.font = "bold 13px sans-serif";
+    const nomesBiomas = [
+        "🌲 Floresta Esmeralda",
+        "🍄 Pântano Tóxico",
+        "🌋 Forja Vulcânica",
+        "☁️ Cidadela Celestial",
+        "🔮 Abismo Cósmico"
+    ];
+    let nomeBiomaAtual = nomesBiomas[Math.floor((jogo.nivel - 1) / 15) % 5];
+    let textoNivel = `${nomeBiomaAtual} • Nvl ${jogo.nivel}` + (drawIsBoss ? " 👑 [CHEFE]" : "");
     if (jogo.frestaDesafio && jogo.frestaDesafio.ativa) {
-        textoNivel = `🌌 FRESTA DIMENSIONAL: Andar ${jogo.frestaDesafio.andarAtual}` + (drawIsBoss ? " (CHEFE)" : "");
+        textoNivel = `🌌 FRESTA DIMENSIONAL: Andar ${jogo.frestaDesafio.andarAtual}` + (drawIsBoss ? " 👑 (CHEFE)" : "");
+    } else if (jogo.torreAbismo && jogo.torreAbismo.ativa) {
+        let imuneTxt = "";
+        if (jogo.torreAbismo.andarAtual % 5 === 0) imuneTxt = " ⚠️ [IMUNE A FÍSICO]";
+        else if (jogo.torreAbismo.andarAtual % 7 === 0) imuneTxt = " ⚠️ [IMUNE A MÁGICO]";
+        textoNivel = `🗼 TORRE DO ABISMO: Andar ${jogo.torreAbismo.andarAtual}${imuneTxt}`;
     }
     ctx.lineWidth = 3; ctx.strokeStyle = "#000";
     ctx.strokeText(textoNivel, 400 - (ctx.measureText(textoNivel).width / 2), 25);
     ctx.fillStyle = "#fff";
     ctx.fillText(textoNivel, 400 - (ctx.measureText(textoNivel).width / 2), 25);
 
-    ctx.fillStyle = "#333"; ctx.fillRect(250, 40, 300, 12);
+    // Barra de Vida com Moldura e Texto de HP Centralizado
+    ctx.fillStyle = "#1a1a1a"; ctx.fillRect(248, 38, 304, 16);
+    ctx.strokeStyle = "#8e7a53"; ctx.lineWidth = 1.5; ctx.strokeRect(248, 38, 304, 16);
+
     ctx.fillStyle = drawIsBoss ? "#8e44ad" : "#e74c3c"; 
-    const hpPercent = Math.max(0, jogo.monstroHp / jogo.monstroHpMax);
+    const hpPercent = Math.max(0, Math.min(1, jogo.monstroHp / jogo.monstroHpMax));
     ctx.fillRect(250, 40, 300 * hpPercent, 12);
+
+    let textoHp = `${formatarNumero(Math.max(0, jogo.monstroHp))} / ${formatarNumero(jogo.monstroHpMax)}`;
+    ctx.font = "bold 10px sans-serif";
+    ctx.lineWidth = 2; ctx.strokeStyle = "#000";
+    ctx.strokeText(textoHp, 400 - (ctx.measureText(textoHp).width / 2), 50);
+    ctx.fillStyle = "#fff";
+    ctx.fillText(textoHp, 400 - (ctx.measureText(textoHp).width / 2), 50);
 
     if (jogo.monstroLodoToxico > 0) {
         ctx.save();
@@ -1785,6 +2260,141 @@ export function desenhar() {
         // O texto flutua suavemente para cima e para baixo
         let floatPoison = Math.sin(tempoAnimacao * 5) * 4; 
         ctx.fillText(`☠️ Toxina: ${jogo.monstroLodoToxico}x`, 400, 115 + floatPoison);
+        ctx.restore();
+    }
+
+    // --- TOP HUD: DPS EM TEMPO REAL & BUFFS ATIVOS ---
+    ctx.save();
+    ctx.fillStyle = "rgba(10, 15, 25, 0.75)";
+    ctx.strokeStyle = "rgba(241, 196, 15, 0.4)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(18, 16, 125, 24, 6);
+    else ctx.rect(18, 16, 125, 24);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.font = "bold 11px sans-serif";
+    ctx.fillStyle = "#f1c40f";
+    ctx.textAlign = "left";
+    let dpsTxt = `⚔️ ${formatarNumero(jogo.dpsEmTempoReal || 0)}/s`;
+    ctx.fillText(dpsTxt, 26, 32);
+
+    let buffY = 46;
+    if (jogo.buffsAtivos && jogo.buffsAtivos.frenesiOuro > 0) {
+        ctx.fillStyle = "rgba(241, 196, 15, 0.2)";
+        ctx.strokeStyle = "rgba(241, 196, 15, 0.8)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(18, buffY, 125, 20, 5);
+        else ctx.rect(18, buffY, 125, 20);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.font = "bold 10px sans-serif";
+        ctx.fillStyle = "#ffeaa7";
+        ctx.fillText(`💰 Frenesi: ${Math.ceil(jogo.buffsAtivos.frenesiOuro)}s (2x)`, 24, buffY + 14);
+        buffY += 24;
+    }
+    if (jogo.buffsAtivos && jogo.buffsAtivos.fluxoVeloz > 0) {
+        ctx.fillStyle = "rgba(0, 206, 209, 0.2)";
+        ctx.strokeStyle = "rgba(0, 206, 209, 0.8)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(18, buffY, 125, 20, 5);
+        else ctx.rect(18, buffY, 125, 20);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.font = "bold 10px sans-serif";
+        ctx.fillStyle = "#81ecec";
+        ctx.fillText(`⚡ Recarga: ${Math.ceil(jogo.buffsAtivos.fluxoVeloz)}s`, 24, buffY + 14);
+        buffY += 24;
+    }
+    if (jogo.buffsAtivos && jogo.buffsAtivos.hidromel > 0) {
+        ctx.fillStyle = "rgba(230, 126, 34, 0.25)";
+        ctx.strokeStyle = "rgba(230, 126, 34, 0.85)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(18, buffY, 125, 20, 5);
+        else ctx.rect(18, buffY, 125, 20);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.font = "bold 10px sans-serif";
+        ctx.fillStyle = "#fab1a0";
+        ctx.fillText(`🍺 Hidromel: ${Math.ceil(jogo.buffsAtivos.hidromel)}s`, 24, buffY + 14);
+        buffY += 24;
+    }
+    ctx.restore();
+
+    // --- CARGA DE ATAQUE DEVASTADOR DO CHEFE ---
+    if (jogo.ataqueChefe && jogo.ataqueChefe.carregando) {
+        ctx.save();
+        let cx = 400;
+        let barraY = 60;
+        let larguraBarra = 240;
+        let alturaBarra = 16;
+        let barraX = cx - (larguraBarra / 2);
+
+        let pulse = 0.7 + Math.sin(tempoAnimacao * 12) * 0.3;
+        ctx.shadowBlur = 10 * pulse;
+        ctx.shadowColor = "#e74c3c";
+
+        ctx.fillStyle = "rgba(20, 0, 0, 0.85)";
+        ctx.fillRect(barraX, barraY, larguraBarra, alturaBarra);
+
+        ctx.strokeStyle = `rgba(231, 76, 60, ${pulse})`;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(barraX, barraY, larguraBarra, alturaBarra);
+
+        let pctTempo = Math.max(0, Math.min(1, jogo.ataqueChefe.tempoRestante / (jogo.ataqueChefe.tempoTotal || 4)));
+        ctx.fillStyle = "#c0392b";
+        ctx.fillRect(barraX + 2, barraY + 2, (larguraBarra - 4) * pctTempo, alturaBarra - 4);
+
+        ctx.font = "bold 10px sans-serif";
+        ctx.fillStyle = "#ffffff";
+        ctx.textAlign = "center";
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = "#000";
+        ctx.fillText(`⚠️ INTERROMPA O CHEFE! (${jogo.ataqueChefe.cliquesAtuais}/${jogo.ataqueChefe.cliquesNecessarios})`, cx, barraY + 12);
+
+        let floatWarning = Math.sin(tempoAnimacao * 8) * 3;
+        ctx.font = "bold 18px sans-serif";
+        ctx.fillStyle = "#ff7675";
+        ctx.fillText("⚡ GOLPE FATAL! ⚡", 400, 110 + floatWarning);
+        ctx.restore();
+    } else if (jogo.ataqueChefe && jogo.ataqueChefe.atordoado > 0) {
+        ctx.save();
+        let stunFloat = Math.sin(tempoAnimacao * 6) * 3;
+        ctx.font = "bold 14px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#f1c40f";
+        ctx.shadowColor = "#f39c12";
+        ctx.shadowBlur = 8;
+        ctx.fillText(`💫 GUARDA QUEBRADA! (+50% DANO)`, 400, 72 + stunFloat);
+
+        for (let s = 0; s < 3; s++) {
+            let ang = tempoAnimacao * 4 + (s * Math.PI * 2 / 3);
+            let sx = 400 + Math.cos(ang) * 40;
+            let sy = 100 + Math.sin(ang) * 12;
+            ctx.fillStyle = "#fff";
+            ctx.font = "12px sans-serif";
+            ctx.fillText("⭐", sx, sy);
+        }
+        ctx.restore();
+    }
+
+    // --- ALERTA DE TIME ATORDOADO ---
+    if (jogo.timeAtordoado > 0) {
+        ctx.save();
+        ctx.font = "bold 14px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillStyle = "#e74c3c";
+        ctx.shadowColor = "#000";
+        ctx.shadowBlur = 6;
+        let avisoTime = `💫 HERÓIS ATORDOADOS! (${Math.ceil(jogo.timeAtordoado)}s)`;
+        ctx.fillText(avisoTime, 400, 260 + Math.sin(tempoAnimacao * 5) * 3);
         ctx.restore();
     }
 
@@ -1851,6 +2461,107 @@ export function desenhar() {
             
             ctx.restore();
         }
+    }
+
+    // --- CRIATURA VOLANTE (EVENTO ATIVO: SLIME DOURADO / FADA) ---
+    if (jogo.eventoVolante && jogo.eventoVolante.ativo) {
+        ctx.save();
+        let ev = jogo.eventoVolante;
+
+        // Atualização suave do voo da criatura pela tela
+        if (typeof ev.x !== 'number' || !Number.isFinite(ev.x)) ev.x = -60;
+        if (typeof ev.y !== 'number' || !Number.isFinite(ev.y)) ev.y = 120;
+        ev.x += (ev.velocidade || 2.2);
+        if (ev.x > 860) {
+            ev.ativo = false;
+        }
+
+        ctx.translate(ev.x, ev.y);
+
+        let raioBase = (Number.isFinite(ev.raio) && ev.raio > 0) ? ev.raio : 22;
+        let auraRad = Math.max(8, raioBase + 12 + Math.sin(tempoAnimacao * 6) * 4);
+        if (Number.isFinite(auraRad) && auraRad > 4) {
+            let gradAura = ctx.createRadialGradient(0, 0, 4, 0, 0, auraRad);
+            gradAura.addColorStop(0, "rgba(255, 235, 59, 0.75)");
+            gradAura.addColorStop(0.6, "rgba(255, 193, 7, 0.35)");
+            gradAura.addColorStop(1, "rgba(255, 193, 7, 0)");
+            ctx.fillStyle = gradAura;
+            ctx.beginPath();
+            ctx.arc(0, 0, auraRad, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        if (ev.tipo === 'slimeDourado') {
+            let bounce = Math.sin(tempoAnimacao * 8) * 3;
+            ctx.fillStyle = "#f1c40f";
+            ctx.beginPath();
+            ctx.ellipse(0, bounce, ev.raio, ev.raio * 0.85, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = "#b7950b";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+            ctx.beginPath();
+            ctx.ellipse(-ev.raio * 0.35, bounce - ev.raio * 0.3, 5, 3, -Math.PI / 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "#2c3e50";
+            ctx.beginPath();
+            ctx.arc(-6, bounce - 2, 2.5, 0, Math.PI * 2);
+            ctx.arc(6, bounce - 2, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "#f39c12";
+            ctx.beginPath();
+            ctx.moveTo(-9, bounce - ev.raio * 0.8);
+            ctx.lineTo(-6, bounce - ev.raio * 0.8 - 7);
+            ctx.lineTo(-2, bounce - ev.raio * 0.8 - 3);
+            ctx.lineTo(0, bounce - ev.raio * 0.8 - 9);
+            ctx.lineTo(2, bounce - ev.raio * 0.8 - 3);
+            ctx.lineTo(6, bounce - ev.raio * 0.8 - 7);
+            ctx.lineTo(9, bounce - ev.raio * 0.8);
+            ctx.closePath();
+            ctx.fill();
+        } else {
+            let asaBate = Math.sin(tempoAnimacao * 18) * 12;
+
+            ctx.fillStyle = "rgba(224, 247, 250, 0.85)";
+            ctx.strokeStyle = "#80deea";
+            ctx.lineWidth = 1.5;
+
+            ctx.beginPath();
+            ctx.ellipse(-14, -6, 16, Math.max(3, Math.abs(asaBate)), -Math.PI / 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.ellipse(14, -6, 16, Math.max(3, Math.abs(asaBate)), Math.PI / 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = "#e040fb";
+            ctx.shadowColor = "#ea80fc";
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.arc(0, 0, 9, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            ctx.arc(0, 0, 4.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        let floatText = Math.sin(tempoAnimacao * 5) * 3;
+        ctx.font = "bold 11px sans-serif";
+        ctx.textAlign = "center";
+        ctx.shadowBlur = 4;
+        ctx.shadowColor = "#000";
+        ctx.fillStyle = "#fffb8f";
+        ctx.fillText("✨ CLIQUE! ✨", 0, ev.raio + 16 + floatText);
+
+        ctx.restore();
     }
 
     for (let i = textosFlutuantes.length - 1; i >= 0; i--) {
@@ -1989,6 +2700,46 @@ export function desenhar() {
         } else {
             animacaoGacha.ativa = false; // Fim
         }
+    }
+    // RENDERIZAR MASCOTES
+    let petAtivo = jogo.mascotes && jogo.mascotes.find(m => m.ativo);
+    if (petAtivo) {
+        ctx.save();
+        let petX = 200 + Math.sin(tempoAnimacao * 2) * 20;
+        let petY = 200 + Math.cos(tempoAnimacao * 1.5) * 15;
+        
+        ctx.translate(petX, petY);
+        
+        if (petAtivo.id === 'fada') {
+            ctx.fillStyle = "rgba(241, 196, 15, 0.8)"; 
+            ctx.beginPath();
+            ctx.arc(0, 0, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+            ctx.beginPath();
+            ctx.ellipse(-10, -5, 10, 4, -Math.PI/6, 0, Math.PI*2);
+            ctx.ellipse(10, -5, 10, 4, Math.PI/6, 0, Math.PI*2);
+            ctx.fill();
+        } else if (petAtivo.id === 'slime') {
+            ctx.fillStyle = "rgba(46, 204, 113, 0.8)"; 
+            ctx.beginPath();
+            ctx.arc(0, 10, 12, 0, Math.PI, true);
+            ctx.quadraticCurveTo(-15, 20, 0, 20);
+            ctx.quadraticCurveTo(15, 20, 12, 10);
+            ctx.fill();
+        } else if (petAtivo.id === 'dragao') {
+            ctx.fillStyle = "#e74c3c"; 
+            ctx.fillRect(-8, -8, 16, 16);
+            ctx.fillStyle = "#f1c40f";
+            ctx.fillRect(8, -4, 4, 8); 
+            ctx.fillStyle = "rgba(231, 76, 60, 0.5)"; 
+            ctx.beginPath();
+            ctx.moveTo(-8, -8);
+            ctx.lineTo(-20, -20);
+            ctx.lineTo(-8, 0);
+            ctx.fill();
+        }
+        ctx.restore();
     }
 
     ctx.restore();
@@ -2129,6 +2880,61 @@ export function desenharPortrait(canvasId, heroiIndex) {
         ctx.fillStyle = "#2ecc71";
         ctx.beginPath(); ctx.ellipse(cx - 8, cy - 5, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
         ctx.beginPath(); ctx.ellipse(cx + 8, cy - 5, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
+    } else if (heroiIndex === 5) {
+        // ✨ Clérigo da Luz Portrait
+        // Manto sagrado branco e dourado
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(cx - 30, cy + 18, 60, 32);
+        ctx.fillStyle = "#f1c40f";
+        ctx.fillRect(cx - 8, cy + 18, 16, 32); // Estola de ouro
+        
+        // Rosto
+        ctx.fillStyle = "#ffcc99";
+        ctx.beginPath(); ctx.arc(cx, cy, 21, 0, Math.PI * 2); ctx.fill();
+
+        // Cabelo prateado
+        ctx.fillStyle = "#ecf0f1";
+        ctx.beginPath(); ctx.arc(cx, cy - 2, 22, Math.PI, 0); ctx.fill();
+
+        // Olhos serenos dourados/âmbar
+        ctx.fillStyle = "#f39c12";
+        ctx.beginPath(); ctx.arc(cx - 7, cy - 4, 3.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx + 7, cy - 4, 3.5, 0, Math.PI * 2); ctx.fill();
+
+        // Auréola Dourada pairando
+        ctx.strokeStyle = "#f1c40f";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.ellipse(cx, cy - 24, 18, 5, 0, 0, Math.PI * 2); ctx.stroke();
+    } else if (heroiIndex === 6) {
+        // 🪓 Bárbaro Furioso Portrait
+        // Torso musculoso e ombreira de ferro
+        ctx.fillStyle = "#c68642";
+        ctx.fillRect(cx - 32, cy + 16, 64, 34);
+        ctx.fillStyle = "#7f8c8d";
+        ctx.beginPath(); ctx.arc(cx - 22, cy + 26, 12, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#bdc3c7";
+        ctx.beginPath(); ctx.moveTo(cx - 26, cy + 20); ctx.lineTo(cx - 35, cy + 10); ctx.lineTo(cx - 20, cy + 18); ctx.fill();
+
+        // Rosto bronzeado feroz
+        ctx.fillStyle = "#c68642";
+        ctx.beginPath(); ctx.arc(cx, cy, 22, 0, Math.PI * 2); ctx.fill();
+
+        // Pintura de guerra carmesim na ponte do nariz e bochechas
+        ctx.fillStyle = "#c0392b";
+        ctx.fillRect(cx - 16, cy - 4, 32, 5);
+
+        // Olhos vermelhos furiosos
+        ctx.fillStyle = "#e74c3c";
+        ctx.beginPath(); ctx.arc(cx - 8, cy - 4, 4, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(cx + 8, cy - 4, 4, 0, Math.PI * 2); ctx.fill();
+
+        // Moicano vermelho rebelde
+        ctx.fillStyle = "#b03a2e";
+        ctx.beginPath();
+        ctx.moveTo(cx - 8, cy - 18);
+        ctx.lineTo(cx, cy - 40);
+        ctx.lineTo(cx + 8, cy - 18);
+        ctx.fill();
     }
 }
 
@@ -2341,8 +3147,93 @@ function desenharSplashArt(ctx, cx, cy, heroiIndex, tick) {
         ctx.beginPath(); ctx.moveTo(-25, 10); ctx.quadraticCurveTo(-45, 0, -30, -30); ctx.quadraticCurveTo(-20, -5, -18, 5); ctx.fill();
         // Adaga Dir (Pegada Invertida)
         ctx.beginPath(); ctx.moveTo(25, 10); ctx.quadraticCurveTo(45, 0, 30, -30); ctx.quadraticCurveTo(20, -5, 18, 5); ctx.fill();
-    }
+    } else if (heroiIndex === 5) {
+        // ✨ CLÉRIGO DA LUZ (Julgamento Celestial / Pose Flutuante)
+        ctx.shadowBlur = 0;
+        
+        // Asas e Raios Solares Dourados ao Fundo
+        ctx.save();
+        ctx.shadowColor = "#f1c40f"; ctx.shadowBlur = 25;
+        ctx.strokeStyle = "rgba(241, 196, 15, 0.7)"; ctx.lineWidth = 4;
+        for (let a = 0; a < 6; a++) {
+            let ang = (a * Math.PI / 3) + breath * 0.1;
+            ctx.beginPath(); ctx.moveTo(0, -10); ctx.lineTo(Math.cos(ang) * 60, Math.sin(ang) * 60 - 10); ctx.stroke();
+        }
+        ctx.restore();
 
+        // Manto Alvo e Estola Dourada
+        let gradManto = ctx.createLinearGradient(0, -20, 0, 40);
+        gradManto.addColorStop(0, "#ffffff"); gradManto.addColorStop(1, "#bdc3c7");
+        ctx.fillStyle = gradManto;
+        ctx.beginPath(); ctx.moveTo(-20, 35); ctx.lineTo(20, 35); ctx.lineTo(15, -10); ctx.lineTo(-15, -10); ctx.fill();
+        ctx.fillStyle = "#f1c40f"; ctx.fillRect(-6, -10, 12, 45); // Estola
+
+        // Rosto e Cabelo
+        ctx.fillStyle = "#ffcc99"; ctx.beginPath(); ctx.arc(0, -16, 11, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#ecf0f1"; ctx.beginPath(); ctx.arc(0, -18, 12, Math.PI, 0); ctx.fill();
+
+        // Olhos Solares Brilhantes
+        ctx.fillStyle = "#f39c12"; ctx.shadowColor = "#f1c40f"; ctx.shadowBlur = 12;
+        ctx.beginPath(); ctx.arc(-4, -16, 2.5, 0, Math.PI * 2); ctx.arc(4, -16, 2.5, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Grande Auréola
+        ctx.strokeStyle = "#f1c40f"; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(0, -32, 22, 6, 0, 0, Math.PI * 2); ctx.stroke();
+
+        // Cetro do Julgamento Solar
+        ctx.save();
+        ctx.translate(25, -5);
+        ctx.fillStyle = "#d4af37"; ctx.fillRect(-3, -40, 6, 75);
+        ctx.fillStyle = "#fff"; ctx.shadowColor = "#f1c40f"; ctx.shadowBlur = 20;
+        ctx.beginPath(); ctx.arc(0, -42, 10, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+
+    } else if (heroiIndex === 6) {
+        // 🪓 BÁRBARO FURIOSO (Salto de Execução com Machados Duplos)
+        ctx.shadowBlur = 0;
+
+        // Rastro de Fúria Sangrenta ao Fundo
+        ctx.shadowColor = "#c0392b"; ctx.shadowBlur = 25;
+        ctx.strokeStyle = "rgba(231, 76, 60, 0.7)"; ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.arc(0, 0, 48, -Math.PI / 1.5, Math.PI / 3); ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(0, 0, 48, Math.PI / 3, Math.PI); ctx.stroke();
+
+        // Torso Bronze Musculoso
+        ctx.fillStyle = "#c68642";
+        ctx.beginPath(); ctx.moveTo(-20, 25); ctx.lineTo(20, 25); ctx.lineTo(22, -12); ctx.lineTo(-22, -12); ctx.fill();
+        ctx.strokeStyle = "#c0392b"; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(-12, -5); ctx.lineTo(5, 12); ctx.stroke();
+
+        // Kilt de Pele
+        ctx.fillStyle = "#5c3a21"; ctx.fillRect(-18, 20, 36, 18);
+
+        // Braços Fortes Empunhando Machados
+        ctx.fillStyle = "#c68642";
+        ctx.beginPath(); ctx.arc(-22, -8, 8, 0, Math.PI * 2); ctx.arc(22, -8, 8, 0, Math.PI * 2); ctx.fill();
+
+        // Rosto e Moicano
+        ctx.beginPath(); ctx.arc(0, -18, 12, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#c0392b"; ctx.fillRect(-10, -19, 20, 3);
+        ctx.fillStyle = "#e74c3c"; ctx.shadowColor = "#e74c3c"; ctx.shadowBlur = 10;
+        ctx.beginPath(); ctx.arc(-4, -19, 2, 0, Math.PI * 2); ctx.arc(4, -19, 2, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#b03a2e"; ctx.shadowBlur = 0;
+        ctx.beginPath(); ctx.moveTo(-6, -18); ctx.lineTo(0, -38); ctx.lineTo(6, -18); ctx.fill();
+
+        // Dois Machados Sangrentos Erguidos
+        ctx.save();
+        ctx.translate(-26, -20); ctx.rotate(-Math.PI / 4);
+        ctx.fillStyle = "#7f8c8d"; ctx.fillRect(-2, -30, 5, 45);
+        ctx.fillStyle = "#bdc3c7"; ctx.beginPath(); ctx.moveTo(0, -25); ctx.lineTo(-20, -35); ctx.lineTo(-15, -12); ctx.fill();
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(26, -20); ctx.rotate(Math.PI / 4);
+        ctx.fillStyle = "#7f8c8d"; ctx.fillRect(-2, -30, 5, 45);
+        ctx.fillStyle = "#bdc3c7"; ctx.beginPath(); ctx.moveTo(0, -25); ctx.lineTo(20, -35); ctx.lineTo(15, -12); ctx.fill();
+        ctx.restore();
+    }
     ctx.restore();
 }
 

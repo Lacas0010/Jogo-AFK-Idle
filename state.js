@@ -2,6 +2,7 @@ export let jogo = {
     estado: 'menu', // Começa na tela de início
     pontos: 0,
     gemas: 0,
+    configAudio: { bgmMudo: false, sfxMudo: false },
     tirosGacha: 0,
     totalTirosGacha: 0,
     ultimoAcesso: Date.now(),
@@ -15,8 +16,8 @@ export let jogo = {
     inventario: { couroOrc: 0, escamasHidra: 0, denteDragao: 0 },
     artefatos: { manoplaOrc: 0, glandulaHidra: 0, cristalDragao: 0 },
     multiplicadorAscensao: 1,
-    desbloqueios: { equipe: false, gacha: false, forja: false, marcos: false, guilda: false, santuario: false, pantheon: false, frestas: false },
-    tutoriaisVistos: { abaUpgrades: false, abaEquipe: false, abaGacha: false, abaForja: false, abaSantuario: false, abaGuilda: false, abaMarcos: false, abaPantheon: false, abaFrestas: false },
+    desbloqueios: { equipe: false, gacha: false, forja: false, marcos: false, guilda: false, santuario: false, pantheon: false, frestas: false, mascotes: false, torre: false, taverna: false },
+    tutoriaisVistos: { abaUpgrades: false, abaEquipe: false, abaGacha: false, abaForja: false, abaSantuario: false, abaGuilda: false, abaMarcos: false, abaPantheon: false, abaFrestas: false, abaMascotes: false, abaTorre: false, abaTaverna: false },
     almasPoligonais: 0,
     upgradesAlmas: [0, 0, 0, 0, 0, 0, 0],
     autoCastAtivo: true,
@@ -32,7 +33,46 @@ export let jogo = {
     timeAtivo: [0],
     fragmentosUniversais: 0,
     reliquiasPantheon: [0, 0, 0],
+    clima: 'limpo',
+    torreAbismo: { andarAtual: 1, ativa: false },
+    taverna: { energia: 5, energiaMaxima: 5, ultimaRecarga: Date.now(), hpPedra: 100 },
+    mascotes: [
+        { id: 'fada', nome: 'Fada de Luz', desbloqueado: false, ativo: false, aura: 'Acelera Cooldowns em 10%' },
+        { id: 'slime', nome: 'Slime Tóxico', desbloqueado: false, ativo: false, aura: 'Dano Passivo Constante' },
+        { id: 'dragao', nome: 'Mini Dragão', desbloqueado: false, ativo: false, aura: '+20% Chance de Crítico' }
+    ],
     frestaDesafio: { andarAtual: 1, tempoRestante: 30, ativa: false, hpOriginalMonstro: 0, tipoInimigo: 0 },
+    ataqueChefe: {
+        carregando: false,
+        tempoRestante: 0,
+        tempoMax: 3.5,
+        cliquesNecessarios: 5,
+        cliquesAtuais: 0,
+        nomeAtaque: "Terremoto Poligonal",
+        atordoado: 0
+    },
+    eventoVolante: {
+        ativo: false,
+        x: -60,
+        y: 120,
+        raio: 22,
+        tipo: 'fada',
+        velocidade: 2.2,
+        duracao: 0
+    },
+    buffsAtivos: {
+        frenesiOuro: 0,
+        fluxoVeloz: 0,
+        hidromel: 0
+    },
+    equipamentos: {
+        inventario: [],
+        equipados: { arma: null, armadura: null, amuleto: null },
+        poDeForja: 0
+    },
+    dpsEmTempoReal: 0,
+    dpsBuffer: 0,
+    timeAtordoado: 0,
     herois: [
         {
             nome: "Herói Principal",
@@ -46,6 +86,11 @@ export let jogo = {
             multCusto: 1.5,
             fragmentos: 0,
             estrelas: 1,
+            talento: null,
+            especializacoes: {
+                A: { nome: "⚔️ Paladino Vingador", desc: "+100% dano de clique e cada clique reduz recarga das skills em 0.1s." },
+                B: { nome: "🗡️ Mestre das Lâminas", desc: "+25% chance de crítico nos cliques e críticos geram +50% de ouro extra." }
+            },
             skills: [
                 {
                     nome: "🔥 Lâmina Incandescente",
@@ -75,6 +120,11 @@ export let jogo = {
             multCusto: 1.7,
             fragmentos: 0,
             estrelas: 1,
+            talento: null,
+            especializacoes: {
+                A: { nome: "🏹 Caçadora dos Ventos", desc: "Dobra a cadência de disparo de flechas (+100% DPS passivo da Elfa)." },
+                B: { nome: "🎯 Franco-Atiradora", desc: "+150% de dano na Rajada de Glifos e perfuração pesada em Chefes." }
+            },
             skills: [
                 {
                     nome: "🏹 Rajada de Glifos",
@@ -104,6 +154,11 @@ export let jogo = {
             multCusto: 1.6,
             fragmentos: 0,
             estrelas: 1,
+            talento: null,
+            especializacoes: {
+                A: { nome: "🌌 Arquimago do Vazio", desc: "Comet Azur causa 50% mais ticks acelerados e aplica chamas astrais contínuas." },
+                B: { nome: "⏳ Senhor do Tempo", desc: "Reduz o tempo de recarga base de todas as habilidades do time em 25%." }
+            },
             skills: [
                 {
                     nome: "🔮 Torrente Prismática",
@@ -126,6 +181,11 @@ export let jogo = {
             descricao: "[Aura Tática]: Cada nível de DPS aumenta o dano de todo o time em +1%. [Esmagar]: Sua Chance de Crítico dita a probabilidade de dar uma Escudada no chefe a cada segundo.",
             dps: 0, nivelDps: 0, custoDps: 15, multCusto: 1.15,
             chanceCritico: 0.05, nivelCritico: 0, custoCritico: 100, multCustoCritico: 1.4, fragmentos: 0, estrelas: 1,
+            talento: null,
+            especializacoes: {
+                A: { nome: "🏰 Fortaleza Inabalável", desc: "Baluarte dura +4s extras e dobra o bônus passivo de dano da patrulha." },
+                B: { nome: "🔨 Colosso Esmagador", desc: "Escudada aciona 2x mais rápido e atordoa o Chefe por 1s." }
+            },
             skills: [
                 {
                     nome: "⚙️ Baluarte Vetorial",
@@ -148,16 +208,69 @@ export let jogo = {
             nome: "🐍 Ladra de Presas (Gacha)",
             descricao: "Assassina do pântano. Seus golpes acumulam veneno corrosivo de efeito contínuo no alvo.",
             dps: 0, nivelDps: 0, custoDps: 600, chanceCritico: 0.25, nivelCritico: 0, custoCritico: 700, multCusto: 1.9, fragmentos: 0, estrelas: 1,
+            talento: null,
+            especializacoes: {
+                A: { nome: "🧪 Alquimista Tóxica", desc: "O veneno nunca expira e acumula até 30 cargas de lodo tóxico no monstro." },
+                B: { nome: "👤 Sombra Fatal", desc: "+40% Dano Crítico e desfere acertos de execução (+100% dano) em monstros sob 35% HP." }
+            },
             skills: [{
                 nome: "🔮 Adagas de Glifos",
                 descricao: "Consome instantaneamente todo o lodo tóxico do monstro, descarregando um estouro de 40x de dano baseado nos acúmulos.",
                 multiplicadorDanoInstantaneo: 40, cooldownMax: 12, cooldownAtual: 0, duracaoMax: 1, duracaoAtual: 0, ativa: false, desbloqueada: true, nivel: 1, custoUpgrade: 400, multCusto: 2.0
+            }]
+        },
+        {
+            nome: "✨ Clérigo da Luz (Gacha)",
+            descricao: "Guardião celestial do sol. Sua presença reduz em 50% o atordoamento do time e inflige +30% de dano sagrado contra Chefes.",
+            dps: 0, nivelDps: 0, custoDps: 1000, chanceCritico: 0.15, nivelCritico: 0, custoCritico: 1200, multCusto: 1.85, fragmentos: 0, estrelas: 1,
+            talento: null,
+            especializacoes: {
+                A: { nome: "☀️ Inquisidor Solar", desc: "Julgamento Divino queima o Chefe com Fogo Sagrado contínuo (+100% dano contra Chefes)." },
+                B: { nome: "🕊️ Bispo da Alvorada", desc: "Purifica atordoamentos instantaneamente e gera bênção de ouro (+25% de ouro de todas as fontes)." }
+            },
+            skills: [{
+                nome: "🌟 Julgamento Divino",
+                descricao: "Invoca colunas de luz divina causando 35x dano de burst instantâneo, purifica atordoamentos do grupo e banha os heróis em Bênção Solar (+100% de dano do time por 5s).",
+                multiplicadorDanoInstantaneo: 35, cooldownMax: 18, cooldownAtual: 0, duracaoMax: 5, duracaoAtual: 0, ativa: false, desbloqueada: true, nivel: 1, custoUpgrade: 450, multCusto: 2.0
+            }]
+        },
+        {
+            nome: "🪓 Bárbaro Furioso (Gacha)",
+            descricao: "Guerreiro indomável. Conforme o monstro perde HP, entra em Frenesi Sangrento (até +150% de DPS extra) e desfere talhos duplos violentos.",
+            dps: 0, nivelDps: 0, custoDps: 1500, chanceCritico: 0.30, nivelCritico: 0, custoCritico: 1800, multCusto: 1.9, fragmentos: 0, estrelas: 1,
+            talento: null,
+            especializacoes: {
+                A: { nome: "🩸 Fúria Carniceira", desc: "O frenesi de baixa vida escala até +250% de dano e concede +20% de Chance Crítica." },
+                B: { nome: "💥 Esmagador de Crânios", desc: "Ataques do Bárbaro causam Guarda Quebrada constante (+50% de dano recebido) no monstro." }
+            },
+            skills: [{
+                nome: "🩸 Fúria Implacável",
+                descricao: "Gira seus machados em um redemoinho devastador de 50x dano e entra em Frenesi por 6s (todos os ataques tornam-se Críticos garantidos).",
+                multiplicadorDanoInstantaneo: 50, cooldownMax: 20, cooldownAtual: 0, duracaoMax: 6, duracaoAtual: 0, ativa: false, desbloqueada: true, nivel: 1, custoUpgrade: 500, multCusto: 2.1
             }]
         }
     ]
 };
 
 let isResetando = false;
+
+export function formatarNumero(num) {
+    if (num === null || num === undefined || isNaN(num)) return "0";
+    let valorAbsoluto = Math.abs(num);
+    if (valorAbsoluto < 1000) return Math.floor(num).toLocaleString('pt-BR');
+    
+    const sufixos = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+    const exp = Math.floor(Math.log10(valorAbsoluto) / 3);
+    if (exp >= sufixos.length) return num.toExponential(2);
+    
+    const escalado = num / Math.pow(10, exp * 3);
+    const dec = Math.abs(escalado) >= 100 ? 0 : (Math.abs(escalado) >= 10 ? 1 : 2);
+    return escalado.toFixed(dec) + ' ' + sufixos[exp];
+}
+
+if (typeof window !== 'undefined') {
+    window.formatarNumero = formatarNumero;
+}
 
 export function calcularHpMaximo(nivel) {
     let hpBase = 10 * Math.pow(1.4, nivel - 1);
@@ -182,12 +295,16 @@ export function carregarJogo() {
     const dadosSalvos = JSON.parse(salvo);
     const tempoFora = dadosSalvos.ultimoAcesso ? Math.max(0, Math.floor((Date.now() - dadosSalvos.ultimoAcesso) / 1000)) : 0;
     
+    if (dadosSalvos.configAudio) {
+        jogo.configAudio = { ...jogo.configAudio, ...dadosSalvos.configAudio };
+    }
+
     // Mescla profunda para garantir que novos desbloqueios existam em saves velhos
     if (dadosSalvos.desbloqueios) {
         jogo.desbloqueios = { ...jogo.desbloqueios, ...dadosSalvos.desbloqueios };
     }
     
-    jogo.tutoriaisVistos = dadosSalvos.tutoriaisVistos || { abaUpgrades: false, abaEquipe: false, abaGacha: false, abaForja: false, abaSantuario: false, abaGuilda: false, abaMarcos: false, abaPantheon: false, abaFrestas: false };
+    jogo.tutoriaisVistos = dadosSalvos.tutoriaisVistos || { abaUpgrades: false, abaEquipe: false, abaGacha: false, abaForja: false, abaSantuario: false, abaGuilda: false, abaMarcos: false, abaPantheon: false, abaFrestas: false, abaMascotes: false, abaTorre: false, abaTaverna: false };
     
     // Migração de heróis mantida como no original
     if (dadosSalvos.herois) {
@@ -198,6 +315,8 @@ export function carregarJogo() {
                 jogo.herois[i].fragmentos = jogo.herois[i].fragmentos || 0;
                 jogo.herois[i].estrelas = Math.min(jogo.herois[i].estrelas || 1, 5);
                 jogo.herois[i].descricao = hBase.descricao;
+                jogo.herois[i].talento = dadosSalvos.herois[i].talento || null;
+                jogo.herois[i].especializacoes = hBase.especializacoes;
                 
                 if (hBase.skills) {
                     if (!jogo.herois[i].skills || jogo.herois[i].skills.length === 0) {
@@ -265,7 +384,32 @@ export function carregarJogo() {
     jogo.timeAtivo = dadosSalvos.timeAtivo || [0];
     jogo.fragmentosUniversais = dadosSalvos.fragmentosUniversais || 0;
     jogo.reliquiasPantheon = dadosSalvos.reliquiasPantheon || [0, 0, 0];
+    jogo.clima = dadosSalvos.clima || 'limpo';
+    jogo.torreAbismo = dadosSalvos.torreAbismo || { andarAtual: 1, ativa: false };
+    jogo.taverna = dadosSalvos.taverna || { energia: 5, energiaMaxima: 5, ultimaRecarga: Date.now(), hpPedra: 100 };
+    jogo.mascotes = dadosSalvos.mascotes || [
+        { id: 'fada', nome: 'Fada de Luz', desbloqueado: false, ativo: false, aura: 'Acelera Cooldowns em 10%' },
+        { id: 'slime', nome: 'Slime Tóxico', desbloqueado: false, ativo: false, aura: 'Dano Passivo Constante' },
+        { id: 'dragao', nome: 'Mini Dragão', desbloqueado: false, ativo: false, aura: '+20% Chance de Crítico' }
+    ];
     jogo.frestaDesafio = dadosSalvos.frestaDesafio || { andarAtual: 1, tempoRestante: 30, ativa: false, hpOriginalMonstro: 0, tipoInimigo: 0 };
+    jogo.buffsAtivos = dadosSalvos.buffsAtivos || { frenesiOuro: 0, fluxoVeloz: 0, hidromel: 0 };
+    if (jogo.buffsAtivos.hidromel === undefined) jogo.buffsAtivos.hidromel = 0;
+    jogo.dpsEmTempoReal = 0;
+    jogo.dpsBuffer = 0;
+    jogo.timeAtordoado = 0;
+
+    jogo.eventoVolante = dadosSalvos.eventoVolante || { ativo: false, x: -60, y: 120, raio: 22, tipo: 'fada', velocidade: 2.2, duracao: 0 };
+    if (!jogo.eventoVolante.raio) jogo.eventoVolante.raio = 22;
+
+    jogo.equipamentos = dadosSalvos.equipamentos || {
+        inventario: [],
+        equipados: { arma: null, armadura: null, amuleto: null },
+        poDeForja: 0
+    };
+    if (!jogo.equipamentos.equipados) jogo.equipamentos.equipados = { arma: null, armadura: null, amuleto: null };
+    if (!jogo.equipamentos.inventario) jogo.equipamentos.inventario = [];
+    if (jogo.equipamentos.poDeForja === undefined) jogo.equipamentos.poDeForja = 0;
 
     jogo.guilda = dadosSalvos.guilda || {
         ultimaRenovacao: new Date().toDateString(),
@@ -364,6 +508,7 @@ export function executarAscensao() {
         jogo.monstroHpMax = 10;
 
         jogo.frestaDesafio.ativa = false;
+        jogo.torreAbismo.ativa = false;
         jogo.guilda.expedicao.ativa = false;
         jogo.guilda.expedicao.heroiIndex = null;
         jogo.guilda.expedicao.tempoFim = 0;
@@ -373,15 +518,15 @@ export function executarAscensao() {
             let estavaDesbloqueado = index === 0 || heroi.desbloqueada || heroi.nivelDps > 0;
             
             heroi.nivelDps = index === 0 ? 0 : (estavaDesbloqueado ? 1 : 0);
-            heroi.custoDps = index === 0 ? 10 : (index === 1 ? 150 : (index === 2 ? 250 : (index === 3 ? 15 : 600)));
-            heroi.multCusto = index === 0 ? 1.5 : (index === 1 ? 1.7 : (index === 2 ? 1.6 : (index === 3 ? 1.15 : 1.9)));
-            heroi.chanceCritico = index === 0 ? 0 : (index === 1 ? 0.10 : (index === 2 ? 0.05 : (index === 3 ? 0.05 : 0.25)));
+            heroi.custoDps = index === 0 ? 10 : (index === 1 ? 150 : (index === 2 ? 250 : (index === 3 ? 15 : (index === 4 ? 600 : (index === 5 ? 1000 : 1500)))));
+            heroi.multCusto = index === 0 ? 1.5 : (index === 1 ? 1.7 : (index === 2 ? 1.6 : (index === 3 ? 1.15 : (index === 4 ? 1.9 : (index === 5 ? 1.85 : 1.9)))));
+            heroi.chanceCritico = index === 0 ? 0 : (index === 1 ? 0.10 : (index === 2 ? 0.05 : (index === 3 ? 0.05 : (index === 4 ? 0.25 : (index === 5 ? 0.15 : 0.30)))));
             heroi.nivelCritico = 0;
-            heroi.custoCritico = index === 0 ? 50 : (index === 1 ? 300 : (index === 2 ? 400 : (index === 3 ? 100 : 700)));
+            heroi.custoCritico = index === 0 ? 50 : (index === 1 ? 300 : (index === 2 ? 400 : (index === 3 ? 100 : (index === 4 ? 700 : (index === 5 ? 1200 : 1800)))));
             if (index === 3) heroi.multCustoCritico = 1.4;
             
             // Reseta o DPS para o nível Base, mantendo os multiplicadores por Estrela do Gacha
-            let dpsBase = index === 0 ? 1 : (estavaDesbloqueado ? (index === 1 ? 2 : (index === 3 ? 0 : 1)) : 0);
+            let dpsBase = index === 0 ? 1 : (estavaDesbloqueado ? (index === 1 ? 2 : (index === 3 ? 0 : (index === 5 ? 3 : (index === 6 ? 4 : 1)))) : 0);
             for (let s = 1; s < (heroi.estrelas || 1); s++) dpsBase = Math.max(1, Math.ceil(dpsBase * 2.0));
             heroi.dps = dpsBase;
             
@@ -405,6 +550,14 @@ export function executarAscensao() {
                         skill.custoUpgrade = 400;
                         skill.multiplicadorDanoInstantaneo = 40;
                         skill.duracaoMax = 1;
+                    } else if (skill.nome === "🌟 Julgamento Divino") {
+                        skill.custoUpgrade = 450;
+                        skill.multiplicadorDanoInstantaneo = 35;
+                        skill.duracaoMax = 5;
+                    } else if (skill.nome === "🩸 Fúria Implacável") {
+                        skill.custoUpgrade = 500;
+                        skill.multiplicadorDanoInstantaneo = 50;
+                        skill.duracaoMax = 6;
                     } else {
                         skill.custoUpgrade = 100;
                         skill.multiplicadorDano = 5;
@@ -418,4 +571,124 @@ export function executarAscensao() {
         isResetando = true; // Impede gravação automática indesejada durante o recarregamento
         window.location.reload();
     }
+}
+
+// --- SISTEMA DE LOOT & EQUIPAMENTOS ---
+export function gerarItemLoot(nivel = 1) {
+    const slots = [
+        { tipo: "arma", nomes: ["Espada", "Lâmina", "Machado", "Arco", "Cajado", "Adaga", "Lança"], icone: "⚔️" },
+        { tipo: "armadura", nomes: ["Cota de Malha", "Armadura", "Manto", "Couraça", "Túnica", "Guarda-Peito"], icone: "🛡️" },
+        { tipo: "amuleto", nomes: ["Amuleto", "Pingente", "Talismã", "Anel", "Relíquia", "Gema"], icone: "💍" }
+    ];
+
+    const sufixos = [
+        "do Titã", "da Aurora", "do Vazio", "da Tempestade", "Ígneo", "Glacial", "Sombrio", "Ancestral", "do Dragão", "Estelar"
+    ];
+
+    let roll = Math.random();
+    let raridade = "comum";
+    if (roll < 0.05 + (nivel * 0.002)) raridade = "lendario";
+    else if (roll < 0.22 + (nivel * 0.004)) raridade = "epico";
+    else if (roll < 0.55 + (nivel * 0.006)) raridade = "raro";
+
+    const slotObj = slots[Math.floor(Math.random() * slots.length)];
+    const nomeBase = slotObj.nomes[Math.floor(Math.random() * slotObj.nomes.length)];
+    const sufixo = sufixos[Math.floor(Math.random() * sufixos.length)];
+    const nome = `${nomeBase} ${sufixo}`;
+
+    const numAfixos = raridade === "comum" ? 1 : (raridade === "raro" ? 2 : (raridade === "epico" ? 3 : 4));
+
+    const poolAfixos = [
+        { tipo: "dpsBonus", baseMin: 12, baseMax: 28, unit: "%", label: "DPS da Equipe" },
+        { tipo: "danoClique", baseMin: 18, baseMax: 40, unit: "%", label: "Dano de Clique" },
+        { tipo: "critChance", baseMin: 3, baseMax: 8, unit: "%", label: "Chance Crítica" },
+        { tipo: "critDano", baseMin: 25, baseMax: 65, unit: "%", label: "Dano Crítico" },
+        { tipo: "ouroBonus", baseMin: 20, baseMax: 50, unit: "%", label: "Ouro Saqueado" },
+        { tipo: "reducaoCd", baseMin: 6, baseMax: 16, unit: "%", label: "Aceleração de Cooldown" }
+    ];
+
+    let multRaridade = raridade === "comum" ? 1 : (raridade === "raro" ? 1.4 : (raridade === "epico" ? 2.1 : 3.2));
+    let fatorNivel = 1 + (nivel * 0.04);
+
+    let embaralhado = [...poolAfixos].sort(() => 0.5 - Math.random());
+    let afixos = [];
+    for (let i = 0; i < numAfixos; i++) {
+        let af = embaralhado[i];
+        let valBase = af.baseMin + Math.random() * (af.baseMax - af.baseMin);
+        let valFinal = Math.round(valBase * multRaridade * fatorNivel);
+        afixos.push({
+            tipo: af.tipo,
+            valor: valFinal,
+            desc: `+${valFinal}${af.unit} ${af.label}`
+        });
+    }
+
+    let passivaLendaria = null;
+    if (raridade === "lendario") {
+        const passivas = [
+            "Fúria do Titã: +100% de dano contra Chefes",
+            "Toque de Midas: +150% de ouro de monstros e eventos",
+            "Eco Arcano: 15% de chance de zerar cooldowns ao usar habilidade",
+            "Coração de Dragão: +50% de dano crítico e golpes causam fogo"
+        ];
+        passivaLendaria = passivas[Math.floor(Math.random() * passivas.length)];
+    }
+
+    return {
+        id: "eq_" + Date.now() + "_" + Math.floor(Math.random() * 10000),
+        nome,
+        tipo: slotObj.tipo,
+        raridade,
+        icone: slotObj.icone,
+        nivelItem: nivel,
+        nivelUpgrade: 0,
+        afixos,
+        passivaLendaria
+    };
+}
+
+export function calcularBonusEquipamentos() {
+    let bonus = {
+        dpsBonus: 0,
+        danoClique: 0,
+        critChance: 0,
+        critDano: 0,
+        ouroBonus: 0,
+        reducaoCd: 0,
+        danoChefe: 1,
+        passivas: []
+    };
+
+    if (!jogo.equipamentos || !jogo.equipamentos.equipados) return bonus;
+
+    ['arma', 'armadura', 'amuleto'].forEach(slot => {
+        let item = jogo.equipamentos.equipados[slot];
+        if (item && item.afixos) {
+            let multUp = 1 + ((item.nivelUpgrade || 0) * 0.15); // +15% nos afixos por nível de forja
+            item.afixos.forEach(af => {
+                let v = af.valor * multUp;
+                if (af.tipo === 'dpsBonus') bonus.dpsBonus += v;
+                else if (af.tipo === 'danoClique') bonus.danoClique += v;
+                else if (af.tipo === 'critChance') bonus.critChance += (v / 100);
+                else if (af.tipo === 'critDano') bonus.critDano += (v / 100);
+                else if (af.tipo === 'ouroBonus') bonus.ouroBonus += (v / 100);
+                else if (af.tipo === 'reducaoCd') bonus.reducaoCd += (v / 100);
+            });
+            if (item.passivaLendaria) {
+                bonus.passivas.push(item.passivaLendaria);
+                if (item.passivaLendaria.includes("Fúria do Titã")) bonus.danoChefe *= 2.0;
+                if (item.passivaLendaria.includes("Toque de Midas")) bonus.ouroBonus += 1.5;
+                if (item.passivaLendaria.includes("Coração de Dragão")) bonus.critDano += 0.50;
+            }
+        }
+    });
+
+    return bonus;
+}
+
+if (typeof window !== 'undefined') {
+    window.jogo = jogo;
+    window.formatarNumero = formatarNumero;
+    window.gerarItemLoot = gerarItemLoot;
+    window.calcularBonusEquipamentos = calcularBonusEquipamentos;
 }

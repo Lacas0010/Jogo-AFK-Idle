@@ -10,9 +10,13 @@
 <body>
 
     <div class="area-jogo">
+        <div class="controles-audio-topo">
+            <button class="btn-audio btn-toggle-bgm" onclick="window.toggleBGM()">🎵 BGM: On</button>
+            <button class="btn-audio btn-toggle-sfx" onclick="window.toggleSFX()">🔊 SFX: On</button>
+        </div>
     <div id="menuInicial" class="menu-inicial-container">
         <div class="menu-inicial-conteudo">
-            <img src="logo.png" alt="Polygonal Echoes Logo" style="width: 150px; height: 150px; display: block; margin: 0 auto 15px auto; filter: drop-shadow(0 0 15px rgba(142, 68, 173, 0.6));">
+            <img src="logo.png" alt="Polygonal Echoes Logo" style="width: 140px; height: 140px; display: block; margin: 0 auto 15px auto; border-radius: 24px; box-shadow: 0 0 25px rgba(155, 89, 182, 0.7); border: 2px solid rgba(241, 196, 15, 0.4);">
             <h1 class="logo-jogo-grande">POLYGONAL ECHOES</h1>
             <p class="subtitulo-jogo">Idle Chronicles</p>
             
@@ -31,6 +35,8 @@
         <button id="btnSkill_2_0" class="btn-upgrade btn-skill" style="display: none;" onclick="ativarSkill(2, 0)">🔮 Comet Azur</button>
         <button id="btnSkill_3_0" class="btn-upgrade btn-skill" style="display: none;" onclick="ativarSkill(3, 0)">⚙️ Baluarte Vetorial</button>
         <button id="btnSkill_4_0" class="btn-upgrade btn-skill" style="display: none;" onclick="ativarSkill(4, 0)">☠️ Adagas de Glifos</button>
+        <button id="btnSkill_5_0" class="btn-upgrade btn-skill" style="display: none;" onclick="ativarSkill(5, 0)">🌟 Julgamento Divino</button>
+        <button id="btnSkill_6_0" class="btn-upgrade btn-skill" style="display: none;" onclick="ativarSkill(6, 0)">🩸 Fúria Implacável</button>
     </div>
     </div>
 
@@ -51,6 +57,9 @@
         <button id="btnAba_marcos" class="btn-aba aba-bloqueada" onclick="alternarAba('abaMarcos')">🏆 Marcos</button>
         <button id="btnAba_pantheon" class="btn-aba aba-bloqueada" onclick="alternarAba('abaPantheon')">🏛️ Panteão</button>
         <button id="btnAba_frestas" class="btn-aba aba-bloqueada" onclick="alternarAba('abaFrestas')">🌌 Frestas</button>
+        <button id="btnAba_mascotes" class="btn-aba aba-bloqueada" onclick="alternarAba('abaMascotes')">🐾 Mascotes</button>
+        <button id="btnAba_torre" class="btn-aba aba-bloqueada" onclick="alternarAba('abaTorre')">🗼 Torre</button>
+        <button id="btnAba_taverna" class="btn-aba aba-bloqueada" onclick="alternarAba('abaTaverna')">🍺 Taverna</button>
         <button class="btn-aba" onclick="alternarAba('abaDebug')">🛠️ Debug</button>
     </div>
 
@@ -104,6 +113,18 @@
     <div id="abaEquipe" class="aba-conteudo">
         <h2>🛡️ Formação do Time (<span id="tamanhoTime">1</span>/3)</h2>
         <div id="painelGerenciarEquipe" class="controles" style="flex-direction: column; gap: 15px; align-items: center;"></div>
+
+        <div style="margin-top: 25px; border-top: 1px dashed rgba(241, 196, 15, 0.4); padding-top: 15px; width: 100%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                <h2 style="margin: 0; font-size: 20px;">⚔️ Arsenal da Equipe</h2>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-upgrade" style="font-size: 11px; padding: 6px 12px; background: #27ae60;" onclick="window.autoEquiparMelhores()">⚡ Auto-Equipar</button>
+                    <button class="btn-crit" style="font-size: 11px; padding: 6px 12px; background: #7f8c8d;" onclick="window.desmantelarComuns()">♻️ Reciclar Comuns</button>
+                </div>
+            </div>
+            <p style="color: #d4af37; font-size: 12px; margin: 0 0 15px 0;">Derrote Chefes para saquear Armas, Armaduras e Amuletos lendários. Seus bônus fortalecem toda a patrulha!</p>
+            <div id="painelEquipamentos"></div>
+        </div>
     </div>
 
     <div id="abaMarcos" class="aba-conteudo">
@@ -114,6 +135,16 @@
 
             <div id="abaPantheon" class="aba-conteudo"><h2>🏛️ Panteão das Relíquias</h2><div id="painelPantheon" class="painel-upgrades"></div></div>
             <div id="abaFrestas" class="aba-conteudo"><h2>🌌 Frestas Dimensionais</h2><div id="painelFrestas" class="painel-upgrades"></div></div>
+            <div id="abaMascotes" class="aba-conteudo"><h2>🐾 Viveiro de Mascotes</h2><div id="painelMascotes" class="painel-upgrades"></div></div>
+            <div id="abaTorre" class="aba-conteudo">
+                <h2>🗼 Torre do Abismo</h2>
+                <p style="color: #f1c40f; font-size: 13px;">Complete andares para ganhar Fragmentos Universais. Modificadores sombrios afetam as batalhas aqui!</p>
+                <div id="painelTorre" class="painel-upgrades"></div>
+            </div>
+            <div id="abaTaverna" class="aba-conteudo">
+                <h2>🍺 Taverna da Cidade</h2>
+                <div id="painelTaverna" class="painel-upgrades"></div>
+            </div>
             
             <div id="abaDebug" class="aba-conteudo">
                 <h3 style="color: #e74c3c;">⚡ Menu de Trapaças</h3>
@@ -121,6 +152,10 @@
                     <button class="btn-upgrade" style="background: #f1c40f; color: #111;" onclick="window.debugAdicionarPontos(100000)">💰 +100k Pontos</button>
                     <button class="btn-upgrade" style="background: #9b59b6; color: #fff;" onclick="window.debugAdicionarGemas(500)">🔮 +500 Gemas</button>
                     <button class="btn-upgrade" style="background: #00ffff; color: #111;" onclick="window.debugAdicionarAlmas(10)">✨ +10 Almas</button>
+                    <button class="btn-upgrade" style="background: #2ecc71; color: #111;" onclick="window.debugDesbloquearTudo()">🔓 Desbloquear Todas Abas</button>
+                    <button class="btn-upgrade" style="background: #3498db; color: #fff;" onclick="window.debugDesbloquearHerois()">👥 Desbloquear Heróis</button>
+                    <button class="btn-upgrade" style="background: #e67e22; color: #fff;" onclick="window.debugDroparEquipamentos()">🎁 Dropar 3 Equipamentos</button>
+                    <button class="btn-upgrade" style="background: #e74c3c; color: #fff;" onclick="window.debugRolarDadosGratis()">🎲 Rolar Dados Grátis</button>
                     <button class="btn-crit" onclick="window.debugAvancarNiveis(5)">⏩ Avançar 5 Níveis</button>
                     <button class="btn-reset" onclick="window.debugResetarCooldowns()">⏳ Reset Cooldowns</button>
                     <button class="btn-reset" onclick="resetarJogo()" style="margin-top: 20px; width: 100%;">Apagar Save Completo</button>
@@ -130,7 +165,7 @@
         </div>
     </div>
 
-    <script type="module" src="engine.js"></script>
+    <script type="module" src="engine.js?v=4.2"></script>
 
     <div id="painelOffline" class="overlay-offline escondido">
         <div class="pergaminho">
